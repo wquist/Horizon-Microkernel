@@ -13,5 +13,6 @@
 #else
 #define _Noreturn
 #endif
+#endif
 
 #endif

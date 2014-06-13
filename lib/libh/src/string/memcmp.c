@@ -1,6 +1,6 @@
 #include <string.h>
 
-int memcmp(const void* a, const void* b, size_t len)
+int memcmp(const void* a, const char* b, size_t len)
 {
 	unsigned char ac, bc;
 
