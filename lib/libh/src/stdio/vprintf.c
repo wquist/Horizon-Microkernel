@@ -91,7 +91,7 @@ int vprintf(const char* format, va_list* arg)
 			case 'd':
 			case 'i':
 			{
-				long d = (long)popped;
+				intmax_t d = (intmax_t)popped;
 				int neg = 0;
 				if (d < 0)
 				{
@@ -99,7 +99,7 @@ int vprintf(const char* format, va_list* arg)
 					neg = 1;
 				}
 
-				putn = fmt_u((uintmax_t)popped, putend);
+				putn = fmt_u((uintmax_t)d, putend);
 				if (neg) *--putn = '-';
 
 				break;
