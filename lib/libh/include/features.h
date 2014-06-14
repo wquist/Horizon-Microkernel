@@ -15,4 +15,8 @@
 #endif
 #endif
 
+#if !defined(_KERNEL_SOURCE)
+#define HAS_STDIO
+#endif
+
 #endif
