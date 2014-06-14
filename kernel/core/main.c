@@ -25,12 +25,13 @@
 #define _KERNEL_SOURCE
 #include <features.h>
 
-#include <spec/multiboot.h>
+#include <arch.h>
+#include <debug/init.h>
 #include <stdint.h>
 
-void _Noreturn kmain(long magic, const multiboot_info_t* bli, uintptr_t vmem)
+void _Noreturn kmain(long magic, const bootloader_info_t* bli, uintptr_t vmem)
 {
-	//
+	debug_init();
 
 	for (;;);
 }
