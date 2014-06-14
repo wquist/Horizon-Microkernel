@@ -3,6 +3,10 @@
 #include <stdint.h>
 #include <ctype.h>
 
+// No libgcc in kernel for now; use 32-bit maximums
+#define uintmax_t unsigned long
+#define  intmax_t long
+
 static const char xdigits[16] = { "0123456789ABCDEF" };
 static char* fmt_x(uintmax_t x, char* s, char lower)
 {
