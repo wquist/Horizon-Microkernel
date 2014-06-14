@@ -15,27 +15,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file main.c
- *  \date May 2014
- *
- *  /mainpage Horizon Microkernel
- *  /version  0.0.5-0
- */
+#include "log.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
-#define _KERNEL_SOURCE
-#define _DEBUG
-
-#include <features.h>
-
-#include <arch.h>
-#include <debug/init.h>
-#include <debug/error.h>
-#include <stdint.h>
-
-void _Noreturn kmain(long magic, const bootloader_info_t* bli, uintptr_t vmem)
+//! Print a kernel message on a new line.
+/*! Print a formatted message, prepended with the calling filename. */
+void debug_trace(const char* file, const char* format, ...)
 {
-	debug_init();
-	dassert(magic == BOOTLOADER_MAGIC);
+	// Extract the filename from the path
+	char* s = strrchr(file, '/');
+	if (!s) ++s;
 
-	for (;;);
+	// Extract the filename from the extension
+	char* e = strchr(file, '.');
+	size_t slen = e - s;
+
+	printf("[");
+	while (slen--) printf("%c", *s++);
+	printf("]");
+
+	va_list arg;
+	va_start(arg, format);
+	vprintf(format, &arg);
+	va_end(arg);
+
+	printf("\n");
 }

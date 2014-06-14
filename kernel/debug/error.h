@@ -15,27 +15,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file main.c
- *  \date May 2014
- *
- *  /mainpage Horizon Microkernel
- *  /version  0.0.5-0
+/*! \file debug/error.h
+ *  \date June 2014
  */
 
-#define _KERNEL_SOURCE
-#define _DEBUG
+#pragma once
 
-#include <features.h>
+#include <debug/log.h>
 
-#include <arch.h>
-#include <debug/init.h>
-#include <debug/error.h>
-#include <stdint.h>
+#if defined(_DEBUG)
 
-void _Noreturn kmain(long magic, const bootloader_info_t* bli, uintptr_t vmem)
-{
-	debug_init();
-	dassert(magic == BOOTLOADER_MAGIC);
+#define dassert(c) \
+	do { if (c); else {                                             \
+	debug_trace(__FILE__, "Assertion failure in %s, line %u: (%s)", \
+	            __PRETTY_FUNCTION__, __LINE__, #c);                 \
+	for (;;); } } while (0)
 
-	for (;;);
-}
+#define dpanic(x) do { debug_trace(__FILE__, "PANIC: %s", x); for (;;); } while (0)
+
+#else
+
+#define dassert(c) do {} while (0)
+#define dpanic(x)  do {} while (0)
+
+#endif

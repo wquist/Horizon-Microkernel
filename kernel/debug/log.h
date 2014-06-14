@@ -15,27 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file main.c
- *  \date May 2014
- *
- *  /mainpage Horizon Microkernel
- *  /version  0.0.5-0
+/*! \file debug/log.h
+ *  \date June 2014
  */
 
-#define _KERNEL_SOURCE
-#define _DEBUG
+#pragma once
 
-#include <features.h>
+#if defined(_DEBUG)
+#define dtrace(x, ...) do { debug_trace(__FILE__, x, __VA_ARGS__); } while (0)
+#else
+#define dtrace(x, ...) do {} while (0)
+#endif
 
-#include <arch.h>
-#include <debug/init.h>
-#include <debug/error.h>
-#include <stdint.h>
-
-void _Noreturn kmain(long magic, const bootloader_info_t* bli, uintptr_t vmem)
-{
-	debug_init();
-	dassert(magic == BOOTLOADER_MAGIC);
-
-	for (;;);
-}
+void debug_trace(const char* file, const char* format, ...);
