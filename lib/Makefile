@@ -1,12 +1,12 @@
 # Set up some path variables
 TARGET_ROOT = $(TARGET)
 BUILD_ROOT  = build/$(TARGET)
-OBJ_ROOT    = build/$(TARGET)/obj-$(ARCH)
+OBJ_ROOT    = $(BUILD_ROOT)/obj-$(ARCH)
 
 BINARY = $(BUILD_ROOT)/$(TARGET)-$(ARCH).a
 
 # Define the cross compiler and archiver - should be in format of ARCH-FORMAT-TOOL
-# Only using elf for now, though
+# Only using elf for now, though, so it is not a variable
 CROSS_CHAIN = /usr/local/cross/bin/$(ARCH)-elf
 CC = $(CROSS_CHAIN)-gcc
 AR = $(CROSS_CHAIN)-ar

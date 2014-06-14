@@ -1,6 +1,7 @@
 #ifndef _STDIO_H
 #define _STDIO_H
 
+#include <features.h>
 #include <stdarg.h>
 
 #if defined(HAS_STDIO)
