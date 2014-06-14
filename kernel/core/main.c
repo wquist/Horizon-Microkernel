@@ -31,11 +31,14 @@
 #include <debug/init.h>
 #include <debug/error.h>
 #include <stdint.h>
+#include <stdio.h>
 
 void _Noreturn kmain(long magic, const bootloader_info_t* bli, uintptr_t vmem)
 {
 	debug_init();
 	dassert(magic == BOOTLOADER_MAGIC);
+
+	printf("%s: %i %03u %#x %%", "Testing", -5, 1, 0xA);
 
 	for (;;);
 }

@@ -3,7 +3,7 @@ PROJECT_ROOT = ..
 # Set up some path variables
 ARCH_ROOT = arch/$(ARCH)
 LIB_ROOT  = $(PROJECT_ROOT)/lib
-BUILD_ROOT = build/
+BUILD_ROOT = build
 OBJ_ROOT = $(BUILD_ROOT)/obj-$(ARCH)
 DEP_ROOT = $(BUILD_ROOT)/dep-$(ARCH)
 LIB_BUILD_ROOT = $(LIB_ROOT)/build
