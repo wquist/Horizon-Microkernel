@@ -22,7 +22,7 @@
 #pragma once
 
 #if defined(_DEBUG)
-#define dtrace(x, ...) do { debug_trace(__FILE__, x, __VA_ARGS__); } while (0)
+#define dtrace(x, ...) do { debug_trace(__FILE__, x, ##__VA_ARGS__); } while (0)
 #else
 #define dtrace(x, ...) do {} while (0)
 #endif

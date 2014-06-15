@@ -26,7 +26,7 @@ void debug_trace(const char* file, const char* format, ...)
 {
 	// Extract the filename from the path
 	char* s = strrchr(file, '/');
-	if (!s) ++s;
+	if (s) ++s;
 
 	// Extract the filename from the extension
 	char* e = strchr(file, '.');

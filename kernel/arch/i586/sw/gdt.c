@@ -57,7 +57,7 @@ void gdt_set_entry(gdt_t* table, size_t i, uint32_t base, uint32_t limit, GDT_EN
 	dassert(dpl <= 3);
 
 	gdt_entry_t *e = &(table->entries[i]);
-	e->raw = 0ULL;
+	e->raw = 0ULL; //< Some unnamed fields must always be 0.
 
 	e->limit_low   =  limit        & 0xFFFF;
 	e->limit_high  = (limit >> 16) & 0xF;
@@ -65,17 +65,17 @@ void gdt_set_entry(gdt_t* table, size_t i, uint32_t base, uint32_t limit, GDT_EN
 	e->base_low	   =  base         & 0xFFFFFF;
 	e->base_high   = (base  >> 24) & 0xFF;
 
-	e->accessed    = !!(type == GDT_ENTRYTYPE_TSS); //< (alt) Differentiate between TSS and LDT.
-	e->readwrite   = !!(type == GDT_ENTRYTYPE_DATA); //< Should self-modifying code be allowed?
-	e->expand_down = 0;
-	e->code        = !!(type == GDT_ENTRYTYPE_CODE || type == GDT_ENTRYTYPE_TSS);  //< (alt) 32-bit TSS.
-	e->normal      = !!(type == GDT_ENTRYTYPE_CODE || type == GDT_ENTRYTYPE_DATA); //< 0 is TSS or LDT.
-	e->privilege   = dpl;
-	e->present     = 1;
+	e->accessed    = (type == GDT_ENTRYTYPE_TSS); //< (alt) Differentiate between TSS and LDT.
+	e->readwrite   = (type == GDT_ENTRYTYPE_DATA); //< Should self-modifying code be allowed?
+	e->expand_down =  0;
+	e->code        = (type == GDT_ENTRYTYPE_CODE || type == GDT_ENTRYTYPE_TSS);  //< (alt) 32-bit TSS.
+	e->normal      = (type == GDT_ENTRYTYPE_CODE || type == GDT_ENTRYTYPE_DATA); //< 0 is TSS or LDT.
+	e->privilege   =  dpl;
+	e->present     =  1;
 
-	e->available   = 0;
-	e->width       = !!(type == GDT_ENTRYTYPE_CODE || type == GDT_ENTRYTYPE_DATA);
-	e->granularity = !!(type == GDT_ENTRYTYPE_CODE || type == GDT_ENTRYTYPE_DATA);
+	e->available   =  0;
+	e->width       = (type == GDT_ENTRYTYPE_CODE || type == GDT_ENTRYTYPE_DATA); //< 32-bit, or (alt) 0 for TSS.
+	e->granularity = (type == GDT_ENTRYTYPE_CODE || type == GDT_ENTRYTYPE_DATA); //< Page granularity, only for code/data.
 
 	dtrace("Set entry %i in GDT %p to 0x%X%X", i, table, (uint32_t)(e->raw), (uint32_t)(e->raw >> 32));
 }
@@ -87,14 +87,14 @@ void gdt_load(const gdt_t* table)
 	lgdt(&(table->gdtr));
 	_ASM
 	(
-		"mov $0x10, %%ax;"
+		"mov $0x10, %%ax;" //< Load the new kernel data segment to all segments. (except code)
 		"mov %%ax,  %%ds;"
 		"mov %%ax,  %%es;"
 		"mov %%ax,  %%fs;"
 		"mov %%ax,  %%gs;"
 		"mov %%ax,  %%ss;"
 
-		"ljmp $0x8, $.flush;"
+		"ljmp $0x8, $.flush;" //< Jump to the new kernel code segment.
 		".flush:;"
 	::: "memory");
 }

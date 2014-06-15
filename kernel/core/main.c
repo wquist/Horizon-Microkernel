@@ -28,9 +28,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <sw/gdt.h>
-
-void _Noreturn kmain(long magic, const bootloader_info_t* bli, uintptr_t vmem)
+void _Noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 {
 	debug_init();
 	dassert(magic == BOOTLOADER_MAGIC);

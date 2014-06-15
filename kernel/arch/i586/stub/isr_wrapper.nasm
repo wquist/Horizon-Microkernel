@@ -90,7 +90,7 @@ isr_entry:       pusha
                  mov   fs, ax
                  mov   gs, ax
 
-                 call  int_handler_common
+                ;call  int_handler_common
 
                  pop   eax    ; Restore the previous user data segment
                  mov   ds, ax

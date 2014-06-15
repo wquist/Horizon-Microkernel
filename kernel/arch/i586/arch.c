@@ -18,7 +18,9 @@
 #include "arch.h"
 #include <sw/gdt.h>
 #include <sw/int/idt.h>
+#include <debug/log.h>
 
+// The actual value of a linker variable is its address.
 #define LINKVAR(symbol, addr)  \
 extern const uintptr_t symbol; \
 const uintptr_t addr = (uintptr_t)&symbol;
@@ -32,11 +34,11 @@ LINKVAR(___ekernel, __ekernel);
 
 void arch_init()
 {
-	gdt_init(&kernel_gdt);
-	gdt_load(&kernel_gdt);
+	gdt_init(kernel_gdt());
+	gdt_load(kernel_gdt());
 	dtrace("Installed main kernel GDT. (null|kcode|kdata|ucode|udata)");
 
-	idt_init(&kernel_idt);
-	idt_load(&kernel_idt);
+	idt_init(kernel_idt());
+	idt_load(kernel_idt());
 	dtrace("Installed main kernel IDT. (interrupts are INT32 ring 0)");
 }
