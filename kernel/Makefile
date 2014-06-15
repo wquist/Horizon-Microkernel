@@ -35,6 +35,9 @@ CFLAGS =                        \
 # Each kernel architecture should define its own linker script
 LDFLAGS = -T $(ARCH_ROOT)/link.ld
 
+# Define global macros
+DEFINES = _KERNEL_SOURCE _DEBUG
+
 # The raw include directories - more can be added in an arch's "Makefile.inc"
 INC_DIRS =                        \
 	.                             \
@@ -67,6 +70,9 @@ ASMEXT   =
 # Get any extra directories or options
 -include $(ARCH_ROOT)/Makefile.inc
 
+# Modify the raw macros to the GCC format
+MACROS = $(addprefix -D, $(DEFINES))
+
 # Modify the raw include directories to the format GCC expects
 INCLUDES = $(addprefix -I, $(INC_DIRS))
 
@@ -95,8 +101,8 @@ SRCASM = $(foreach d,$(SRC_DIRS), $(wildcard $(d)/*.$(ASMEXT)))
 OBJASM = $(addprefix $(OBJ_ROOT)/, $(addsuffix .o, $(basename $(SRCASM))))
 endif
 
-DEPEND      = $(CC)   $(CFLAGS)  $(INCLUDES) -MM -MP
-COMPILE.c   = $(CC)   $(CFLAGS)  $(INCLUDES) -c
+DEPEND      = $(CC)   $(CFLAGS)  $(INCLUDES) $(MACROS) -MM -MP
+COMPILE.c   = $(CC)   $(CFLAGS)  $(INCLUDES) $(MACROS) -c
 COMPILE.asm = $(ASMC) $(ASMFLAGS)
 LINK        = $(LD)   $(LDFLAGS)
 

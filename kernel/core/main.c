@@ -22,21 +22,21 @@
  *  /version  0.0.5-0
  */
 
-#define _KERNEL_SOURCE
-#define _DEBUG
-
-#include <features.h>
-
 #include <arch.h>
 #include <debug/init.h>
 #include <debug/error.h>
 #include <stdint.h>
 #include <stdio.h>
 
+#include <sw/gdt.h>
+
 void _Noreturn kmain(long magic, const bootloader_info_t* bli, uintptr_t vmem)
 {
 	debug_init();
 	dassert(magic == BOOTLOADER_MAGIC);
+
+	gdt_init(kernel_gdt());
+	gdt_load(kernel_gdt());
 
 	printf("%s: %i %03u %#x %%", "Testing", -5, 1, 0xA);
 
