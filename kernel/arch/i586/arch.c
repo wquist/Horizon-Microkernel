@@ -15,26 +15,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file arch/i586/arch.h
- *  \date June 2014
- */
+#include "arch.h"
+#include <sw/gdt.h>
+#include <sw/int/idt.h>
 
-#pragma once
+#define LINKVAR(symbol, addr)  \
+extern const uintptr_t symbol; \
+const uintptr_t addr = (uintptr_t)&symbol;
 
-#include <hw/console.h>
+LINKVAR(_KERNEL_PHYS_ADDR, KERNEL_PHYS_ADDR);
+LINKVAR(_KERNEL_VIRT_ADDR, KERNEL_VIRT_ADDR);
+LINKVAR(___skernel, __skernel);
+LINKVAR(___ekernel, __ekernel);
 
-#include <spec/multiboot.h>
-#include <stdint.h>
+#undef LINKVAR
 
-//! Redfine multiboot variables into generic names.
-typedef struct multiboot_info bootloader_info_t;
-#define BOOTLOADER_MAGIC MULTIBOOT_LOADER_MAGIC
+void arch_init()
+{
+	gdt_init(&kernel_gdt);
+	gdt_load(&kernel_gdt);
+	dtrace("Installed main kernel GDT. (null|kcode|kdata|ucode|udata)");
 
-//! Address constant taken as the address of variables in the linker script.
-extern const uintptr_t KERNEL_PHYS_ADDR, KERNEL_VIRT_ADDR;
-extern const uintptr_t __skernel, __ekernel;
-
-//! The lowest safe address to start allocating memory from.
-#define PHYSICAL_USABLE_BASE 0x1000000
-
-void arch_init();
+	idt_init(&kernel_idt);
+	idt_load(&kernel_idt);
+	dtrace("Installed main kernel IDT. (interrupts are INT32 ring 0)");
+}
