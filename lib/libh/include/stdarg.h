@@ -3,7 +3,7 @@
 
 #include <features.h>
 
-#if (__GNU_C__ >= 3)
+#if (__GNUC__ >= 3)
 
 typedef __builtin_va_list va_list;
 
