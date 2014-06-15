@@ -15,36 +15,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file arch/i586/hw/console.h
- *  \date June 2014
- */
+#include "arch.h"
+#include <sw/gdt.h>
+#include <sw/int/idt.h>
 
-#pragma once
+#define LINKVAR(symbol, addr)  \
+extern const uintptr_t symbol; \
+const uintptr_t addr = (uintptr_t)&symbol;
 
-#include <stddef.h>
-#include <stdint.h>
+LINKVAR(_KERNEL_PHYS_ADDR, KERNEL_PHYS_ADDR);
+LINKVAR(_KERNEL_VIRT_ADDR, KERNEL_VIRT_ADDR);
+LINKVAR(___skernel, __skernel);
+LINKVAR(___ekernel, __ekernel);
 
-#define CONSOLE_ADDR   ((void*)0xB8000)
-#define CONSOLE_WIDTH  80U
-#define CONSOLE_HEIGHT 25U
+#undef LINKVAR
 
-typedef uint16_t console_char_t;
-
-enum console_color
+void arch_init()
 {
-	CONSOLE_COLOR_BLACK = 0x0,
-	CONSOLE_COLOR_BLUE,
-	CONSOLE_COLOR_GREEN,
-	CONSOLE_COLOR_CYAN,
-	CONSOLE_COLOR_RED,
-	CONSOLE_COLOR_MAGENTA,
-	CONSOLE_COLOR_BROWN,
-	CONSOLE_COLOR_GRAY,
+	gdt_init(&kernel_gdt);
+	gdt_load(&kernel_gdt);
+	dtrace("Installed main kernel GDT. (null|kcode|kdata|ucode|udata)");
 
-	CONSOLE_COLOR_BRIGHTER = (1 << 4)
-};
-
-static inline console_char_t console_format(char c)
-{
-	return (console_char_t)(c | (CONSOLE_COLOR_GRAY << 8));	
+	idt_init(&kernel_idt);
+	idt_load(&kernel_idt);
+	dtrace("Installed main kernel IDT. (interrupts are INT32 ring 0)");
 }

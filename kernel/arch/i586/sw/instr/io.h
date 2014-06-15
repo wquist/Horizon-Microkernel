@@ -15,36 +15,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file arch/i586/hw/console.h
+/*! \file arch/i586/sw/instr/io.h
  *  \date June 2014
  */
 
 #pragma once
 
-#include <stddef.h>
 #include <stdint.h>
 
-#define CONSOLE_ADDR   ((void*)0xB8000)
-#define CONSOLE_WIDTH  80U
-#define CONSOLE_HEIGHT 25U
-
-typedef uint16_t console_char_t;
-
-enum console_color
+//! Read a byte of data from an I/O port.
+static inline uint8_t inb(uint16_t port)
 {
-	CONSOLE_COLOR_BLACK = 0x0,
-	CONSOLE_COLOR_BLUE,
-	CONSOLE_COLOR_GREEN,
-	CONSOLE_COLOR_CYAN,
-	CONSOLE_COLOR_RED,
-	CONSOLE_COLOR_MAGENTA,
-	CONSOLE_COLOR_BROWN,
-	CONSOLE_COLOR_GRAY,
+	uint8_t ret;
+	_ASM ("inb %1, %0" : "=a" (ret) : "d" (port));
+	return ret;
+}
 
-	CONSOLE_COLOR_BRIGHTER = (1 << 4)
-};
-
-static inline console_char_t console_format(char c)
+//! Write a byte of data to an I/O port.
+static inline void outb(uint16_t port, uint8_t val)
 {
-	return (console_char_t)(c | (CONSOLE_COLOR_GRAY << 8));	
+	_ASM ("outb %0, %1" :: "a" (val), "d" (port) : "memory");
 }

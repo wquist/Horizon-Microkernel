@@ -15,36 +15,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file arch/i586/hw/console.h
+/*! \file arch/i586/sw/instr/ctl.h
  *  \date June 2014
  */
 
 #pragma once
 
 #include <stddef.h>
-#include <stdint.h>
 
-#define CONSOLE_ADDR   ((void*)0xB8000)
-#define CONSOLE_WIDTH  80U
-#define CONSOLE_HEIGHT 25U
-
-typedef uint16_t console_char_t;
-
-enum console_color
+//! Prevents optimization of tight/idle loops.
+static inline void pause()
 {
-	CONSOLE_COLOR_BLACK = 0x0,
-	CONSOLE_COLOR_BLUE,
-	CONSOLE_COLOR_GREEN,
-	CONSOLE_COLOR_CYAN,
-	CONSOLE_COLOR_RED,
-	CONSOLE_COLOR_MAGENTA,
-	CONSOLE_COLOR_BROWN,
-	CONSOLE_COLOR_GRAY,
+	_ASM ("pause" ::: "memory");
+}
 
-	CONSOLE_COLOR_BRIGHTER = (1 << 4)
-};
-
-static inline console_char_t console_format(char c)
+//! Enable interrupts.
+static inline void sti()
 {
-	return (console_char_t)(c | (CONSOLE_COLOR_GRAY << 8));	
+	_ASM ("sti" ::: "memory");
+}
+
+//! Disable interrupts.
+static inline void cli()
+{
+	_ASM ("cli" ::: "memory");
 }

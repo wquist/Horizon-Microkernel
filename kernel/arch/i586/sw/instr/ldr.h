@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file arch/i586/hw/console.h
+/*! \file arch/i586/sw/instr/ldr.h
  *  \date June 2014
  */
 
@@ -24,27 +24,21 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define CONSOLE_ADDR   ((void*)0xB8000)
-#define CONSOLE_WIDTH  80U
-#define CONSOLE_HEIGHT 25U
-
-typedef uint16_t console_char_t;
-
-enum console_color
+//! Load a new GDT for the CPU.
+static inline void lgdt(const void* gdtr)
 {
-	CONSOLE_COLOR_BLACK = 0x0,
-	CONSOLE_COLOR_BLUE,
-	CONSOLE_COLOR_GREEN,
-	CONSOLE_COLOR_CYAN,
-	CONSOLE_COLOR_RED,
-	CONSOLE_COLOR_MAGENTA,
-	CONSOLE_COLOR_BROWN,
-	CONSOLE_COLOR_GRAY,
+	_ASM ("lgdt (%0)" :: "r" (gdtr) : "memory");
+}
 
-	CONSOLE_COLOR_BRIGHTER = (1 << 4)
-};
-
-static inline console_char_t console_format(char c)
+//! Load a new IDT for the CPU.
+static inline void lidt(const void* idtr)
 {
-	return (console_char_t)(c | (CONSOLE_COLOR_GRAY << 8));	
+	_ASM ("lidt (%0)" :: "r" (idtr) : "memory");
+}
+
+//! Load a new task register segment.
+static inline void ltr(uint16_t seg, size_t dpl)
+{
+	uint16_t val = seg | (uint16_t)dpl;
+	_ASM ("ltr %0" :: "r" (val) : "memory");
 }

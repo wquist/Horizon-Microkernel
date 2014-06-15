@@ -24,6 +24,17 @@
 #include <hw/console.h>
 
 #include <spec/multiboot.h>
+#include <stdint.h>
 
+//! Redfine multiboot variables into generic names.
 typedef struct multiboot_info bootloader_info_t;
 #define BOOTLOADER_MAGIC MULTIBOOT_LOADER_MAGIC
+
+//! Address constant taken as the address of variables in the linker script.
+extern const uintptr_t KERNEL_PHYS_ADDR, KERNEL_VIRT_ADDR;
+extern const uintptr_t __skernel, __ekernel;
+
+//! The lowest safe address to start allocating memory from.
+#define PHYSICAL_USABLE_BASE 0x1000000
+
+void arch_init();
