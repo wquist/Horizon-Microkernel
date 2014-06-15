@@ -27,13 +27,13 @@
 //! Load a new GDT for the CPU.
 static inline void lgdt(const void* gdtr)
 {
-	_ASM ("lgdt (%0)" :: "p" (gdtr) : "memory");
+	_ASM ("lgdt (%0)" :: "r" (gdtr) : "memory");
 }
 
 //! Load a new IDT for the CPU.
 static inline void lidt(const void* idtr)
 {
-	_ASM ("lidt (%0)" :: "p" (idtr) : "memory");
+	_ASM ("lidt (%0)" :: "r" (idtr) : "memory");
 }
 
 //! Load a new task register segment.
