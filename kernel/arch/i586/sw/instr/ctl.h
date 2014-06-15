@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <stddef.h>
+
 //! Prevents optimization of tight/idle loops.
 static inline void pause()
 {

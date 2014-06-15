@@ -25,8 +25,8 @@
 #include <stdint.h>
 
 #define CONSOLE_ADDR   ((void*)0xB8000)
-#define CONSOLE_WIDTH  (80U)
-#define CONSOLE_HEIGHT (25U)
+#define CONSOLE_WIDTH  80U
+#define CONSOLE_HEIGHT 25U
 
 typedef uint16_t console_char_t;
 

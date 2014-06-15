@@ -44,9 +44,9 @@ typedef enum gdt_entrytype GDT_ENTRYTYPE;
 enum gdt_entrytype
 {
 	GDT_ENTRYTYPE_CODE = 1,
-	GDT_ENTRYTYPE_DATA = 2,
-	GDT_ENTRYTYPE_TSS  = 3,
-	GDT_ENTRYTYPE_LDT  = 4 //! \warning Not yet supported.
+	GDT_ENTRYTYPE_DATA,
+	GDT_ENTRYTYPE_TSS,
+	GDT_ENTRYTYPE_LDT //! \warning Not yet supported.
 };
 
 //! The description portion of a GDT.
@@ -60,8 +60,8 @@ struct _Packed gdt_desc
 
 //! A single GDT entry.
 /*! A GDT entry consists of a 64-bit bitfield of flags.
- *	The flags carry different meaning depending on whether the
- *	entry is a GDT segment entry, a TSS entry, or an LDT entry.
+ *  The flags carry different meaning depending on whether the
+ *  entry is a GDT segment entry, a TSS entry, or an LDT entry.
  */
 typedef union gdt_entry gdt_entry_t;
 union gdt_entry
@@ -82,7 +82,7 @@ union gdt_entry
 		uint8_t  limit_high	 :  4;
 
 		uint8_t  available   :  1; //!< \todo Should this always be 0 for segments?
-		uint8_t  _reserved   :  1; //!< Always 0.
+		uint8_t              :  1; //!< Always 0.
 		uint8_t  width		 :  1; //!< 1 for 32-bits (leave 0 when TSS).
 		uint8_t  granularity :  1; //!< 1 for page granularity.
 
@@ -98,6 +98,9 @@ struct gdt
 	gdt_entry_t entries[GDT_SEGMENT_MAX];
 	gdt_desc_t  gdtr;
 };
+
+//! Get the byte offset of a GDT_SEGMENT.
+static inline uint16_t gdt_segment_offset(size_t index) { return (index * 8); }
 
 void gdt_init(gdt_t* table);
 void gdt_clone(gdt_t* dest, const gdt_t* src);

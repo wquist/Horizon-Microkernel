@@ -20,7 +20,7 @@
 #include <debug/log.h>
 #include <debug/error.h>
 
-gdt_t kernel_table = {0};
+static gdt_t kernel_table = {0};
 
 //! Initialize a Global Descriptor Table by setting default entries and the GDTR.
 void gdt_init(gdt_t* table)
@@ -57,6 +57,7 @@ void gdt_set_entry(gdt_t* table, size_t i, uint32_t base, uint32_t limit, GDT_EN
 	dassert(dpl <= 3);
 
 	gdt_entry_t *e = &(table->entries[i]);
+	e->raw = 0ULL;
 
 	e->limit_low   =  limit        & 0xFFFF;
 	e->limit_high  = (limit >> 16) & 0xF;
@@ -73,7 +74,6 @@ void gdt_set_entry(gdt_t* table, size_t i, uint32_t base, uint32_t limit, GDT_EN
 	e->present     = 1;
 
 	e->available   = 0;
-	e->_reserved   = 0;
 	e->width       = !!(type == GDT_ENTRYTYPE_CODE || type == GDT_ENTRYTYPE_DATA);
 	e->granularity = !!(type == GDT_ENTRYTYPE_CODE || type == GDT_ENTRYTYPE_DATA);
 
