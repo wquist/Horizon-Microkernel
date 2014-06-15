@@ -15,6 +15,12 @@
 #endif
 #endif
 
+#if defined(__GNUC__)
+#define _ASM __asm__ __volatile__
+#else
+#define _ASM asm
+#endif
+
 #if !defined(_KERNEL_SOURCE)
 #define HAS_STDIO
 #endif
