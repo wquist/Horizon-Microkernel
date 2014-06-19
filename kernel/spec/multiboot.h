@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file multiboot.h
+/*! \file spec/multiboot.h
  *  \date June 2014
  *
  *  \note View the official documentation at 
@@ -26,9 +26,12 @@
 
 #define MULTIBOOT_HEADER
 
-//! Various constants used in the multiboot specification.
-typedef enum multiboot_defs MULTIBOOT_DEFS;
-enum multiboot_defs
+#include <limits.h>
+#include <stdint.h>
+
+//! Various constants used in the multiboot specification - specifies what info will be made available.
+typedef enum multiboot_feat MULTIBOOT_FEAT;
+enum multiboot_feat
 {
     MULTIBOOT_HEADER_MAGIC = 0x1BADB002, //!< The magic defined in the bootstrap.
     MULTIBOOT_LOADER_MAGIC = 0x2BADB002, //!< The magic that can be checked in the kernel main.
@@ -72,26 +75,22 @@ enum multiboot_memory
     MULTIBOOT_MEMORY_RESERVED  = 0x2
 };
 
-typedef unsigned short     multiboot_uint16_t;
-typedef unsigned int       multiboot_uint32_t;
-typedef unsigned long long multiboot_uint64_t;
-
 typedef struct multiboot_aout_symbol_table multiboot_aout_symbol_table_t;
 struct multiboot_aout_symbol_table
 {
-    multiboot_uint32_t tabsize;
-    multiboot_uint32_t strsize;
-    multiboot_uint32_t addr;
-    multiboot_uint32_t reserved;
+    uint32_t tabsize;
+    uint32_t strsize;
+    uint32_t addr;
+    uint32_t reserved;
 };
 
 typedef struct multiboot_elf_section_header_table multiboot_elf_section_header_table_t;
 struct multiboot_elf_section_header_table
 {
-    multiboot_uint32_t num;
-    multiboot_uint32_t size;
-    multiboot_uint32_t addr;
-    multiboot_uint32_t shndx;
+    uint32_t num;
+    uint32_t size;
+    uint32_t addr;
+    uint32_t shndx;
 };
 
 //! The main multiboot structure.
@@ -107,17 +106,17 @@ struct multiboot_elf_section_header_table
 typedef struct multiboot_info multiboot_info_t;
 struct multiboot_info
 {
-    multiboot_uint32_t flags; //!< Values defined in MULTIBOOT_FLAGS.
+    uint32_t flags; //!< Values defined in MULTIBOOT_FLAGS.
     
-    multiboot_uint32_t mem_lower; //!< Low memory, up to 640 KB.
-    multiboot_uint32_t mem_upper; //!< High memory, the maximum available address minus 1 MB.
+    uint32_t mem_lower; //!< Low memory, up to 640 KB.
+    uint32_t mem_upper; //!< High memory, the maximum available address minus 1 MB.
     
-    multiboot_uint32_t boot_device;
+    uint32_t boot_device;
     
-    multiboot_uint32_t cmdline;
+    uint32_t cmdline;
     
-    multiboot_uint32_t mods_count;
-    multiboot_uint32_t mods_addr;
+    uint32_t mods_count;
+    uint32_t mods_addr;
     
     union
     {
@@ -125,36 +124,44 @@ struct multiboot_info
         multiboot_elf_section_header_table_t elf_sec;
     };
     
-    multiboot_uint32_t mmap_length;
-    multiboot_uint32_t mmap_addr;
+    uint32_t mmap_length;
+    uint32_t mmap_addr;
     
-    multiboot_uint32_t drives_length;
-    multiboot_uint32_t drives_addr;
+    uint32_t drives_length;
+    uint32_t drives_addr;
     
-    multiboot_uint32_t config_table;
+    uint32_t config_table;
     
-    multiboot_uint32_t boot_loader_name;
+    uint32_t boot_loader_name;
     
-    multiboot_uint32_t apm_table;
+    uint32_t apm_table;
     
-    multiboot_uint32_t vbe_control_info;
-    multiboot_uint32_t vbe_mode_info;
-    multiboot_uint16_t vbe_mode;
-    multiboot_uint16_t vbe_interface_seg;
-    multiboot_uint16_t vbe_interface_off;
-    multiboot_uint16_t vbe_interface_len;
+    uint32_t vbe_control_info;
+    uint32_t vbe_mode_info;
+    uint16_t vbe_mode;
+    uint16_t vbe_interface_seg;
+    uint16_t vbe_interface_off;
+    uint16_t vbe_interface_len;
 };
 
 //! A multiboot memory map entry.
 /*! \note In memory, this struct is aligned at addr; i.e. size is at 
  *  location -4, addr is at 0, etc.
  */
-typedef struct multiboot_mmap_entry multiboot_memory_map_t;
-struct __attribute__((packed)) multiboot_mmap_entry
+typedef struct multiboot_mmap_entry multiboot_mmap_t;
+struct _Packed multiboot_mmap_entry
 {
-    multiboot_uint32_t size;
-    multiboot_uint64_t addr;
-    multiboot_uint64_t length;
+    uint32_t size;
+
+#if (LONG_BIT == 32)
+    uint32_t addr;
+    uint32_t _addr_pad;
+    uint32_t length;
+    uint32_t _length_pad;
+#else
+    uint64_t addr;
+    uint64_t length;
+#endif
     /*! \brief Memory type (MULTIBOOT_MEMORY_*)
      *
      *  A memory map entry can only be used by the kernel
@@ -162,16 +169,16 @@ struct __attribute__((packed)) multiboot_mmap_entry
      *  at the type of memory: 2 is general reserved, 3 and
      *  4 are ACPI memory, and 5 is damaged memory.
      */
-    multiboot_uint32_t type;
+    uint32_t type;
 };
 
 typedef struct multiboot_mod_list multiboot_module_t;
 struct multiboot_mod_list
 {
-    multiboot_uint32_t mod_start;
-    multiboot_uint32_t mod_end;
+    uint32_t mod_start;
+    uint32_t mod_end;
     
-    multiboot_uint32_t cmdline;
+    uint32_t cmdline;
     
-    multiboot_uint32_t pad;
+    uint32_t pad;
 };
