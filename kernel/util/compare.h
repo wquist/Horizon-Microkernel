@@ -15,18 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file debug/log.h
+/*! \file util/compare.h
  *  \date June 2014
  */
 
 #pragma once
 
-#if defined(_DEBUG)
-#define dprintf(x, ...) do { printf(x, ##__VA_ARGS__); } while (0)
-#define dtrace(x, ...)  do { debug_trace(__FILE__, x, ##__VA_ARGS__); } while (0)
-#else
-#define dprintf(x, ...) do {} while (0)
-#define dtrace(x, ...)  do {} while (0)
-#endif
+#include <stddef.h>
+#include <stdint.h>
 
-void debug_trace(const char* file, const char* format, ...);
+// Replace the size types with intmax types?
+static inline size_t min(size_t a, size_t b) { if (a < b) return a; return b; }
+static inline size_t max(size_t a, size_t b) { if (a > b) return a; return b; }
+
+static inline ssize_t smin(ssize_t a, ssize_t b) { if (a < b) return a; return b; }
+static inline ssize_t smax(ssize_t a, ssize_t b) { if (a > b) return a; return b; }

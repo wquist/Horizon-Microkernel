@@ -24,6 +24,6 @@
 #include <spec/multiboot.h>
 #include <stddef.h>
 
-size_t multiboot_mem_size_get(multiboot_info_t* mbi);
+size_t multiboot_mem_size_get(const multiboot_info_t* mbi);
 
-multiboot_mmap_t* multiboot_mmap_get(multiboot_info_t* mbi, multiboot_mmap_t* prev);
+const multiboot_mmap_t* multiboot_mmap_get(const multiboot_info_t* mbi, const multiboot_mmap_t* prev);

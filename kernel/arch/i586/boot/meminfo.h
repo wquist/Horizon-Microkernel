@@ -15,18 +15,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file debug/log.h
+/*! \file arch/i586/boot/meminfo.h
  *  \date June 2014
  */
 
 #pragma once
 
-#if defined(_DEBUG)
-#define dprintf(x, ...) do { printf(x, ##__VA_ARGS__); } while (0)
-#define dtrace(x, ...)  do { debug_trace(__FILE__, x, ##__VA_ARGS__); } while (0)
-#else
-#define dprintf(x, ...) do {} while (0)
-#define dtrace(x, ...)  do {} while (0)
-#endif
+#include <spec/multiboot.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-void debug_trace(const char* file, const char* format, ...);
+//! A section of available memory
+typedef struct meminfo_mmap meminfo_mmap_t;
+struct meminfo_mmap
+{
+	uintptr_t start;
+	uintptr_t end;
+};
+
+void meminfo_init(const multiboot_info_t* mbi);
+
+bool meminfo_region_is_valid(uintptr_t start, size_t size);
+
+size_t meminfo_total_get();
+size_t meminfo_usable_get();
+uintptr_t meminfo_limit_get();
+
+size_t meminfo_mmap_count_get();
+const meminfo_mmap_t* meminfo_mmap_get(size_t index);
