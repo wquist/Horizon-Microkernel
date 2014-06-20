@@ -28,20 +28,24 @@ static uintptr_t max_mapped = 0;
 static uintptr_t next_free  = 0;
 static bool idmap_valid = true;
 
+//! Set up the start values for the region allocator.
 void region_init(uintptr_t mapped)
 {
 	max_mapped = mapped;
+	// Start marking regions immediately after the kernel ends.
 	next_free  = addr_align_next(__ekernel, ARCH_PGSIZE);
 
 	dtrace("First free region at %#X.", next_free);
 }
 
+//! Reserve a region after the last, possibly aligned to a page boundary.
+/*! Regions can only be allocated; never freed. */
 uintptr_t region_reserve(size_t size, bool aligned)
 {
 	if (aligned)
 		next_free = addr_align_next(next_free, ARCH_PGSIZE);
 
-	if (idmap_valid)
+	if (idmap_valid) //< Make sure an already mapped region is available.
 		dassert(next_free + size < max_mapped);
 
 	uintptr_t curr = next_free;
@@ -51,6 +55,7 @@ uintptr_t region_reserve(size_t size, bool aligned)
 	return curr;
 }
 
+//! Signal to the allocator that no more ready-mapped regions are needed.
 void region_idmap_invalidate()
 {
 	dassert(idmap_valid);
@@ -61,5 +66,7 @@ void region_idmap_invalidate()
 	dtrace("Ended ID-mapped regions at %#X.", max_mapped);
 }
 
+//! Get the next free region available.
 uintptr_t region_end_get() { return next_free; }
+//! Get the last id-mapped address available.
 uintptr_t region_idmap_end_get() { return max_mapped; }

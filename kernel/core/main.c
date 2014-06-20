@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file main.c
+/*! \file core/main.c
  *  \date May 2014
  *
  *  /mainpage Horizon Microkernel
