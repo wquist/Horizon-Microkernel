@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <stdio.h>
+
 #if defined(_DEBUG)
 #define dprintf(x, ...) do { printf(x, ##__VA_ARGS__); } while (0)
 #define dtrace(x, ...)  do { debug_trace(__FILE__, x, ##__VA_ARGS__); } while (0)

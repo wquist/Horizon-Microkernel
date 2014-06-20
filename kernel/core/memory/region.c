@@ -16,6 +16,7 @@
  */
 
 #include "region.h"
+#include <arch.h>
 #include <debug/log.h>
 #include <debug/error.h>
 #include <util/addr.h>

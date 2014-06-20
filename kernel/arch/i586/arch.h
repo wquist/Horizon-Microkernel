@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <boot/meminfo.h>
+
 #include <hw/console.h>
 
 #include <spec/multiboot.h>

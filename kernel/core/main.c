@@ -39,6 +39,7 @@ void _Noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 
 	// Initialize parts that need memory before the physical allocator is set up.
 	region_init(vmem);
+	meminfo_init(bli);
 
 	for (;;);
 }

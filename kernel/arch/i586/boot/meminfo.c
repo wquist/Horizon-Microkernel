@@ -18,6 +18,8 @@
 #include "meminfo.h"
 #include <memory/region.h>
 #include <debug/log.h>
+#include <debug/error.h>
+#include <spec/multiboot/mmap.h>
 #include <util/compare.h>
 
 static size_t mem_total    = 0;
@@ -30,13 +32,13 @@ static meminfo_mmap_t* mmaps = NULL;
 //! Read the memory and mmap information from the multiboot structure.
 void meminfo_init(const multiboot_info_t* mbi)
 {
-	mem_total = multiboot_mem_size_get();
+	mem_total = multiboot_mem_size_get(mbi);
 	dassert(mem_total != 0);
 	dtrace("Total memory: %iKB. Memory map: ", mem_total / 1024);
 
-	mmaps = region_reserve(0, true); //< Get the start address with an empty reserve.
+	mmaps = (meminfo_mmap_t*)region_reserve(0, true); //< Get the start address with an empty reserve.
 
-	multiboot_mmap_t* entry = multiboot_mmap_get(mbi, NULL);
+	const multiboot_mmap_t* entry = multiboot_mmap_get(mbi, NULL);
 	for (; entry; entry = multiboot_mmap_get(mbi, entry))
 	{
 		// Adding these two shouldn't have a chance to overflow.
