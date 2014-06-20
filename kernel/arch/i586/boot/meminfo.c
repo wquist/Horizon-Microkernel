@@ -45,7 +45,7 @@ void meminfo_init(const multiboot_info_t* mbi)
 		uintptr_t end = entry->addr + entry->length;
 
 		dprintf("\t[%2i] ", entry->type);
-		dprintf("%#8X - %#8X\n", entry->addr, end);
+		dprintf("%#10X - %#10X\n", entry->addr, end);
 
 		// Otherwise this memory is reserved or damaged.
 		if (entry->type != MULTIBOOT_MEMORY_AVAILABLE)

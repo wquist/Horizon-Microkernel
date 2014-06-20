@@ -40,9 +40,9 @@ const multiboot_mmap_t* multiboot_mmap_get(const multiboot_info_t* mbi, const mu
 		return (multiboot_mmap_t*)(mbi->mmap_addr);
 	}
 
-	uintptr_t addr = (uintptr_t)prev;
-	if (addr >= (mbi->mmap_addr + mbi->mmap_length))
+	uintptr_t next = (uintptr_t)prev + prev->size + 4;
+	if (next >= (mbi->mmap_addr + mbi->mmap_length))
 		return NULL;
 
-	return (const multiboot_mmap_t*)(addr + prev->size + 4);
+	return (const multiboot_mmap_t*)next;
 }
