@@ -24,18 +24,18 @@
 
 #pragma once
 
-#define MULTIBOOT_HEADER
-
 #include <limits.h>
 #include <stdint.h>
+
+#define MULTIBOOT_HEADER
+
+#define MULTIBOOT_HEADER_MAGIC 0x1BADB002 //!< The magic defined in the bootstrap.
+#define MULTIBOOT_LOADER_MAGIC 0x2BADB002 //!< The magic that can be checked in the kernel main.
 
 //! Various constants used in the multiboot specification - specifies what info will be made available.
 typedef enum multiboot_feat MULTIBOOT_FEAT;
 enum multiboot_feat
 {
-    MULTIBOOT_HEADER_MAGIC = 0x1BADB002, //!< The magic defined in the bootstrap.
-    MULTIBOOT_LOADER_MAGIC = 0x2BADB002, //!< The magic that can be checked in the kernel main.
-
     MULTIBOOT_UNSUPPORTED  = 0x0000FFFC,
     MULTIBOOT_MOD_ALIGN    = 0x00001000,
     MULTIBOOT_INFO_ALIGN   = 0x00000004,

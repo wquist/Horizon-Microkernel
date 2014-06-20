@@ -19,7 +19,7 @@
 
 //! Get the total memory active in the system.
 /*! This includes unusable memory. */
-size_t multiboot_mem_size_get(multiboot_info_t* mbi)
+size_t multiboot_mem_size_get(const multiboot_info_t* mbi)
 {
 	if (!(mbi->flags & MULTIBOOT_INFO_MEMORY))
 		return 0;
@@ -30,7 +30,7 @@ size_t multiboot_mem_size_get(multiboot_info_t* mbi)
 
 //! Get the next memory map entry in the linked list, or NULL if the end / not available.
 /*! Returns the first entry if prev is NULL. */
-multiboot_mmap_t* multiboot_mmap_get(multiboot_info_t* mbi, multiboot_mmap_t* prev)
+const multiboot_mmap_t* multiboot_mmap_get(const multiboot_info_t* mbi, const multiboot_mmap_t* prev)
 {
 	if (!prev)
 	{
@@ -44,5 +44,5 @@ multiboot_mmap_t* multiboot_mmap_get(multiboot_info_t* mbi, multiboot_mmap_t* pr
 	if (addr >= (mbi->mmap_addr + mbi->mmap_length))
 		return NULL;
 
-	return (multiboot_mmap_t*)(addr + prev->size + 4);
+	return (const multiboot_mmap_t*)(addr + prev->size + 4);
 }
