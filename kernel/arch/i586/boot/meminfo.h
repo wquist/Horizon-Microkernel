@@ -26,6 +26,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+ #define MEMINFO_MMAP_MAX 8
+
 //! A section of available memory
 typedef struct meminfo_mmap meminfo_mmap_t;
 struct meminfo_mmap
