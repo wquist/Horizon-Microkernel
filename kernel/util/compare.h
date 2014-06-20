@@ -23,6 +23,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 // Replace the size types with intmax types?
 static inline size_t min(size_t a, size_t b) { if (a < b) return a; return b; }

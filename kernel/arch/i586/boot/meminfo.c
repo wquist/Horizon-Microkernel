@@ -21,6 +21,7 @@
 #include <debug/error.h>
 #include <spec/multiboot/mmap.h>
 #include <util/compare.h>
+#include <limits.h>
 
 static size_t mem_total    = 0;
 static size_t mem_usable   = 0;
@@ -41,10 +42,12 @@ void meminfo_init(const multiboot_info_t* mbi)
 	const multiboot_mmap_t* entry = multiboot_mmap_get(mbi, NULL);
 	for (; entry; entry = multiboot_mmap_get(mbi, entry))
 	{
-		// Adding these two shouldn't have a chance to overflow.
-		uintptr_t end = entry->addr + entry->length;
+		// Check for overflow - undefined region if so (for 32-bit at least).
+		if (entry->addr > ULONG_MAX - entry->length)
+			continue;
 
-		dprintf("\t[%2i] ", entry->type);
+		uintptr_t end = entry->addr + entry->length;
+		dprintf("\t[%i] ", entry->type);
 		dprintf("%#10X - %#10X\n", entry->addr, end);
 
 		// Otherwise this memory is reserved or damaged.
@@ -66,8 +69,8 @@ void meminfo_init(const multiboot_info_t* mbi)
 /*! This assumes each mmap entry is not adjacent; entries should not be fragmented. */
 bool meminfo_region_is_valid(uintptr_t start, size_t size)
 {
-	// Check for overflow
-	dassert(start <= LONG_MAX - size);
+	// Check for overflow.
+	dassert(start <= ULONG_MAX - size);
 
 	uintptr_t end = start + size;
 	for (size_t i = 0; i != mmap_count; ++i)
