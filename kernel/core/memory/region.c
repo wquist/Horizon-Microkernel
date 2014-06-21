@@ -59,11 +59,11 @@ uintptr_t region_reserve(size_t size, bool aligned)
 void region_idmap_invalidate()
 {
 	dassert(idmap_valid);
+	dtrace("Ended ID-mapped regions at %#X.", next_free);
 
-	max_mapped  = next_free;
+	// Skip to the end of the id-mapped region.
+	next_free = max_mapped;
 	idmap_valid = false;
-
-	dtrace("Ended ID-mapped regions at %#X.", max_mapped);
 }
 
 //! Get the next free region available.
