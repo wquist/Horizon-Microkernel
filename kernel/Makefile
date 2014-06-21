@@ -32,8 +32,10 @@ CFLAGS =                        \
 	-Wno-unused-variable        \
 	-Wno-unused-function        \
 	-Wno-packed-bitfield-compat
+
 # Each kernel architecture should define its own linker script
-LDFLAGS = -T $(ARCH_ROOT)/link.ld
+LDSCRIPT = $(ARCH_ROOT)/link.ld
+LDFLAGS  = -T $(LDSCRIPT)
 
 # Define global macros
 DEFINES = _KERNEL_SOURCE _DEBUG
@@ -125,8 +127,8 @@ $(OBJ_ROOT)/%.o:%.$(ASMEXT) | checkdirs
 	@$(COMPILE.asm) $< -o $@
 	@echo "CC [ASM] $<"
 
-$(BINARY): $(OBJC) $(OBJASM) $(OBJLIB)
-	@$(LINK) $^ -o $@ $(LIB_SEARCH) $(LIBS)
+$(BINARY): $(OBJC) $(OBJASM) $(OBJLIB) $(LDSCRIPT)
+	@$(LINK) $(OBJC) $(OBJASM) $(OBJLIB) -o $@ $(LIB_SEARCH) $(LIBS)
 	@echo "LD $@"
 
 $(OBJ_DIRS):

@@ -77,7 +77,7 @@ void gdt_set_entry(gdt_t* table, size_t i, uint32_t base, uint32_t limit, GDT_EN
 	e->width       = (type == GDT_ENTRYTYPE_CODE || type == GDT_ENTRYTYPE_DATA); //< 32-bit, or (alt) 0 for TSS.
 	e->granularity = (type == GDT_ENTRYTYPE_CODE || type == GDT_ENTRYTYPE_DATA); //< Page granularity, only for code/data.
 
-	dtrace("Set entry %i in GDT %p to 0x%X%X", i, table, (uint32_t)(e->raw), (uint32_t)(e->raw >> 32));
+	dtrace("Set entry %i in GDT %p to 0x%08X%08X", i, table, (uint32_t)(e->raw), (uint32_t)(e->raw >> 32));
 }
 
 void gdt_load(const gdt_t* table)
