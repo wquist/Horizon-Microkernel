@@ -1,10 +1,8 @@
 OUTPUT_FORMAT(elf32-i386)
 ENTRY(bootstrap)
 
-_APSETUP_PHYS_ADDR = 0x00080000;
-
 _KERNEL_PHYS_ADDR = 0x00100000;
-_KERNEL_VIRT_ADDR = 0xC0000000;
+_KERNEL_VIRT_ADDR = 0xC0100000;
 
 SECTIONS
 {
@@ -15,12 +13,6 @@ SECTIONS
         ___ssetup = .;
         *(.setup)
         ___esetup = .;
-
-        . = ALIGN(4096);
-
-        ___sapsetup = .;
-        *(.apsetup)
-        ___eapsetup = .;
 
         . = ALIGN(4096);
     }
@@ -69,7 +61,8 @@ SECTIONS
         ___ebss = .;
 
         . = ALIGN(4096);
-
         ___ekernel = .;
+
+        . = ALIGN(4096*1024);
     }
 }

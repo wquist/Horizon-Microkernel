@@ -36,7 +36,7 @@ void idt_init(idt_t* table)
 		idt_entry_set(table, i, GDT_SEGMENT_KCODE, IDT_ENTRYTYPE_INT32, 0);
 
 	idt_entry_t* first = &(table->entries[0]);
-	dtrace("Set all entries in IDT %p to 0x%X%X", table, (uint32_t)(first->raw), (uint32_t)(first->raw >> 32));
+	dtrace("Set all entries in IDT %p to 0x%08X%08X", table, (uint32_t)(first->raw), (uint32_t)(first->raw >> 32));
 
 	table->idtr.base  = (uint32_t)first;
 	table->idtr.limit = IDT_ENTRY_MAX * sizeof(idt_entry_t) - 1;

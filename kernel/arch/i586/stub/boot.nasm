@@ -24,6 +24,9 @@
 GLOBAL bootstrap
 EXTERN kmain
 
+EXTERN _KERNEL_PHYS_ADDR
+EXTERN _KERNEL_VIRT_ADDR
+
 ; =======
 ; Defines
 ; =======
@@ -52,12 +55,20 @@ bootstrap: push eax ; Save MultiBoot magic
 
            ; Setup page table for low memory identity mapping
            mov  eax, BL_PGTBL_ID
-           mov  ebx, 0x00000000 | BL_PGTBL_FLAGS
+           mov  ebx, 0x00000000
+           or   ebx, BL_PGTBL_FLAGS
            call map
+
+           ; Calculate the virtual offset to map the kernel
+           lea  ecx, [_KERNEL_PHYS_ADDR]
+           lea  edx, [_KERNEL_VIRT_ADDR]
+           sub  edx, 768<<22
+           sub  ecx, edx
 
            ; Setup page table for high memory kernel addressing
            mov  eax, BL_PGTBL_3G
-           mov  ebx, 0x00100000 | BL_PGTBL_FLAGS
+           mov  ebx, ecx
+           or   ebx, BL_PGTBL_FLAGS
            call map
 
            ; Format the page directory

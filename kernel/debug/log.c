@@ -34,7 +34,7 @@ void debug_trace(const char* file, const char* format, ...)
 
 	printf("[");
 	while (slen--) printf("%c", *s++);
-	printf("]");
+	printf("] ");
 
 	va_list arg;
 	va_start(arg, format);
