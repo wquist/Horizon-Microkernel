@@ -28,9 +28,10 @@
 typedef uintptr_t bitmap_t;
 
 #define BITMAP_BITS (8 * sizeof(bitmap_t))
-#define BITMAP_LENGTH(x) ((x) / BITMAP_BITS)
-
-static inline size_t bitmap_size(size_t items) { return (BITMAP_LENGTH(items) * sizeof(bitmap_t)); }
+//! The number of bitmap_t elements needed for an array of size x.
+#define BITMAP_LENGTH(x) ((size_t)(x) / BITMAP_BITS)
+//! The size, in bytes, of a bitmap of size x.
+#define BITMAP_SIZE(x) (BITMAP_LENGTH(x) * (sizeof(bitmap_t)))
 
 void bitmap_set(bitmap_t* bm, size_t index);
 void bitmap_clear(bitmap_t* bm, size_t index);

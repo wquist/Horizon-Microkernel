@@ -100,7 +100,7 @@ struct gdt
 };
 
 //! Get the byte offset of a GDT_SEGMENT.
-static inline uint16_t gdt_segment_offset(size_t index) { return (index * 8); }
+#define GDT_SEGMENT_OFFSET(x) ((size_t)(x) * 8)
 
 void gdt_init(gdt_t* table);
 void gdt_clone(gdt_t* dest, const gdt_t* src);

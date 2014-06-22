@@ -19,15 +19,15 @@
 #include <memory/region.h>
 #include <debug/error.h>
 
-enum { PAGING_FLAG_PRESENT = 0x1 };
+#define PAGING_FLAG_PRESENT 0x1
 
 static paging_dir_t* kernel_dir = NULL;
 static uintptr_t tempmap_addr = 0;
 
-static inline size_t dir_index(uintptr_t addr) { return (addr >> 22) & 0x3FF; }
-static inline size_t tbl_index(uintptr_t addr) { return (addr >> 12) & 0x3FF; }
-static inline uint32_t  entry_frame(uintptr_t addr) { return (addr  >> 12); }
-static inline uintptr_t entry_addr(uint32_t frame)  { return (frame << 12); }
+#define DIR_INDEX(x)  (((uintptr_t)(x) >> 22) & 0x3FF)
+#define TBL_INDEX(x)  (((uintptr_t)(x) >> 12) & 0x3FF)
+#define ENTRY_FRAME(x) ((uintptr_t)(x) >> 12)
+#define ENTRY_ADDR(x)  ((uintptr_t)(x) << 12)
 
 static inline paging_dirent_t* dirent_find(uintptr_t addr)
 {

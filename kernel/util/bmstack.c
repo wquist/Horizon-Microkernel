@@ -99,14 +99,14 @@ bool bmstack_test(bmstack_t* bms, size_t index)
 void bmstack_set_all(bmstack_t* bms, size_t items)
 {
 	dassert(bms->base);
-	memset(bms->base, 0xFF, bmstack_size(items));
+	memset(bms->base, 0xFF, BMSTACK_SIZE(items));
 }
 
 //! Set 'items' bits to 0.
 void bmstack_clear_all(bmstack_t* bms, size_t items)
 {
 	dassert(bms->base);
-	memset(bms->base, 0x00, bmstack_size(items));
+	memset(bms->base, 0x00, BMSTACK_SIZE(items));
 }
 
 size_t bmstack_find_and_set(bmstack_t* bms)

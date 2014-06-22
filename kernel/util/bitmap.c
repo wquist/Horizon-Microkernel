@@ -48,13 +48,13 @@ bool bitmap_test(const bitmap_t* bm, size_t index)
 //! Set 'items' bits to 1.
 void bitmap_set_all(bitmap_t* bm, size_t items)
 {
-	memset(bm, 0xFF, bitmap_size(items));
+	memset(bm, 0xFF, BITMAP_SIZE(items));
 }
 
 //! Clear 'items' bits to 0.
 void bitmap_clear_all(bitmap_t* bm, size_t items)
 {
-	memset(bm, 0x00, bitmap_size(items));
+	memset(bm, 0x00, BITMAP_SIZE(items));
 }
 
 //! Find the first clear bit in the bitmap, set it, and return the index.

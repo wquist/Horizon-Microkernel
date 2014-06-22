@@ -61,7 +61,7 @@ void idt_entry_set(idt_t* table, size_t i, uint16_t seg, IDT_ENTRYTYPE type, siz
 
 	e->base_low  =  base        & 0xFFFF;
 	e->base_high = (base >> 16) & 0xFFFF;
-	e->segment   =  gdt_segment_offset(seg);
+	e->segment   =  GDT_SEGMENT_OFFSET(seg);
 
 	e->gate_type =  type;
 	e->storage   =  0;
