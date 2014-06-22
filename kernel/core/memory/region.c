@@ -21,9 +21,6 @@
 #include <debug/error.h>
 #include <util/addr.h>
 
-//! FIXME: temporary define until arch paging is written.
-#define ARCH_PGSIZE 4096
-
 static uintptr_t max_mapped = 0;
 static uintptr_t next_free  = 0;
 static bool idmap_valid = true;
@@ -38,12 +35,12 @@ void region_init(uintptr_t mapped)
 	dtrace("First free region at %#X.", next_free);
 }
 
-//! Reserve a region after the last, possibly aligned to a page boundary.
+//! Reserve a region after the last, aligned to a page boundary.
 /*! Regions can only be allocated; never freed. */
-uintptr_t region_reserve(size_t size, bool aligned)
+uintptr_t region_reserve(size_t size)
 {
-	if (aligned)
-		next_free = addr_align_next(next_free, ARCH_PGSIZE);
+	// First align to the next page boundary.
+	next_free = addr_align_next(next_free, ARCH_PGSIZE);
 
 	if (idmap_valid) //< Make sure an already mapped region is available.
 		dassert(next_free + size < max_mapped);
