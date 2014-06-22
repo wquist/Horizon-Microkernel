@@ -34,11 +34,10 @@
 typedef enum paging_flags PAGING_FLAGS;
 enum paging_flags
 {
-//	PAGING_FLAG_PRESENT = 0x1,
-	PAGING_FLAG_WRITE   = 0x2, //< Read-Write access.
-	PAGING_FLAG_USER    = 0x4, //< Ring-3 access.
+	PAGING_FLAG_WRITE   = 0x1, //< Read-Write access.
+	PAGING_FLAG_USER    = 0x2, //< Ring-3 access.
 
-	PAGING_FLAG_FORCE   = 0x8  //< Overwrite the previous mapping, if it exists.
+	PAGING_FLAG_FORCE   = 0x4  //< Overwrite the previous mapping, if it exists.
 };
 
 //! A page directory entry. (PDE)
@@ -116,11 +115,11 @@ void paging_init();
 paging_dir_t* paging_dir_create();
 void paging_dir_destroy(paging_dir_t* dir);
 
-bool  paging_map(paging_dir_t* dir, const void* virt, const void* phys, PAGING_FLAGS flags);
-void* paging_map_temp(const void* virt);
-void  paging_unmap(paging_dir_t* dir, const void* virt);
+bool  paging_map(paging_dir_t* dir, uintptr_t virt, const void* phys, PAGING_FLAGS flags);
+void* paging_map_temp(const void* phys);
+void  paging_unmap(paging_dir_t* dir, uintptr_t virt);
 
-bool  paging_is_mapped(const paging_dir_t* dir, const void* virt);
-void* paging_mapping_get(const paging_dir_t* dir, const void* virt);
+bool  paging_is_mapped(const paging_dir_t* dir, uintptr_t virt);
+void* paging_mapping_get(const paging_dir_t* dir, uintptr_t virt);
 
 paging_dir_t* kernel_pgdir();
