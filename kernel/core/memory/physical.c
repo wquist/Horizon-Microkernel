@@ -30,7 +30,6 @@ static uint8_t* ref_counts = NULL;
 void physical_init()
 {
 	size_t blocks = addr_to_index(PHYSICAL_USABLE_BASE, ARCH_PGSIZE, meminfo_limit_get());
-
 	size_t alloc_size = BMSTACK_SIZE(blocks);
 	uintptr_t alloc_start = region_reserve(alloc_size);
 	dtrace("Allocated physical memory bitmap. (%iKB)", alloc_size / 1024);

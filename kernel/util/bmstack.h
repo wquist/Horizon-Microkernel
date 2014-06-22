@@ -41,7 +41,7 @@ struct bmstack
 	bmstack_entry_t* head;
 };
 
-#define BMSTACK_SIZE(x) (BITMAP_LENGTH(x) * (sizeof(bmstack_t)))
+#define BMSTACK_SIZE(x) (BITMAP_LENGTH(x) * (sizeof(bmstack_entry_t)))
 
 void bmstack_init(bmstack_t* bms, void* base);
 void bmstack_link(bmstack_t* bms, size_t items);

@@ -20,7 +20,7 @@
 #include <memory.h>
 
 static size_t cursor_x = 0, cursor_y = 0;
-static console_char_t* buffer = CONSOLE_ADDR;
+static console_char_t* buffer = (console_char_t*)CONSOLE_ADDR;
 
 static void scroll();
 

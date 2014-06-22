@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define CONSOLE_ADDR   ((void*)0xB8000)
+#define CONSOLE_ADDR   0xC00B8000
 #define CONSOLE_WIDTH  80U
 #define CONSOLE_HEIGHT 25U
 

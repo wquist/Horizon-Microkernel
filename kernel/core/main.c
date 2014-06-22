@@ -24,6 +24,7 @@
 
 #include <arch.h>
 #include <memory/region.h>
+#include <memory/physical.h>
 #include <debug/init.h>
 #include <debug/error.h>
 #include <stdint.h>
@@ -41,6 +42,10 @@ void _Noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 	region_init(vmem);
 	meminfo_init(bli);
 	paging_tempmap_init();
+
+	physical_init();
+	region_idmap_invalidate();
+	paging_init();
 
 	for (;;);
 }

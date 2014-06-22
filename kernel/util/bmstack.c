@@ -33,9 +33,9 @@ void bmstack_link(bmstack_t* bms, size_t items)
 	bmstack_entry_t* prev = NULL;
 	bmstack_entry_t* curr;
 
-	for (size_t i = 0; i != BITMAP_LENGTH(items); ++i, prev = curr)
+	for (size_t i = 0; i != BITMAP_LENGTH(items); ++i)
 	{
-		bmstack_entry_t* curr = &(bms->base[i]);
+		curr = &(bms->base[i]);
 		curr->next = NULL;
 
 		// If this singular bitmap is full...
@@ -46,6 +46,8 @@ void bmstack_link(bmstack_t* bms, size_t items)
 			bms->head = curr; //< Start of the linked list.
 		else 
 			prev->next = curr; //< Another link.
+
+		prev = curr;
 	}
 }
 
@@ -122,6 +124,6 @@ size_t bmstack_find_and_set(bmstack_t* bms)
 	size_t i = addr_to_index(base, sizeof(bmstack_entry_t), head); 
 	size_t index  = (i * BITMAP_BITS) + bit;
 
-	bms->base[i].bitmap |= (1 << bit);
+	bmstack_set(bms, index);
 	return index; 
 }
