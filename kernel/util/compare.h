@@ -29,5 +29,6 @@
 static inline size_t min(size_t a, size_t b) { if (a < b) return a; return b; }
 static inline size_t max(size_t a, size_t b) { if (a > b) return a; return b; }
 
+// Signed versions of min/max.
 static inline ssize_t smin(ssize_t a, ssize_t b) { if (a < b) return a; return b; }
 static inline ssize_t smax(ssize_t a, ssize_t b) { if (a > b) return a; return b; }

@@ -25,13 +25,27 @@
 #include <stddef.h>
 #include <stdint.h>
 
+//! Align down an address to the given boundary.
 static inline uintptr_t addr_align(uintptr_t addr, size_t bound)
 {
 	dassert(bound && (bound & (bound-1)) == 0); //< Make sure bound is a power of two.
 	return (addr & ~(bound-1));
 }
 
+//! Align up an address to the given boundary.
 static inline uintptr_t addr_align_next(uintptr_t addr, size_t bound)
 {
 	return addr_align(addr + bound-1, bound);
+}
+
+//! Convert a physical address to an index based on the given offset and element size.
+static inline size_t addr_to_index(uintptr_t base, size_t blocksize, uintptr_t addr)
+{
+	return ((addr - base) / blocksize);
+}
+
+//! Convert an index to a physical address.
+static inline uintptr_t index_to_addr(uintptr_t base, size_t blocksize, size_t index)
+{
+	return (base + (index * blocksize));
 }
