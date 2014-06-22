@@ -16,7 +16,7 @@
  */
 
 #include "bitmap.h"
-#include <string.h>
+#include <memory.h>
 
 //! Set a bit in the bitmap at the given index.
 void bitmap_set(bitmap_t* bm, size_t index)

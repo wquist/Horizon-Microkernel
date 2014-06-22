@@ -18,7 +18,7 @@
 #include "bmstack.h"
 #include <debug/error.h>
 #include <util/addr.h>
-#include <string.h>
+#include <memory.h>
 
 //! Initialize a bmstack by setting its base.
 void bmstack_init(bmstack_t* bms, void* base)
@@ -122,6 +122,6 @@ size_t bmstack_find_and_set(bmstack_t* bms)
 	size_t i = addr_to_index(base, sizeof(bmstack_entry_t), head); 
 	size_t index  = (i * BITMAP_BITS) + bit;
 
-	bms->base[i] |= (1 << bit);
+	bms->base[i].bitmap |= (1 << bit);
 	return index; 
 }

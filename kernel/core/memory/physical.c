@@ -21,6 +21,7 @@
 #include <util/addr.h>
 #include <util/bmstack.h>
 #include <limits.h>
+#include <memory.h>
 
 static bmstack_t alloc_map = {0};
 static uint8_t* ref_counts = NULL;
@@ -45,7 +46,7 @@ void physical_init()
 		for (uintptr_t curr = mmap->start; curr + ARCH_PGSIZE < mmap->end; curr += ARCH_PGSIZE)
 		{
 			size_t index = addr_to_index(PHYSICAL_USABLE_BASE, ARCH_PGSIZE, curr);
-			bmstack_unset(&alloc_map, index);
+			bmstack_clear(&alloc_map, index);
 		}
 	}
 
@@ -82,7 +83,7 @@ void physical_retain(const void* block)
 	if (!(ref_counts[index])) //< Bad block; it was not previously allocated.
 		return;
 
-	dassert(ref_counts[index] < UINT8_MAX);
+	dassert(ref_counts[index] < UCHAR_MAX);
 	++(ref_counts[index]);
 }
 

@@ -23,6 +23,7 @@
 
 #include <boot/meminfo.h>
 
+#include <sw/paging.h>
 #include <hw/console.h>
 
 #include <spec/multiboot.h>

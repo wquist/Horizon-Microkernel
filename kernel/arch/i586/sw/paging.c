@@ -17,6 +17,7 @@
 
 #include "paging.h"
 #include <memory/region.h>
+#include <debug/error.h>
 
 enum { PAGING_FLAG_PRESENT = 0x1 };
 
@@ -40,7 +41,7 @@ static inline paging_tblent_t* tblent_find(uintptr_t addr)
 
 void paging_tempmap_init()
 {
-	tempmap_addr = region_reserve(2 * PAGING_PGSIZE, true);
+	tempmap_addr = region_reserve(2 * PAGING_PAGE_SIZE);
 }
 
 void paging_init()
@@ -97,5 +98,5 @@ void* paging_mapping_get(const paging_dir_t* dir, const void* virt)
 
 paging_dir_t* kernel_pgdir()
 {
-	return &kernel_dir;
+	return kernel_dir;
 }
