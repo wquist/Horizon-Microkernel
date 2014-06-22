@@ -38,5 +38,7 @@ extern const uintptr_t __skernel, __ekernel;
 
 //! The lowest safe address to start allocating memory from.
 #define PHYSICAL_USABLE_BASE 0x1000000
+//! The architecture's page size.
+#define ARCH_PGSIZE PAGING_PAGE_SIZE
 
 void arch_init();

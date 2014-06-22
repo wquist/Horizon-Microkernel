@@ -27,7 +27,7 @@
 
 void region_init(uintptr_t mapped);
 
-uintptr_t region_reserve(size_t size, bool aligned);
+uintptr_t region_reserve(size_t size);
 void region_idmap_invalidate();
 
 uintptr_t region_end_get();
