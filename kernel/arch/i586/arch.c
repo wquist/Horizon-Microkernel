@@ -27,6 +27,7 @@ const uintptr_t addr = (uintptr_t)&symbol;
 
 LINKVAR(_KERNEL_PHYS_ADDR, KERNEL_PHYS_ADDR);
 LINKVAR(_KERNEL_VIRT_ADDR, KERNEL_VIRT_ADDR);
+LINKVAR(_KERNEL_VIRT_BASE, KERNEL_VIRT_BASE);
 LINKVAR(___skernel, __skernel);
 LINKVAR(___ekernel, __ekernel);
 

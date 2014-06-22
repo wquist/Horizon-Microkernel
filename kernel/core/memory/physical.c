@@ -43,7 +43,7 @@ void physical_init()
 	{
 		// All available memory ranges are stored in the meminfo mmaps.
 		const meminfo_mmap_t* mmap = meminfo_mmap_get(i);
-		for (uintptr_t curr = mmap->start; curr + ARCH_PGSIZE < mmap->end; curr += ARCH_PGSIZE)
+		for (uintptr_t curr = mmap->start; curr + ARCH_PGSIZE <= mmap->end; curr += ARCH_PGSIZE)
 		{
 			size_t index = addr_to_index(PHYSICAL_USABLE_BASE, ARCH_PGSIZE, curr);
 			bmstack_clear(&alloc_map, index);
