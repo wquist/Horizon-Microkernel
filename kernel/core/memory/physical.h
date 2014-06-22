@@ -15,32 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file core/main.c
- *  \date May 2014
- *
- *  /mainpage Horizon Microkernel
- *  /version  0.0.5-0
+/*! \file core/memory/physical.h
+ *  \date June 2014
  */
 
-#include <arch.h>
-#include <memory/region.h>
-#include <debug/init.h>
-#include <debug/error.h>
-#include <stdint.h>
-#include <stdio.h>
+#pragma once
 
-void _Noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
-{
-	debug_init();
-	dassert(magic == BOOTLOADER_MAGIC);
+#include <stdbool.h>
 
-	// Initialize anything platform-dependent.
-	arch_init();
+void physical_init();
 
-	// Initialize parts that need memory before the physical allocator is set up.
-	region_init(vmem);
-	meminfo_init(bli);
-	paging_temmap_init();
-
-	for (;;);
-}
+void* physical_alloc();
+void  physical_retain(const void* block);
+bool  physical_release(void* block);
