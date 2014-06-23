@@ -21,7 +21,8 @@ CFLAGS =           \
 	-nostartfiles  \
 	-nodefaultlibs \
 	-Wall          \
-	-Werror
+	-Werror        \
+	-fno-tree-loop-distribute-patterns
 ARFLAGS = rcs
 
 # Use a default of include/ and src/, but allow a unique Makefile.inc to specify more

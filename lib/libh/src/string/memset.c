@@ -2,11 +2,9 @@
 
 void* memset(void* ptr, int ch, size_t len)
 {
-	char* p = ptr;
-
-	size_t i;
-	for (i = 0; i < len; ++i)
-		p[i] = ch;
+	unsigned char* s = ptr;
+	for (; len; --len, ++s) 
+		*s = ch;
 
 	return ptr;
 }
