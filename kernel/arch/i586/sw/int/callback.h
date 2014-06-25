@@ -15,28 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file arch/i586/sw/instr/ctl.h
+/*! \file arch/i586/sw/int/callback.h
  *  \date June 2014
  */
 
 #pragma once
 
-#include <stddef.h>
+#include <sw/int/frame.h>
+#include <stdbool.h>
 
-//! Prevents optimization of tight/idle loops.
-static inline void pause()
-{
-	_ASM ("pause" ::: "memory");
-}
+typedef void (*int_callback_t)(uint8_t, int8_t, int_frame_t*);
 
-//! Enable interrupts.
-static inline void sti()
-{
-	_ASM ("sti" ::: "memory");
-}
-
-//! Disable interrupts.
-static inline void cli()
-{
-	_ASM ("cli" ::: "memory");
-}
+void int_callback_set(uint8_t isr, bool eoi, int_callback_t handle);
