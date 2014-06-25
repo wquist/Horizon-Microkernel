@@ -25,7 +25,7 @@
 #include <arch.h>
 #include <memory/region.h>
 #include <memory/physical.h>
-#include <debug/init.h>
+#include <debug/ctl.h>
 #include <debug/error.h>
 #include <stdint.h>
 #include <stdio.h>

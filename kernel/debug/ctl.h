@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file debug/init.h
+/*! \file debug/ctl.h
  *  \date June 2014
  */
 

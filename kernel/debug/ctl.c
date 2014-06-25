@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "init.h"
+#include "ctl.h"
 #include <arch.h>
 #include <memory.h>
 
