@@ -41,3 +41,5 @@ struct int_frame
 	uint32_t EFLAGS;             //!< EFLAGS state before interrupt.
 	uint32_t user_esp, SS;       //!< User stack pointer and stack segment.
 };
+
+void int_frame_debug(int_frame_t* frame);

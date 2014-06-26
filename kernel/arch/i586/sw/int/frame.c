@@ -15,12 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ctl.h"
-#include <sw/int/exception.h>
+#include "frame.h"
+#include <debug/log.h>
+#include <stdio.h>
 
-void int_init()
+//! Dump the contents of the register frame.
+void int_frame_debug(int_frame_t* frame)
 {
-	exception_init();
-
-	// FIXME: initialize interrupt hardware.
+	dtrace("Register Dump:");
+	printf("\tEBP:0x%08X EIP:0x%08X ESP:0x%08X\n", frame->EBP, frame->EIP, frame->ESP);
+	printf("\tEAX:0x%08X EBX:0x%08X\n", frame->EAX, frame->EBX);
+	printf("\tECX:0x%08X EDX:0x%08X\n", frame->ECX, frame->EDX);
+	printf("\tEFLAGS:0x%08X\n", frame->EFLAGS);
+	dtrace("Segment Dump:");
+	printf("\tCS:0x%08X, DS:0x%08X, SS:0x%08X\n", frame->CS, frame->DS, frame->SS);
 }
