@@ -17,10 +17,11 @@
 
 #include "ctl.h"
 #include <sw/int/exception.h>
+#include <hw/int/pic.h>
 
 void int_init()
 {
 	exception_init();
 
-	// FIXME: initialize interrupt hardware.
+	pic_init();
 }
