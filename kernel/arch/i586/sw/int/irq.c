@@ -18,8 +18,9 @@
 #include "irq.h"
 #include <debug/error.h>
 
-static irq_t irq_map[ISR_MAX] = {-1};
-static isr_t isr_map[IRQ_MAX] = {0};
+// Could only set these ifdef _DEBUG to save some kernel space.
+static irq_t irq_map[ISR_MAX] = { [0 ... ISR_MAX-1] = -1   };
+static isr_t isr_map[IRQ_MAX] = { [0 ... IRQ_MAX-1] = 0xFF };
 
 //! Associate the given IRQ with an ISR.
 void irq_set_isr(irq_t irq, isr_t isr)
