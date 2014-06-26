@@ -18,8 +18,6 @@
 #include "callback.h"
 #include <debug/log.h>
 
-#define ISR_MAX 256 //< FIXME: Define in isr.h.
-
 static struct
 {
 	int_callback_t handle;
@@ -30,7 +28,7 @@ void int_callback_common(int_frame_t frame);
 
 //! Set a callback for the given ISR, as the main handle or the EOI.
 /*! The function will warn if the ISR already has a callback assigned. */
-void int_callback_set(uint8_t isr, bool eoi, int_callback_t handle)
+void int_callback_set(isr_t isr, bool eoi, int_callback_t handle)
 {
 	int_callback_t* target;
 	if (eoi) target = &(callback_pairs[isr].eoi_handle);
@@ -45,7 +43,7 @@ void int_callback_set(uint8_t isr, bool eoi, int_callback_t handle)
 // The interrupt stubs call this function to dispatch to the callbacks.
 void int_callback_common(int_frame_t frame)
 {
-	uint8_t isr = frame.int_num;
+	isr_t isr = frame.int_num;
 
 	// FIXME: Implement IRQ numbers.
 	if (callback_pairs[isr].handle)

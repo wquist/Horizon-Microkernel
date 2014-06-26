@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 //! The registers that are pushed to the stack during an interrupt.
 /*! \note The order is important, this struct is cast from the stack
  *  set up by the interrupt assembly wrapper.

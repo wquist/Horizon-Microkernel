@@ -15,17 +15,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file arch/i586/sw/int/callback.h
+/*! \file arch/i586/sw/int/isr.h
  *  \date June 2014
  */
 
 #pragma once
 
-#include <sw/int/frame.h>
-#include <sw/int/isr.h>
-#include <sw/int/irq.h>
-#include <stdbool.h>
+#include <stdint.h>
 
-typedef void (*int_callback_t)(isr_t, irq_t, int_frame_t*);
+#define ISR_MAX 256
 
-void int_callback_set(isr_t isr, bool eoi, int_callback_t handle);
+typedef uint8_t isr_t;
+
+//! Each leading hex digit (0x00,0x10,0x20) has a priority level.
+/*! The levels are divided into 4 main priorities. */
+typedef enum isr_priority ISR_PRIORITY;
+enum isr_priority
+{
+	ISR_PRIORITY_CRITICAL = 0,
+	ISR_PRIORITY_HIGH     = 4,
+	ISR_PRIORITY_NORMAL   = 8,
+	ISR_PRIORITY_LOW      = 12,
+
+	ISR_PRIORITY_LOWEST   = 15,
+	ISR_PRIORITY_LEVELS
+};
+
+void  isr_reserve(isr_t isr);
+isr_t isr_alloc(ISR_PRIORITY pri);
+void  isr_free(isr_t isr);

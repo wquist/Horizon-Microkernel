@@ -15,17 +15,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file arch/i586/sw/int/callback.h
- *  \date June 2014
- */
+#include "irq.h"
+#include <debug/error.h>
 
-#pragma once
+static irq_t irq_map[ISR_MAX] = {-1};
+static isr_t isr_map[IRQ_MAX] = {0};
 
-#include <sw/int/frame.h>
-#include <sw/int/isr.h>
-#include <sw/int/irq.h>
-#include <stdbool.h>
+//! Associate the given IRQ with an ISR.
+void irq_set_isr(irq_t irq, isr_t isr)
+{
+	dassert(irq_map[isr] == -1);
+	dassert(irq >= 0);
 
-typedef void (*int_callback_t)(isr_t, irq_t, int_frame_t*);
+	irq_map[isr] = irq;
+	isr_map[irq] = isr;
+}
 
-void int_callback_set(isr_t isr, bool eoi, int_callback_t handle);
+//! Get an IRQ based on its ISR number.
+irq_t irq_from_isr(isr_t isr)
+{
+	return irq_map[isr];
+}
+
+//! Get an ISR based on its IRQ number.
+isr_t irq_to_isr(irq_t irq)
+{
+	dassert(irq >= 0);
+	return isr_map[irq];
+}

@@ -15,17 +15,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file arch/i586/sw/int/callback.h
+/*! \file arch/i586/sw/int/irq.h
  *  \date June 2014
  */
 
 #pragma once
 
-#include <sw/int/frame.h>
 #include <sw/int/isr.h>
-#include <sw/int/irq.h>
-#include <stdbool.h>
+#include <stdint.h>
 
-typedef void (*int_callback_t)(isr_t, irq_t, int_frame_t*);
+#define IRQ_MAX 128
 
-void int_callback_set(isr_t isr, bool eoi, int_callback_t handle);
+typedef int8_t irq_t;
+
+void irq_set_isr(irq_t irq, isr_t isr);
+
+irq_t irq_from_isr(isr_t isr);
+isr_t irq_to_isr(irq_t irq);
