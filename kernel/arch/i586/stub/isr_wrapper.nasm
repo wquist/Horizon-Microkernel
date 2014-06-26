@@ -22,7 +22,7 @@
 ; ===================
 
 GLOBAL ___sisr, ___eisr
-EXTERN int_handler_common
+EXTERN int_callback_common
 
 ; ======
 ; Macros
@@ -90,7 +90,7 @@ isr_entry:       pusha
                  mov   fs, ax
                  mov   gs, ax
 
-                ;call  int_handler_common
+                 call  int_callback_common
 
                  pop   eax    ; Restore the previous user data segment
                  mov   ds, ax
