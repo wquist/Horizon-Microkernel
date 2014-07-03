@@ -25,19 +25,24 @@
 #include <stddef.h>
 #include <stdint.h>
 
-//! Generic flags for virtual memory mapping.
-/*! Not all flags apply depending on the platform. */
-typedef enum virtual_flags VIRTUAL_FLAGS;
-enum virtual_flags
+typedef enum virtual_clone_mode VIRTUAL_CLONE_MODE;
+enum virtual_clone_mode
 {
-	VIRTUAL_FLAG_READ  = 0x1,
-	VIRTUAL_FLAG_WRITE = 0x2,
-	VIRTUAL_FLAG_EXEC  = 0x4
+	VIRTUAL_CLONE_READ,
+	VIRTUAL_CLONE_WRITE
 };
 
-void virtual_map(process_t* proc, uintptr_t virt, void* phys, size_t size, VIRTUAL_FLAGS flags);
-void virtual_unmap(process_t* proc, uintptr_t virt, size_t size);
-int  virtual_is_mapped(process_t* proc, uintptr_t virt, size_t size);
+/*! All of the virtual memory management functions operate on the passed
+ *    process's address space, or the kernel PAS if NULL is passed.
+ *    Always pass NULL for kernel mappings.
+ *  Passed addresses and sizes are automatically page aligned.
+ *  If a page is mapped inside the region being operated on, it is ignored,
+ *    i.e., it will not be overwritten/cloned etc.
+ */
 
-void virtual_alloc(process_t* proc, uintptr_t virt, size_t size, VIRTUAL_FLAGS flags);
-void virtual_clone(process_t* dest, process_t* src, uintptr_t virt, size_t size, VIRTUAL_FLAGS flags);
+void virtual_map(process_t* proc, uintptr_t virt, const void* phys, size_t size);
+void virtual_unmap(process_t* proc, uintptr_t virt, size_t size);
+int  virtual_is_mapped(const process_t* proc, uintptr_t virt, size_t size);
+
+void virtual_alloc(process_t* proc, uintptr_t virt, size_t size);
+void virtual_clone(process_t* dest, const process_t* src, uintptr_t from, uintptr_t to, size_t size, VIRTUAL_CLONE_MODE mode);
