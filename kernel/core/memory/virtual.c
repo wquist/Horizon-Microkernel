@@ -120,7 +120,7 @@ void virtual_alloc(process_t* proc, uintptr_t virt, size_t size)
 	}
 }
 
-//! Give a region of memory the same 
+//! Point virtual memory to the same physical region that is mapped in another process.
 void virtual_clone(process_t* dest, const process_t* src, uintptr_t from, uintptr_t to, size_t size, VIRTUAL_CLONE_MODE mode)
 {
 	dassert(dest && src);

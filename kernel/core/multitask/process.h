@@ -28,8 +28,14 @@
 
 #define PROCESS_MAX (2<<15)
 #define PROCESS_BLOCK_SIZE 4096
+//! The number of threads an individual PID can own.
+/*! A bitmap with this many bits is stored in the PCB. */
 #define PROCESS_THREAD_MAX 1024
 
+#define THREAD_MAX (2<<15)
+#define THREAD_BLOCK_SIZE 4096
+
+//! A process control block (PCB).
 typedef struct process process_t;
 struct process
 {
@@ -47,4 +53,34 @@ struct process
 	} threads;
 };
 
-//
+//! A thread control block (TCB).
+typedef struct thread thread_t;
+struct thread
+{
+	uint16_t tid, lid;
+	uint16_t owner;
+
+	uintptr_t entry;
+	int_frame_t frame;
+
+	struct
+	{
+		struct { uint16_t prev, uint16_t next; } queue;
+		uint8_t timeslice;
+		// FIXME: thread state.
+	} sched;
+
+	// FIXME: message queue.
+};
+
+void process_init();
+void thread_init(); //!< Called internally.
+
+uint16_t process_new(uint16_t ppid, uintptr_t entry);
+void process_kill(uint16_t pid);
+
+uint16_t thread_new(uint16_t pid, uintptr_t entry);
+void thread_kill(uint16_t tid);
+
+process_t* process_get(uint16_t pid);
+thread_t* thread_get(uint16_t tid);
