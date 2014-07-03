@@ -43,4 +43,7 @@ extern const uintptr_t __skernel, __ekernel;
 //! The architecture's page size.
 #define ARCH_PGSIZE PAGING_PAGE_SIZE
 
+//! Redefine the top-level paging structure.
+typedef struct paging_dir paging_pas_t;
+
 void arch_init();
