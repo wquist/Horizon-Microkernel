@@ -65,7 +65,7 @@ struct thread
 
 	struct
 	{
-		struct { uint16_t prev, uint16_t next; } queue;
+		struct { uint16_t prev, next; } queue;
 		uint8_t timeslice;
 		// FIXME: thread state.
 	} sched;
