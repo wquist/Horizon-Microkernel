@@ -32,16 +32,16 @@ void process_init()
 {
 	dassert(sizeof(process_t) <= PROCESS_BLOCK_SIZE);
 
-	//! Reserve space for PCBs, but do not map them to physical memory yet.
-	/*! PCBs are allocated as they are needed to save memory. */
+	// Reserve space for PCBs, but do not map them to physical memory yet.
+	/* PCBs are allocated as they are needed to save memory. */
 	blocks = (process_t*)region_reserve(PROCESS_MAX * PROCESS_BLOCK_SIZE);
 
-	//! Make space for the bitmap, and map the entire space to physical memory.
+	// Make space for the bitmap, and map the entire space to physical memory.
 	uintptr_t map_start = region_reserve(BMSTACK_SIZE(PROCESS_MAX));
 	bmstack_init(&block_map, (void*)map_start);
 	virtual_alloc(NULL, map_start, BMSTACK_SIZE(PROCESS_MAX));
 
-	//! Reserve some special PIDs (self, kernel, any).
+	// Reserve some special PIDs (self, kernel, any).
 	bmstack_set(&block_map, 0);
 	bmstack_set(&block_map, 1);
 	bmstack_set(&block_map, PROCESS_MAX-1);
@@ -84,6 +84,7 @@ void process_kill(uint16_t pid)
 	process_t* target = process_get(pid);
 	dassert(target);
 
+	// Set the PCB as free but do not free the physical memory.
 	bmstack_clear(&block_map, pid);
 	paging_pas_destroy(target->addr_space);
 
@@ -96,6 +97,10 @@ void process_kill(uint16_t pid)
 process_t* process_get(uint16_t pid)
 {
 	dassert(pid < PROCESS_MAX);
+
+	// Check for reserved PIDs.
+	if (pid == 0 || pid == 1 || pid == PROCESS_MAX-1)
+		return NULL;
 
 	if (!bmstack_test(&block_map, pid))
 		return NULL;

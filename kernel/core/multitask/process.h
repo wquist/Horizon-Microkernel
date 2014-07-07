@@ -35,6 +35,13 @@
 #define THREAD_MAX (2<<15)
 #define THREAD_BLOCK_SIZE 4096
 
+typedef enum thread_state THREAD_STATE;
+enum thread_state
+{
+	THREAD_STATE_NEW,
+	THREAD_STATE_ACTIVE
+};
+
 //! A process control block (PCB).
 typedef struct process process_t;
 struct process
@@ -67,7 +74,7 @@ struct thread
 	{
 		struct { uint16_t prev, next; } queue;
 		uint8_t timeslice;
-		// FIXME: thread state.
+		THREAD_STATE state;
 	} sched;
 
 	// FIXME: message queue.
