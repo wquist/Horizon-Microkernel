@@ -27,10 +27,10 @@ void gdt_init(gdt_t* table)
 {
 	dassert(table);
 
-	gdt_set_entry(table, GDT_SEGMENT_KCODE, 0x0, 0xFFFFFFFF, GDT_ENTRYTYPE_CODE, 0);
-	gdt_set_entry(table, GDT_SEGMENT_KDATA, 0x0, 0xFFFFFFFF, GDT_ENTRYTYPE_DATA, 0);
-	gdt_set_entry(table, GDT_SEGMENT_UCODE, 0x0, 0xFFFFFFFF, GDT_ENTRYTYPE_CODE, 3);
-	gdt_set_entry(table, GDT_SEGMENT_UDATA, 0x0, 0xFFFFFFFF, GDT_ENTRYTYPE_DATA, 3);
+	gdt_entry_set(table, GDT_SEGMENT_KCODE, 0x0, 0xFFFFFFFF, GDT_ENTRYTYPE_CODE, 0);
+	gdt_entry_set(table, GDT_SEGMENT_KDATA, 0x0, 0xFFFFFFFF, GDT_ENTRYTYPE_DATA, 0);
+	gdt_entry_set(table, GDT_SEGMENT_UCODE, 0x0, 0xFFFFFFFF, GDT_ENTRYTYPE_CODE, 3);
+	gdt_entry_set(table, GDT_SEGMENT_UDATA, 0x0, 0xFFFFFFFF, GDT_ENTRYTYPE_DATA, 3);
 
 	table->gdtr.base  = (uint32_t)&(table->entries[0]);
 	table->gdtr.limit = GDT_SEGMENT_MAX * sizeof(gdt_entry_t) - 1;
@@ -50,7 +50,7 @@ void gdt_clone(gdt_t* dest, const gdt_t* src)
 }
 
 //! Set a single segment entry in a GDT.
-void gdt_set_entry(gdt_t* table, size_t i, uint32_t base, uint32_t limit, GDT_ENTRYTYPE type, size_t dpl)
+void gdt_entry_set(gdt_t* table, size_t i, uint32_t base, uint32_t limit, GDT_ENTRYTYPE type, size_t dpl)
 {
 	dassert(table);
 	dassert(i < GDT_SEGMENT_MAX);

@@ -24,7 +24,7 @@ static struct
 	int_callback_t eoi_handle;
 } callback_pairs[ISR_MAX] = {{0}};
 
-void int_callback_common(int_frame_t frame);
+void int_callback_common(int_frame_t* frame);
 
 //! Set a callback for the given ISR, as the main handle or the EOI.
 /*! The function will warn if the ISR already has a callback assigned. */
@@ -41,13 +41,13 @@ void int_callback_set(isr_t isr, bool eoi, int_callback_t handle)
 }
 
 // The interrupt stubs call this function to dispatch to the callbacks.
-void int_callback_common(int_frame_t frame)
+void int_callback_common(int_frame_t* frame)
 {
-	isr_t isr = frame.int_num;
+	isr_t isr = frame->int_num;
 
 	// FIXME: Implement IRQ numbers.
 	if (callback_pairs[isr].handle)
-		callback_pairs[isr].handle(isr, -1, &frame);
+		callback_pairs[isr].handle(isr, -1, frame);
 	if (callback_pairs[isr].eoi_handle)
-		callback_pairs[isr].eoi_handle(isr, -1, &frame);
+		callback_pairs[isr].eoi_handle(isr, -1, frame);
 }
