@@ -24,6 +24,7 @@
 #include <boot/meminfo.h>
 
 #include <sw/paging.h>
+#include <sw/task.h>
 #include <sw/int/frame.h>
 #include <sw/int/ctl.h>
 #include <hw/console.h>

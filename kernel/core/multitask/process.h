@@ -67,8 +67,7 @@ struct thread
 	uint16_t tid, lid;
 	uint16_t owner;
 
-	uintptr_t entry;
-	int_frame_t frame;
+	task_info_t task;
 
 	struct
 	{

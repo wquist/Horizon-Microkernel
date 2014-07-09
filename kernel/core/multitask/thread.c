@@ -68,7 +68,9 @@ uint16_t thread_new(uint16_t pid, uintptr_t entry)
 
 	thread->tid   = index;
 	thread->owner = pid;
-	thread->entry = (entry) ? entry : owner->entry;
+
+	task_init(&(thread->task));
+	thread->task.entry = (entry) ? entry : owner->entry;
 
 	// Add the thread to the process's slots and update the bitmap.
 	/* FIXME: Should the thread add itself or the process add the thread? */
