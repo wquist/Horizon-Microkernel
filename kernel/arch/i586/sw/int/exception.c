@@ -25,8 +25,8 @@
 #include <debug/error.h>
 #include <stddef.h>
 
-void exception_callback(isr_t isr, irq_t irq, int_frame_t* frame);
-void exception_debug(isr_t isr, irq_t irq, int_frame_t* frame);
+void exception_callback(isr_t isr, irq_t irq);
+void exception_debug(isr_t isr, irq_t irq);
 
 //! Reserve the exception ISRs and add callbacks.
 void exception_init()
@@ -42,14 +42,16 @@ void exception_init()
 }
 
 // Properly handle an exception.
-void exception_callback(isr_t isr, irq_t irq, int_frame_t* frame)
+void exception_callback(isr_t isr, irq_t irq)
 {
 	//
 }
 
 // Print detailed information when an exception occurs.
-void exception_debug(isr_t isr, irq_t irq, int_frame_t* frame)
+void exception_debug(isr_t isr, irq_t irq)
 {
+	int_frame_t* frame = int_callback_frame_get();
+
 	// Only some exceptions format this variable.
 	exception_errcode_t sel = { .raw = frame->err_code };
 

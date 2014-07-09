@@ -63,7 +63,7 @@ struct _Packed tss
 void task_init(task_info_t* info);
 
 void task_start(task_info_t* info);
-void task_switch(task_info_t* curr, task_info_t* next, int_frame_t* frame);
+void task_switch(task_info_t* curr, task_info_t* next);
 
 void tss_init(tss_t* task, uintptr_t kstack);
 void tss_load(const tss_t* task);

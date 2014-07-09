@@ -17,6 +17,7 @@
 
 #include "task.h"
 #include <sw/gdt.h>
+#include <sw/int/callback.h>
 #include <memory.h>
 
 // FIXME: Must be changed for SMP.
@@ -59,8 +60,10 @@ void task_start(task_info_t* info)
 
 //! Switch to another task during an interrupt.
 /*! The address space only needs to be changed prior if switching to new process. */
-void task_switch(task_info_t* curr, task_info_t* next, int_frame_t* frame)
+void task_switch(task_info_t* curr, task_info_t* next)
 {
+	int_frame_t* frame = int_callback_frame_get();
+
 	// Save the old state.
 	memcpy(&(curr->frame), frame, sizeof(int_frame_t));
 
