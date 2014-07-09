@@ -16,6 +16,7 @@
  */
 
 #include "callback.h"
+#include <sw/int/irq.h>
 #include <debug/log.h>
 #include <debug/error.h>
 #include <stddef.h>
@@ -58,11 +59,10 @@ void int_callback_common(int_frame_t* frame)
 	isr_t isr = frame->int_num;
 	curr_frame = frame;
 
-	// FIXME: Implement IRQ numbers.
 	if (callback_pairs[isr].handle)
-		callback_pairs[isr].handle(isr, -1);
+		callback_pairs[isr].handle(isr, irq_from_isr(isr));
 	if (callback_pairs[isr].eoi_handle)
-		callback_pairs[isr].eoi_handle(isr, -1);
+		callback_pairs[isr].eoi_handle(isr, irq_from_isr(isr));
 
 	curr_frame = NULL;
 }
