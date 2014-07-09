@@ -90,7 +90,10 @@ isr_entry:       pusha
                  mov   fs, ax
                  mov   gs, ax
 
+                 mov   eax, esp            ; Comply to the C calling convention
+                 push  eax                 ; Optimization can trash if not a pointer
                  call  int_callback_common
+                 pop   eax
 
                  pop   eax    ; Restore the previous user data segment
                  mov   ds, ax

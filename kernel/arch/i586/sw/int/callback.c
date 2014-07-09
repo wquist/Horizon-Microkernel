@@ -16,7 +16,10 @@
  */
 
 #include "callback.h"
+#include <sw/int/irq.h>
 #include <debug/log.h>
+#include <debug/error.h>
+#include <stddef.h>
 
 static struct
 {
@@ -24,7 +27,9 @@ static struct
 	int_callback_t eoi_handle;
 } callback_pairs[ISR_MAX] = {{0}};
 
-void int_callback_common(int_frame_t frame);
+static int_frame_t* curr_frame = NULL;
+
+void int_callback_common(int_frame_t* frame);
 
 //! Set a callback for the given ISR, as the main handle or the EOI.
 /*! The function will warn if the ISR already has a callback assigned. */
@@ -40,14 +45,24 @@ void int_callback_set(isr_t isr, bool eoi, int_callback_t handle)
 	*target = handle;
 }
 
-// The interrupt stubs call this function to dispatch to the callbacks.
-void int_callback_common(int_frame_t frame)
+//! Get the register state before the interrupt occurred.
+/*! Only valid during an interrupt (when in a callback). */
+int_frame_t* int_callback_frame_get()
 {
-	isr_t isr = frame.int_num;
+	dassert(curr_frame);
+	return curr_frame;
+}
 
-	// FIXME: Implement IRQ numbers.
+// The interrupt stubs call this function to dispatch to the callbacks.
+void int_callback_common(int_frame_t* frame)
+{
+	isr_t isr = frame->int_num;
+	curr_frame = frame;
+
 	if (callback_pairs[isr].handle)
-		callback_pairs[isr].handle(isr, -1, &frame);
+		callback_pairs[isr].handle(isr, irq_from_isr(isr));
 	if (callback_pairs[isr].eoi_handle)
-		callback_pairs[isr].eoi_handle(isr, -1, &frame);
+		callback_pairs[isr].eoi_handle(isr, irq_from_isr(isr));
+
+	curr_frame = NULL;
 }
