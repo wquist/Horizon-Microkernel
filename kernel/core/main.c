@@ -25,6 +25,7 @@
 #include <arch.h>
 #include <memory/region.h>
 #include <memory/physical.h>
+#include <multitask/process.h>
 #include <debug/ctl.h>
 #include <debug/error.h>
 #include <stdint.h>
@@ -50,6 +51,7 @@ void _Noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 
 	// Initialize multitasking.
 	int_init();
+	process_init();
 
 	for (;;);
 }
