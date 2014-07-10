@@ -26,6 +26,8 @@
 #include <sw/int/irq.h>
 #include <stdbool.h>
 
-typedef void (*int_callback_t)(isr_t, irq_t, int_frame_t*);
+typedef void (*int_callback_t)(isr_t, irq_t);
 
 void int_callback_set(isr_t isr, bool eoi, int_callback_t handle);
+
+int_frame_t* int_callback_frame_get();

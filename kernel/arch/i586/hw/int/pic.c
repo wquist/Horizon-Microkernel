@@ -22,7 +22,7 @@
 #include <debug/log.h>
 #include <debug/error.h>
 
-void pic_eoi(isr_t isr, irq_t irq, int_frame_t* frame);
+void pic_eoi(isr_t isr, irq_t irq);
 
 //! Remap the PIC to make room for the exception ISRs and set up EOI handles.
 void pic_init()
@@ -141,7 +141,7 @@ void pic_irq_disable_all()
 }
 
 // Reset the appropriate PICs after an interrupt.
-void pic_eoi(isr_t isr, irq_t irq, int_frame_t* frame)
+void pic_eoi(isr_t isr, irq_t irq)
 {
 	bool needs_eoi = true;
 	if (irq == PIC_IRQ_SPURIOUS_MASTER || irq == PIC_IRQ_SPURIOUS_SLAVE)

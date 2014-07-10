@@ -104,7 +104,7 @@ struct gdt
 
 void gdt_init(gdt_t* table);
 void gdt_clone(gdt_t* dest, const gdt_t* src);
-void gdt_set_entry(gdt_t* table, size_t i, uint32_t base, uint32_t limit, GDT_ENTRYTYPE type, size_t dpl);
+void gdt_entry_set(gdt_t* table, size_t i, uint32_t base, uint32_t limit, GDT_ENTRYTYPE type, size_t dpl);
 
 void gdt_load(const gdt_t* table);
 
