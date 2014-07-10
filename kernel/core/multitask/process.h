@@ -26,13 +26,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define PROCESS_MAX (2<<15)
+#define PROCESS_MAX (1<<15)
 #define PROCESS_BLOCK_SIZE 4096
 //! The number of threads an individual PID can own.
 /*! A bitmap with this many bits is stored in the PCB. */
 #define PROCESS_THREAD_MAX 1024
 
-#define THREAD_MAX (2<<15)
+#define THREAD_MAX (1<<15)
 #define THREAD_BLOCK_SIZE 4096
 
 typedef enum thread_state THREAD_STATE;

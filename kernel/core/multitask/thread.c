@@ -97,7 +97,6 @@ void thread_kill(uint16_t tid)
 	bitmap_clear(owner->threads.bitmap, target->lid);
 	--(owner->threads.count);
 
-	// Make the TCB available for another thread.
 	bmstack_clear(&block_map, tid);
 	dtrace("Destroyed thread with TID %i, owned by PID %i.", tid, owner->pid);
 }
