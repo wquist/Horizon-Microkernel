@@ -39,11 +39,12 @@ void task_start(task_info_t* info)
 
 	_ASM
 	(
-		"movw  0x20|0x3, %%ds; " //< Set the user data segment for each reg.
-		"movw  0x20|0x3, %%es; "
-		"movw  0x20|0x3, %%fs; "
-		"movw  0x20|0x3, %%gs; "
-		"pushl 0x20|0x3;       " //< Also place on stack as user_esp.
+		"movw  0x20|0x3, %%ax; "
+		"movw  %%ax,     %%ds; " //< Set the user data segment for each reg.
+		"movw  %%ax,     %%es; "
+		"movw  %%ax,     %%fs; "
+		"movw  %%ax,     %%gs; "
+		"pushl 0x20|0x3;       " //< Also place user data seg on stack as SS.
 		"pushl %0;             " //< Push the specified stack pointer.
 		"pushf;                "
 		"popl  %%eax;          " //< Pop EFLAGS into EAX.
