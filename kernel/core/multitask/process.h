@@ -81,7 +81,7 @@ struct thread
 
 	struct
 	{
-		uint8_t head;
+		uint8_t head, tail;
 		size_t count;
 		message_t slots[THREAD_MESSAGE_MAX];
 		bitmap_t bitmap[BITMAP_LENGTH(THREAD_MESSAGE_MAX)];

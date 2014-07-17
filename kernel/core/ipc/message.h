@@ -39,4 +39,4 @@ struct _Packed message //!< This should always be 16 bytes.
 
 // FIXME: Maybe replace these with the library message type.
 void message_send(uint16_t dest, message_t* msg);
-message_t* message_recv(uint16_t src);
+void message_recv(uint16_t src,  message_t* msg);

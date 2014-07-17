@@ -16,13 +16,58 @@
  */
 
 #include "message.h"
+#include <multitask/process.h>
+#include <util/bitmap.h>
+#include <debug/error.h>
+#include <stddef.h>
+#include <string.h>
 
 void message_send(uint16_t dest, message_t* msg)
 {
-	//
+	dassert(msg);
+
+	// Make sure the thread exists and has room in its queue.
+	thread_t* thread = thread_get(dest);
+	dassert(thread);
+	dassert(thread->messages.count < THREAD_MESSAGE_MAX);
+
+	uint8_t slot = bitmap_find_and_set(thread->messages.bitmap, THREAD_MESSAGE_MAX);
+	dassert(slot != -1);
+
+	message_t* tail = &(thread->messages.slots[slot]);
+	memcpy(tail, msg, sizeof(message_t));
+
+	tail->next = -1; //< Mark the end of the linked list.
+	if (thread->messages.count != 0)
+	{
+		// Tail is always valid when there are messages in the queue (count > 0).
+		message_t* last = &(thread->messages.slots[thread->messages.tail]);
+
+		last->next = slot;
+		thread->messages.tail = slot;
+	}
+	else
+	{
+		// The only message in queue is the head and tail.
+		thread->messages.head = slot;
+		thread->messages.tail = slot;
+	}
+
+	++(thread->messages.count);
 }
 
-message_t* message_recv(uint16_t src)
+void message_recv(uint16_t src, message_t* msg)
 {
-	//
+	// A message must be in queue for recv to work.
+	thread_t* thread = thread_get(src);
+	dassert(thread);
+	dassert(thread->messages.count);
+
+	// Head is also valid under the same conditions as tail.
+	message_t* head = &(thread->messages.slots[thread->messages.head]);
+	memcpy(msg, head, sizeof(message_t));
+
+	thread->messages.head = head->next;
+
+	--(thread->messages.count);
 }
