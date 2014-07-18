@@ -16,7 +16,9 @@
  */
 
 #include "callback.h"
+#include <sw/instr/misc.h>
 #include <sw/int/irq.h>
+#include <multitask/scheduler.h>
 #include <debug/log.h>
 #include <debug/error.h>
 #include <stddef.h>
@@ -65,4 +67,9 @@ void int_callback_common(int_frame_t* frame)
 		callback_pairs[isr].eoi_handle(isr, irq_from_isr(isr));
 
 	curr_frame = NULL;
+
+	// No thread to return to.
+	/* Hopefully an interrupt will add one. */
+	while (!scheduler_curr()) //< FIXME: Is this volatile?
+		pause();
 }
