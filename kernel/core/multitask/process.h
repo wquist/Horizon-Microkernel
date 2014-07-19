@@ -22,6 +22,7 @@
 #pragma once
 
 #include <arch.h>
+#include <ipc/message.h>
 #include <util/bitmap.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -34,6 +35,8 @@
 
 #define THREAD_MAX (1<<15)
 #define THREAD_BLOCK_SIZE 4096
+//! The number of messages a TID can queue.
+#define THREAD_MESSAGE_MAX 128
 
 typedef enum thread_state THREAD_STATE;
 enum thread_state
@@ -76,7 +79,13 @@ struct thread
 		THREAD_STATE state;
 	} sched;
 
-	// FIXME: message queue.
+	struct
+	{
+		uint8_t head, tail;
+		size_t count;
+		message_t slots[THREAD_MESSAGE_MAX];
+		bitmap_t bitmap[BITMAP_LENGTH(THREAD_MESSAGE_MAX)];
+	} messages;
 };
 
 void process_init();
