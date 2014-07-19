@@ -16,7 +16,9 @@
  */
 
 #include "callback.h"
+#include <sw/instr/misc.h>
 #include <sw/int/irq.h>
+#include <multitask/scheduler.h>
 #include <debug/log.h>
 #include <debug/error.h>
 #include <stddef.h>

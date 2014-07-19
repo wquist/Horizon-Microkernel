@@ -50,5 +50,7 @@ typedef struct paging_dir paging_pas_t;
 //! Make the structure alloc/free generic too.
 #define paging_pas_create  paging_dir_create
 #define paging_pas_destroy paging_dir_destroy
+//! As well as the switching.
+#define paging_pas_load paging_dir_load
 
 void arch_init();
