@@ -20,10 +20,13 @@
 #include <multitask/process.h>
 #include <debug/error.h>
 
+// FIXME: Will have to be modified for multi-core.
 static uint16_t active_thread = 0;
 
 static void timer_tick(uint8_t isr, int8_t irq);
 
+//! Initialize the scheduler and start the first usermode process.
+/*! scheduler_add must be called prior at least once. */
 void scheduler_start()
 {
 	// A thread must be in queue to start.
@@ -36,6 +39,7 @@ void scheduler_start()
 	task_start(&(thread->task));
 }
 
+//! Add a thread to the scheduler queue.
 void scheduler_add(uint16_t tid)
 {
 	// The thread must exists and not be in a queue.
@@ -70,22 +74,19 @@ void scheduler_add(uint16_t tid)
 	prev->sched.queue.next = tid;
 }
 
+//! Remove a thread from the schduler queue.
+/*! The thread cannot be the the scheduler_curr thread. */
 void scheduler_remove(uint16_t tid)
 {
-	// The thread must exist in the scheduler queue.
+	// FIXME: Allow the currently running thread to be removed.
+
+	// The thread must exist in the scheduler queue and not be running.
 	thread_t* target = thread_get(tid);
 	dassert(target);
+	dassert(target->sched.timeslice == 0);
 	dassert(target->sched.state == THREAD_STATE_ACTIVE);
 
 	target->sched.state = THREAD_STATE_NEW;
-
-	// This is the last thread in its queue.
-	if (target->sched.queue.next == tid)
-	{
-		active_thread = 0;
-
-		return;
-	}
 
 	thread_t* next = thread_get(target->sched.queue.next);
 	thread_t* prev = thread_get(target->sched.queue.prev);
@@ -95,9 +96,11 @@ void scheduler_remove(uint16_t tid)
 	prev->sched.queue.next = next->tid;
 }
 
+//! Switch to the next thread in the scheduler queue.
 void scheduler_next()
 {
 	thread_t* curr = thread_get(active_thread);
+	curr->sched.timeslice = 0;
 	
 	active_thread = curr->sched.queue.next;
 
@@ -113,6 +116,7 @@ void scheduler_next()
 		task_switch(&(curr->task), &(next->task));
 }
 
+//! Get the currently running thread.
 uint16_t scheduler_curr()
 {
 	return active_thread;

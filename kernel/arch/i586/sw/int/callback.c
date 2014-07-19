@@ -67,9 +67,4 @@ void int_callback_common(int_frame_t* frame)
 		callback_pairs[isr].eoi_handle(isr, irq_from_isr(isr));
 
 	curr_frame = NULL;
-
-	// No thread to return to.
-	/* Hopefully an interrupt will add one. */
-	while (!scheduler_curr()) //< FIXME: Is this volatile?
-		pause();
 }
