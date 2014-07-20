@@ -25,6 +25,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* FIXME: Modules are located above 4MB and below 16MB.
+ * Could interfere with DMA allocations if their total
+ * size is too big. Relocate them to 16MB+ later?
+ */
+
 //! How many modules will be parsed by the kernel?
 /*! Does not prevent more modules from being loaded. */
 #define MODULE_MAX 5
