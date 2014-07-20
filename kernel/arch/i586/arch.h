@@ -33,6 +33,10 @@
 #include <spec/multiboot.h>
 #include <stdint.h>
 
+//! Define the active achitecture - may be useful elsewhere.
+#define ARCH_X86
+#define ARCH_ISA_I586
+
 //! Redfine multiboot variables into generic names.
 typedef struct multiboot_info bootloader_info_t;
 #define BOOTLOADER_MAGIC MULTIBOOT_LOADER_MAGIC

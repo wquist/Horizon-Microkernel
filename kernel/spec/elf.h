@@ -40,7 +40,7 @@ enum elf_fid
 	ELF_FID_VERSION,
 	ELF_FID_PAD,
 
-	ELF_FID_LENGTH 16
+	ELF_FID_LENGTH = 16
 };
 
 //! Possible values for the 'class' byte of the FID.
@@ -57,7 +57,7 @@ enum elf_data
 {
 	ELF_DATA_2LSB = 1, //!< Two's complement LSB.
 	ELF_DATA_2MSB,     //!< 2sC MSB.
-}
+};
 //! Values for the 'type' field in a file header.
 typedef enum elf_ftype ELF_FTYPE;
 enum elf_ftype
