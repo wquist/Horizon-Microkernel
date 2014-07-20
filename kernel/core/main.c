@@ -26,8 +26,11 @@
 #include <memory/region.h>
 #include <memory/physical.h>
 #include <multitask/process.h>
+#include <multitask/scheduler.h>
 #include <debug/ctl.h>
+#include <debug/log.h>
 #include <debug/error.h>
+#include <spec/elf.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -54,5 +57,24 @@ void _Noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 	int_init();
 	process_init();
 
+	// Load available modules as processes.
+	for (size_t i = 0; i != module_count_get(); ++i)
+	{
+		const module_t* mod = module_get(i);
+		if (elf_module_validate(mod))
+		{
+			elf_binary_t binary = elf_module_parse(mod);
+			uint16_t pid = elf_binary_load(&binary);
+
+			uint16_t tid = thread_new(pid, 0);
+			scheduler_add(tid);
+		}
+	}
+
+	// Begin the first usermode thread.
+	scheduler_start();
+
+	// Should never be reached.
+	dtrace("Unexpected end of kernel reached!");
 	for (;;);
 }

@@ -27,7 +27,7 @@
 
 //! Read the potential elf header to determine if a module is valid.
 /*! Also checks architecture and word size. */
-bool elf_module_check(const module_t* module)
+bool elf_module_validate(const module_t* module)
 {
 	dassert(module);
 
@@ -68,7 +68,7 @@ bool elf_module_check(const module_t* module)
 elf_binary_t elf_module_parse(const module_t* module)
 {
 	dassert(module);
-	dassert(elf_module_check(module));
+	dassert(elf_module_validate(module));
 
 	elf_binary_t binary = {0};
 
