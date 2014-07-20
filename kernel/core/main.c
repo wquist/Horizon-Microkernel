@@ -39,9 +39,10 @@ void _Noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 	// Initialize anything platform-dependent.
 	arch_init();
 
-	// Initialize parts that need memory before the physical allocator is set up.
+	// Initialize arch-specific memory info.
 	region_init(vmem);
 	meminfo_init(bli);
+	module_init(bli);
 	paging_tempmap_init();
 
 	// Initial physical and virtual memory management.
