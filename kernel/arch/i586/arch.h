@@ -22,6 +22,7 @@
 #pragma once
 
 #include <boot/meminfo.h>
+#include <boot/module.h>
 
 #include <sw/paging.h>
 #include <sw/task.h>
