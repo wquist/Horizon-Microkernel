@@ -21,6 +21,8 @@
 #include <sw/int/callback.h>
 #include <debug/log.h>
 #include <debug/error.h>
+#include <spec/pic8259.h>
+#include <spec/pic8259/io.h>
 
 void pic_eoi(isr_t isr, irq_t irq);
 
@@ -49,10 +51,6 @@ void pic_remap(isr_t pic1, isr_t pic2)
 	dassert(pic1 <= ISR_MAX - PIC_CHIP_IRQ_MAX);
 	dassert(pic2 <= ISR_MAX - PIC_CHIP_IRQ_MAX);
 
-	// Save the previous IRQ mask info.
-	uint8_t prev1 = inb(PIC1_PORT_DATA);
-	uint8_t prev2 = inb(PIC2_PORT_DATA);
-
 	// Edge triggered, will send ICW4.
 	pic_icw1_t icw1 = {0};
 	icw1.icw4          = true;
@@ -61,16 +59,15 @@ void pic_remap(isr_t pic1, isr_t pic2)
 	icw1.trigger       = PIC_TRIGGER_EDGE;
 	icw1.always_1      = 1;
 
-	// Send the same command to both PICs.
-	outb(PIC1_PORT_CMD, icw1.raw);
-	outb(PIC2_PORT_CMD, icw1.raw);
+	// Send the same data to both PICs.
+	pic_icw_write(icw1.raw, icw1.raw, true);
 
 	// ICW2 contains the remap offsets.
 	pic_icw2_t icw2_m = { .raw = pic1 };
 	pic_icw2_t icw2_s = { .raw = pic2 };
 
-	outb(PIC1_PORT_DATA, icw2_m.raw);
-	outb(PIC2_PORT_DATA, icw2_s.raw);
+	// ICW2 is different for the two PICs.
+	pic_icw_write(icw2_m.raw, icw2_s.raw, false);
 
 	// Setup master/slave mode with ICW3.
 	pic_icw3_t icw3_m = {0};
@@ -78,8 +75,8 @@ void pic_remap(isr_t pic1, isr_t pic2)
 	pic_icw3_t icw3_s = {0};
 	icw3_s.slave.slave_id = 2; //< This slave is second in line.
 
-	outb(PIC1_PORT_DATA, icw3_m.raw);
-	outb(PIC2_PORT_DATA, icw3_s.raw);
+	// ICW3 is also different.
+	pic_icw_write(icw3_m.raw, icw3_s.raw, false);
 
 	// Setup other special modes (all disabled).
 	pic_icw4_t icw4 = {0};
@@ -88,56 +85,7 @@ void pic_remap(isr_t pic1, isr_t pic2)
 	icw4.buffer_mode  = PIC_BUFFER_MODE_NONE;
 	icw4.fully_nested = false;
 
-	// Send the same data to both chips.
-	outb(PIC1_PORT_DATA, icw4.raw);
-	outb(PIC2_PORT_DATA, icw4.raw);
-
-	// Restore the previous IRQ mask info.
-	outb(PIC1_PORT_DATA, prev1);
-	outb(PIC2_PORT_DATA, prev2);
-}
-
-//! Allow the specified IRQ to be raised.
-void pic_irq_enable(irq_t irq)
-{
-	dassert(irq >= 0 && irq < PIC_IRQ_MAX);
-
-	// Determine whether this IRQ belongs to master or slave.
-	uint16_t port = (irq < PIC_CHIP_SLAVE) ? PIC1_PORT_DATA : PIC2_PORT_DATA;
-	if (port == PIC2_PORT_DATA) irq -= PIC_CHIP_IRQ_MAX;
-
-	// An interrupt is enabled when the corresponding bit is clear in PORT_DATA.
-	uint8_t mask = inb(port) & ~(1 << irq);
-	outb(port, mask);
-}
-
-//! Prevent the specified IRQ from being triggered.
-void pic_irq_disable(irq_t irq)
-{
-	dassert(irq >= 0 && irq < PIC_IRQ_MAX);
-
-	uint16_t port = (irq < PIC_CHIP_SLAVE) ? PIC1_PORT_DATA : PIC2_PORT_DATA;
-	if (port == PIC2_PORT_DATA) irq -= PIC_CHIP_IRQ_MAX;
-
-	// The interrupt is disabled when the bit is set in PORT_DATA.
-	uint8_t mask = inb(port) | (1 << irq);
-	outb(port, mask);
-}
-
-//! Allow all interrupts from the PICs.
-void pic_irq_enable_all()
-{
-	// Clear all bits in both PORT_DATA's.
-	outb(PIC1_PORT_DATA, 0x00);
-	outb(PIC2_PORT_DATA, 0x00);
-}
-
-//! Supress all interrupts from the PICs.
-void pic_irq_disable_all()
-{
-	// Set all bits in both PORT_DATA's.
-	outb(PIC1_PORT_DATA, 0xFF);
-	outb(PIC2_PORT_DATA, 0xFF);
+	pic_icw_write(icw4.raw, icw4.raw, false);
 }
 
 // Reset the appropriate PICs after an interrupt.
@@ -146,19 +94,14 @@ void pic_eoi(isr_t isr, irq_t irq)
 	bool needs_eoi = true;
 	if (irq == PIC_IRQ_SPURIOUS_MASTER || irq == PIC_IRQ_SPURIOUS_SLAVE)
 	{
-		// Send the In-Service Register (ISR) read request.
-		outb(PIC1_PORT_CMD, PIC_CMD_READ_ISR);
-		outb(PIC2_PORT_CMD, PIC_CMD_READ_ISR);
-
-		// Read the actual ISR.
-		uint16_t irqs = inb(PIC1_PORT_CMD) | (inb(PIC2_PORT_CMD) << 8);
+		uint16_t irqs = pic_isr_read();
 		// If the interrupt was spurious, the corresponding bit will be clear.
 		needs_eoi = (irqs & (1 << irq)); //< No EOI if the IRQ is spurious.
 	}
 
 	if (needs_eoi && irq >= PIC_CHIP_SLAVE)
-		outb(PIC2_PORT_CMD, PIC_CMD_EOI);
+		pic_reset(PIC_CHIP_SLAVE);
 	// Even for the slave spurious IRQ, master needs an EOI because of cascade.
 	if (needs_eoi || irq >= PIC_CHIP_SLAVE)
-		outb(PIC1_PORT_CMD, PIC_CMD_EOI);
+		pic_reset(PIC_CHIP_MASTER);
 }

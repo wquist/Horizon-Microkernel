@@ -58,6 +58,7 @@ SRC_DIRS =         \
 	debug          \
 	spec/elf       \
 	spec/multiboot \
+	spec/pic8259   \
 	util           \
 	$(ARCH_ROOT)
 

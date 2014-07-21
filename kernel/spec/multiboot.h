@@ -94,7 +94,7 @@ struct multiboot_elf_section_header_table
 };
 
 //! The main multiboot structure.
-/*! \note Before most values can be used, the appropriate
+/*! Before most values can be used, the appropriate
  *  flag must be checked to make sure the values
  *  were properly defined and are available.
  *
@@ -145,7 +145,7 @@ struct multiboot_info
 };
 
 //! A multiboot memory map entry.
-/*! \note In memory, this struct is aligned at addr; i.e. size is at 
+/*! In memory, this struct is aligned at addr; i.e. size is at 
  *  location -4, addr is at 0, etc.
  */
 typedef struct multiboot_mmap_entry multiboot_mmap_t;
@@ -162,7 +162,7 @@ struct _Packed multiboot_mmap_entry
     uint64_t addr;
     uint64_t length;
 #endif
-    /*! \brief Memory type (MULTIBOOT_MEMORY_*)
+    /*! Memory type (MULTIBOOT_MEMORY_*)
      *
      *  A memory map entry can only be used by the kernel
      *  if its type equals 1. However, other values hint

@@ -28,6 +28,7 @@
 #include <sw/task.h>
 #include <sw/int/frame.h>
 #include <sw/int/ctl.h>
+#include <sw/instr/io.h>
 #include <hw/console.h>
 
 #include <spec/multiboot.h>

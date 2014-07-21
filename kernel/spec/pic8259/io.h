@@ -15,18 +15,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file arch/i586/hw/int/pic.h
- *  \date June 2014
+/*! \file spec/pic8259/io.h
+ *  \date July 2014
  */
 
-#pragma once
+#include "../pic8259.h"
 
-#include <sw/int/isr.h>
-#include <sw/int/irq.h>
-#include <stdint.h>
-#include <stdbool.h>
+//! The PIC is controlled through I/O ports.
+/*! Each PIC chip has its own command and data port. */
+typedef enum pic_port PIC_PORT;
+enum pic_port
+{
+	PIC1_PORT_BASE = 0x20,
+	PIC1_PORT_CMD  = 0x20,
+	PIC1_PORT_DATA = 0x21,
 
-#define PIC_REMAP_BASE 32
+	PIC2_PORT_BASE = 0xA0,
+	PIC2_PORT_CMD  = 0xA0,
+	PIC2_PORT_DATA = 0xA1
+};
 
-void pic_init();
-void pic_remap(isr_t pic1, isr_t pic2);
+void pic_icw_write(uint8_t mval, uint8_t sval, bool cmd);
+uint16_t pic_isr_read();
+void pic_reset(PIC_CHIP pic);
+
+void pic_irq_enable(uint8_t irq);
+void pic_irq_disable(uint8_t irq);
+void pic_irq_enable_all();
+void pic_irq_disable_all();
