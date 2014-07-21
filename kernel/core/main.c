@@ -28,7 +28,6 @@
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
 #include <debug/ctl.h>
-#include <debug/log.h>
 #include <debug/error.h>
 #include <spec/elf.h>
 #include <stdint.h>
@@ -74,7 +73,6 @@ void _Noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 	// Begin the first usermode thread.
 	scheduler_start();
 
-	// Should never be reached.
-	dtrace("Unexpected end of kernel reached!");
-	for (;;);
+	// scheduler_start should never return.
+	dpanic("Unexpected end of kernel reached!");
 }
