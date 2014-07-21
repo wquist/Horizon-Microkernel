@@ -39,7 +39,7 @@ void process_init()
 	// Make space for the bitmap, and map the entire space to physical memory.
 	uintptr_t map_start = region_reserve(BMSTACK_SIZE(PROCESS_MAX));
 	bmstack_init(&block_map, (void*)map_start);
-	virtual_alloc(NULL, map_start, BMSTACK_SIZE(PROCESS_MAX));
+	virtual_alloc(0, map_start, BMSTACK_SIZE(PROCESS_MAX));
 
 	// Reserve some special PIDs (self, kernel, any).
 	bmstack_set(&block_map, 0);
@@ -61,7 +61,7 @@ uint16_t process_new(uint16_t ppid, uintptr_t entry)
 
 	// Get the address of the PCB and map it in if necessary.
 	uintptr_t block = index_to_addr((uintptr_t)blocks, PROCESS_BLOCK_SIZE, index);
-	virtual_alloc(NULL, block, PROCESS_BLOCK_SIZE);
+	virtual_alloc(0, block, PROCESS_BLOCK_SIZE);
 
 	process_t* process = (process_t*)block;
 	memset(process, 0, PROCESS_BLOCK_SIZE);

@@ -17,19 +17,27 @@
 
 #include "virtual.h"
 #include <memory/physical.h>
+#include <multitask/process.h>
 #include <debug/error.h>
 #include <util/addr.h>
 #include <stdbool.h>
 
-static paging_pas_t* get_dir(const process_t* proc, PAGING_FLAGS* flags)
+static paging_pas_t* get_dir(uint16_t pid, PAGING_FLAGS* flags)
 {
 	if (flags)
 		*flags = PAGING_FLAG_WRITE;
 
+	// PID 0 is the kernel PID, the rest may be invalid.
+	process_t* proc = NULL;
+	if (pid)
+	{
+		proc = process_get(pid);
+		dassert(proc);
+	}
+
 	if (proc)
 	{
-		// If the process exists, the mapping must be for userspace.
-		if (flags)
+		if (flags) //< If the process exists, the mapping must be for userspace.
 			*flags |= PAGING_FLAG_USER;
 
 		return proc->addr_space;
@@ -40,12 +48,12 @@ static paging_pas_t* get_dir(const process_t* proc, PAGING_FLAGS* flags)
 }
 
 //! Map a range of memory to a corresponding region of physical memory.
-void virtual_map(process_t* proc, uintptr_t virt, const void* phys, size_t size)
+void virtual_map(uint16_t pid, uintptr_t virt, const void* phys, size_t size)
 {
 	dassert(size);
 
 	PAGING_FLAGS flags;
-	paging_pas_t* pas = get_dir(proc, &flags);
+	paging_pas_t* pas = get_dir(pid, &flags);
 	phys = (const void*)addr_align((uintptr_t)phys, ARCH_PGSIZE);
 
 	// The paging functions expect aligned addresses.
@@ -57,11 +65,11 @@ void virtual_map(process_t* proc, uintptr_t virt, const void* phys, size_t size)
 }
 
 //! Remove a range of memory from the PAS.
-void virtual_unmap(process_t* proc, uintptr_t virt, size_t size)
+void virtual_unmap(uint16_t pid, uintptr_t virt, size_t size)
 {
 	dassert(size);
 
-	paging_pas_t* pas = get_dir(proc, NULL);
+	paging_pas_t* pas = get_dir(pid, NULL);
 
 	uintptr_t curr = addr_align(virt, ARCH_PGSIZE);
 	uintptr_t end  = virt + size;
@@ -71,11 +79,11 @@ void virtual_unmap(process_t* proc, uintptr_t virt, size_t size)
 
 //! Check if a region is completely or partially mapped.
 /*! Returns 0 if not mapped, 1 if mapped, or -1 if mixed. */
-int virtual_is_mapped(const process_t* proc, uintptr_t virt, size_t size)
+int virtual_is_mapped(uint16_t pid, uintptr_t virt, size_t size)
 {
 	dassert(size);
 
-	paging_pas_t* pas = get_dir(proc, NULL);
+	paging_pas_t* pas = get_dir(pid, NULL);
 	uintptr_t curr = addr_align(virt, ARCH_PGSIZE);
 
 	// Use the first page as the basis to check for mixed mappings.
@@ -95,12 +103,12 @@ int virtual_is_mapped(const process_t* proc, uintptr_t virt, size_t size)
 }
 
 //! Map a region with newly allocated physical memory.
-void virtual_alloc(process_t* proc, uintptr_t virt, size_t size)
+void virtual_alloc(uint16_t pid, uintptr_t virt, size_t size)
 {
 	dassert(size);
 
 	PAGING_FLAGS flags;
-	paging_pas_t* pas = get_dir(proc, &flags);
+	paging_pas_t* pas = get_dir(pid, &flags);
 
 	uintptr_t curr = addr_align(virt, ARCH_PGSIZE);
 	uintptr_t end  = virt + size;
@@ -121,14 +129,17 @@ void virtual_alloc(process_t* proc, uintptr_t virt, size_t size)
 }
 
 //! Point virtual memory to the same physical region that is mapped in another process.
-void virtual_clone(process_t* dest, const process_t* src, uintptr_t from, uintptr_t to, size_t size, VIRTUAL_CLONE_MODE mode)
+void virtual_clone(uint16_t dest, uint16_t src, uintptr_t from, uintptr_t to, size_t size, VIRTUAL_CLONE_MODE mode)
 {
-	dassert(dest && src);
+	// No need for get_dir since both processes must exist.
+	process_t* pdest = process_get(dest);
+	process_t* psrc  = process_get(src);
+
+	dassert(pdest && psrc);
 	dassert(size);
 
-	// No need for get_dir since both processes must exist.
-	paging_pas_t* pas_dest = dest->addr_space;
-	paging_pas_t* pas_src  = src->addr_space;
+	paging_pas_t* pas_dest = pdest->addr_space;
+	paging_pas_t* pas_src  = psrc->addr_space;
 
 	PAGING_FLAGS flags = PAGING_FLAG_USER;
 	switch (mode)

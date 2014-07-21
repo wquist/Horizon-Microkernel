@@ -113,8 +113,6 @@ uint16_t elf_binary_load(const elf_binary_t* binary)
 	dassert(binary);
 
 	uint16_t pid = process_new(0, binary->entry);
-	process_t* proc = process_get(pid);
-
 	for (size_t i = 0; i != ELF_SECTION_MAX; ++i)
 	{
 		if (!(binary->sections[i].phys))
@@ -128,12 +126,12 @@ uint16_t elf_binary_load(const elf_binary_t* binary)
 		dassert(virt + sect_size <= KERNEL_VIRT_BASE);
 
 		// First map the actual data from physical memory.
-		virtual_map(proc, virt, (void*)phys, map_size);
+		virtual_map(pid, virt, (void*)phys, map_size);
 
 		// Then map any remaining with new memory.
 		ssize_t rem_size = sect_size - map_size;
 		if (rem_size > 0)
-			virtual_alloc(proc, virt+map_size, rem_size);
+			virtual_alloc(pid, virt+map_size, rem_size);
 	}
 
 	return pid;

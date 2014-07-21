@@ -40,7 +40,7 @@ void thread_init()
 	// Map in memory for the bitmap.
 	uintptr_t map_start = region_reserve(BMSTACK_SIZE(THREAD_MAX));
 	bmstack_init(&block_map, (void*)map_start);
-	virtual_alloc(NULL, map_start, BMSTACK_SIZE(THREAD_MAX));
+	virtual_alloc(0, map_start, BMSTACK_SIZE(THREAD_MAX));
 
 	// Only TID 0 is reserved.
 	bmstack_set(&block_map, 0);
@@ -61,7 +61,7 @@ uint16_t thread_new(uint16_t pid, uintptr_t entry)
 	dassert(index != -1); //< No more TCBs available.
 
 	uintptr_t block = index_to_addr((uintptr_t)blocks, THREAD_BLOCK_SIZE, index);
-	virtual_alloc(NULL, block, THREAD_BLOCK_SIZE); //< Make sure the TCB is mapped.
+	virtual_alloc(0, block, THREAD_BLOCK_SIZE); //< Make sure the TCB is mapped.
 
 	thread_t* thread = (thread_t*)block;
 	memset(thread, 0, THREAD_BLOCK_SIZE);
