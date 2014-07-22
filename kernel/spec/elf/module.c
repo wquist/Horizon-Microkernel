@@ -15,9 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../elf.h"
-#include <memory/virtual.h>
-#include <multitask/process.h>
+#include "module.h"
 #include <debug/log.h>
 #include <debug/error.h>
 #include <util/addr.h>
@@ -105,34 +103,4 @@ elf_binary_t elf_module_parse(const module_t* module)
 	}
 
 	return binary;
-}
-
-//! Create a process from an .ELF binary.
-uint16_t elf_binary_load(const elf_binary_t* binary)
-{
-	dassert(binary);
-
-	uint16_t pid = process_new(0, binary->entry);
-	for (size_t i = 0; i != ELF_SECTION_MAX; ++i)
-	{
-		if (!(binary->sections[i].phys))
-			continue;
-
-		uintptr_t phys = addr_align(binary->sections[i].phys, ARCH_PGSIZE);
-		uintptr_t virt = addr_align(binary->sections[i].virt, ARCH_PGSIZE);
-		size_t sect_size = binary->sections[i].reserve;
-		size_t map_size  = binary->sections[i].size;
-
-		dassert(virt + sect_size <= KERNEL_VIRT_BASE);
-
-		// First map the actual data from physical memory.
-		virtual_map(pid, virt, (void*)phys, map_size);
-
-		// Then map any remaining with new memory.
-		ssize_t rem_size = sect_size - map_size;
-		if (rem_size > 0)
-			virtual_alloc(pid, virt+map_size, rem_size);
-	}
-
-	return pid;
 }

@@ -136,24 +136,3 @@ struct _Packed elf_program_header
 	uint32_t flags;
 	uint32_t align;
 };
-
-//! Abstracted section info from a program header.
-typedef struct elf_section elf_section_t;
-struct elf_section
-{
-	uintptr_t phys, virt;
-	size_t size, reserve;
-	uint32_t flags;
-};
-
-//! Abstracted info for the entire .elf file.
-typedef struct elf_binary elf_binary_t;
-struct elf_binary
-{
-	elf_section_t sections[ELF_SECTION_MAX];
-	uintptr_t entry;
-};
-
-bool elf_module_validate(const module_t* module);
-elf_binary_t elf_module_parse(const module_t* module);
-uint16_t elf_binary_load(const elf_binary_t* binary);

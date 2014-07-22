@@ -15,31 +15,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file spec/pic8259/io.h
+/*! \file spec/elf/module.h
  *  \date July 2014
  */
 
-#include <spec/pic8259.h>
+#pragma once
 
-//! The PIC is controlled through I/O ports.
-/*! Each PIC chip has its own command and data port. */
-typedef enum pic_port PIC_PORT;
-enum pic_port
+#include <spec/elf.h>
+#include <stddef.h>
+#include <stdint.h>
+
+//! Abstracted section info from a program header.
+typedef struct elf_section elf_section_t;
+struct elf_section
 {
-	PIC1_PORT_BASE = 0x20,
-	PIC1_PORT_CMD  = 0x20,
-	PIC1_PORT_DATA = 0x21,
-
-	PIC2_PORT_BASE = 0xA0,
-	PIC2_PORT_CMD  = 0xA0,
-	PIC2_PORT_DATA = 0xA1
+	uintptr_t phys, virt;
+	size_t size, reserve;
+	uint32_t flags;
 };
 
-void pic_icw_write(uint8_t mval, uint8_t sval, bool cmd);
-uint16_t pic_isr_read();
-void pic_reset(PIC_CHIP pic);
+//! Abstracted info for the entire .elf file.
+typedef struct elf_binary elf_binary_t;
+struct elf_binary
+{
+	elf_section_t sections[ELF_SECTION_MAX];
+	uintptr_t entry;
+};
 
-void pic_irq_enable(uint8_t irq);
-void pic_irq_disable(uint8_t irq);
-void pic_irq_enable_all();
-void pic_irq_disable_all();
+bool elf_module_validate(const module_t* module);
+elf_binary_t elf_module_parse(const module_t* module);
