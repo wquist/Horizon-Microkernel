@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file spec/pic8259/io.h
+/*! \file spec/pic8259/x86.h
  *  \date July 2014
  */
 

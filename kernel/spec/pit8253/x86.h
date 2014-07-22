@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file spec/pit8253/io.h
+/*! \file spec/pit8253/x86.h
  *  \date July 2014
  */
 

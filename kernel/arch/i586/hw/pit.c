@@ -18,7 +18,7 @@
 #include "pit.h"
 #include <sw/instr/misc.h>
 #include <debug/error.h>
-#include <spec/pit8253/io.h>
+#include <spec/pit8253/x86.h>
 
 //! Setup a PIT timer with a given frequency and output mode.
 void pit_set(PIT_TIMER timer, size_t freq, PIT_OUTMODE mode)

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "io.h"
+#include "x86.h"
 #include <arch.h>
 #include <debug/error.h>
 

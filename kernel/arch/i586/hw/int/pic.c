@@ -22,7 +22,7 @@
 #include <debug/log.h>
 #include <debug/error.h>
 #include <spec/pic8259.h>
-#include <spec/pic8259/io.h>
+#include <spec/pic8259/x86.h>
 
 void pic_eoi(isr_t isr, irq_t irq);
 
