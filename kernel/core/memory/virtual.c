@@ -22,10 +22,11 @@
 #include <util/addr.h>
 #include <stdbool.h>
 
-static paging_pas_t* get_dir(uint16_t pid, PAGING_FLAGS* flags)
+static PAGING_FLAGS get_dir(uint16_t pid, paging_pas_t** pas)
 {
-	if (flags)
-		*flags = PAGING_FLAG_WRITE;
+	// The paging functions use NULL to represent the kernel PAS.
+	*pas = NULL;
+	PAGING_FLAGS flags = PAGING_FLAG_WRITE;
 
 	// PID 0 is the kernel PID, the rest may be invalid.
 	process_t* proc = NULL;
@@ -35,16 +36,14 @@ static paging_pas_t* get_dir(uint16_t pid, PAGING_FLAGS* flags)
 		dassert(proc);
 	}
 
+	// If the process exists, the mapping must be for userspace.
 	if (proc)
 	{
-		if (flags) //< If the process exists, the mapping must be for userspace.
-			*flags |= PAGING_FLAG_USER;
-
-		return proc->addr_space;
+		flags |= PAGING_FLAG_USER;
+		*pas = proc->addr_space;
 	}
 
-	// The paging functions use NULL to represent the kernel PAS.
-	return NULL;
+	return flags;
 }
 
 //! Map a range of memory to a corresponding region of physical memory.
@@ -52,11 +51,13 @@ void virtual_map(uint16_t pid, uintptr_t virt, const void* phys, size_t size)
 {
 	dassert(size);
 
-	PAGING_FLAGS flags;
-	paging_pas_t* pas = get_dir(pid, &flags);
+	paging_pas_t* pas;
+	PAGING_FLAGS flags = get_dir(pid, &pas);
+
+	// The physical page must be aligned for paging_map.
 	phys = (const void*)addr_align((uintptr_t)phys, ARCH_PGSIZE);
 
-	// The paging functions expect aligned addresses.
+	// Same for the virtual page.
 	uintptr_t curr = addr_align(virt, ARCH_PGSIZE);
 	// Use virt and not curr because virt+size may extend an extra page over curr+size.
 	uintptr_t end  = virt + size;
@@ -69,7 +70,8 @@ void virtual_unmap(uint16_t pid, uintptr_t virt, size_t size)
 {
 	dassert(size);
 
-	paging_pas_t* pas = get_dir(pid, NULL);
+	paging_pas_t* pas;
+	get_dir(pid, &pas);
 
 	uintptr_t curr = addr_align(virt, ARCH_PGSIZE);
 	uintptr_t end  = virt + size;
@@ -83,15 +85,15 @@ int virtual_is_mapped(uint16_t pid, uintptr_t virt, size_t size)
 {
 	dassert(size);
 
-	paging_pas_t* pas = get_dir(pid, NULL);
-	uintptr_t curr = addr_align(virt, ARCH_PGSIZE);
+	paging_pas_t* pas;
+	get_dir(pid, &pas);
 
+	uintptr_t curr = addr_align(virt, ARCH_PGSIZE);
 	// Use the first page as the basis to check for mixed mappings.
 	bool state = paging_is_mapped(pas, curr);
-	curr += ARCH_PGSIZE;
 
 	uintptr_t end  = virt + size;
-	for (; curr < end; curr += ARCH_PGSIZE)
+	for (curr += ARCH_PGSIZE; curr < end; curr += ARCH_PGSIZE)
 	{
 		bool temp = paging_is_mapped(pas, curr);
 		// The rest of the mappings don't matter if it is already mixed.
@@ -107,8 +109,8 @@ void virtual_alloc(uint16_t pid, uintptr_t virt, size_t size)
 {
 	dassert(size);
 
-	PAGING_FLAGS flags;
-	paging_pas_t* pas = get_dir(pid, &flags);
+	paging_pas_t* pas;
+	PAGING_FLAGS flags = get_dir(pid, &pas);
 
 	uintptr_t curr = addr_align(virt, ARCH_PGSIZE);
 	uintptr_t end  = virt + size;
