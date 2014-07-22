@@ -59,6 +59,7 @@ SRC_DIRS =         \
 	spec/elf       \
 	spec/multiboot \
 	spec/pic8259   \
+	spec/pit8253   \
 	util           \
 	$(ARCH_ROOT)
 
