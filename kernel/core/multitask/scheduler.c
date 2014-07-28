@@ -35,7 +35,7 @@ void scheduler_start()
 	thread_t* thread = thread_get(active_thread);
 	thread->sched.timeslice = SCHEDULER_TIMESLICE;
 
-	// FIXME: Set the arch timer.
+	arch_timer_init(SCHEDULER_FREQ, timer_tick);
 	task_start(&(thread->task));
 }
 
