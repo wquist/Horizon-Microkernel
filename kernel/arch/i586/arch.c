@@ -18,7 +18,10 @@
 #include "arch.h"
 #include <sw/gdt.h>
 #include <sw/int/idt.h>
+#include <hw/int/pic.h>
+#include <hw/pit.h>
 #include <debug/log.h>
+#include <stdbool.h>
 
 // The actual value of a linker variable is its address.
 #define LINKVAR(symbol, addr)  \
@@ -42,4 +45,11 @@ void arch_init()
 	idt_init(kernel_idt());
 	idt_load(kernel_idt());
 	dtrace("Installed main kernel IDT. (interrupts are INT32 ring 0)");
+}
+
+void arch_timer_init(size_t freq, int_callback_t handle)
+{
+	int_callback_set(irq_to_isr(PIT_IRQ), false, handle);
+	pic_irq_enable(PIT_IRQ);
+	pit_timer_set(PIT_TIMER0, freq, PIT_OUTMODE_SQRWAVE);
 }

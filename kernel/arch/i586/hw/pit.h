@@ -22,8 +22,11 @@
 #pragma once
 
 #include <spec/pit8253.h>
+#include <spec/pit8253/x86.h>
 #include <stddef.h>
 #include <stdint.h>
 
-void pit_set(PIT_TIMER timer, size_t freq, PIT_OUTMODE mode);
+#define PIT_IRQ 0
+
+void pit_timer_set(PIT_TIMER timer, size_t freq, PIT_OUTMODE mode);
 void pit_sleep(size_t msec);

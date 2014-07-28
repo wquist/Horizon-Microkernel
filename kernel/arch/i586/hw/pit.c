@@ -18,10 +18,9 @@
 #include "pit.h"
 #include <sw/instr/misc.h>
 #include <debug/error.h>
-#include <spec/pit8253/x86.h>
 
 //! Setup a PIT timer with a given frequency and output mode.
-void pit_set(PIT_TIMER timer, size_t freq, PIT_OUTMODE mode)
+void pit_timer_set(PIT_TIMER timer, size_t freq, PIT_OUTMODE mode)
 {
 	dassert(freq);
 
@@ -40,7 +39,7 @@ void pit_sleep(size_t msec)
 {
 	// Use TIMER2 for sleeping.
 	size_t freq = 1000 / msec;
-	pit_set(PIT_TIMER2, freq, PIT_OUTMODE_ONESHOT);
+	pit_timer_set(PIT_TIMER2, freq, PIT_OUTMODE_ONESHOT);
 
 	// Toggle the CH2 gate to start the one-shot.
 	pit_control_t ctl = pit_control_read();

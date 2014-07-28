@@ -28,6 +28,7 @@
 #include <sw/task.h>
 #include <sw/int/frame.h>
 #include <sw/int/ctl.h>
+#include <sw/int/callback.h>
 #include <sw/instr/io.h>
 #include <hw/console.h>
 
@@ -60,3 +61,4 @@ typedef struct paging_dir paging_pas_t;
 #define paging_pas_load paging_dir_load
 
 void arch_init();
+void arch_timer_init(size_t freq, int_callback_t handle);

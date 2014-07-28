@@ -23,6 +23,8 @@
 
 #include <sw/int/isr.h>
 #include <sw/int/irq.h>
+#include <spec/pic8259.h>
+#include <spec/pic8259/x86.h>
 #include <stdint.h>
 #include <stdbool.h>
 
