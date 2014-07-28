@@ -28,6 +28,10 @@
 
 #define SYSCALL_ISR 0x95
 
+//! A null-terminated array of syscall structs.
+/*! Define this in the core system/syscalls header. */
+#define SYSCALL_TABLE const __weak syscall_t syscall_table[]
+
 typedef struct syscall syscall_t;
 struct syscall
 {
