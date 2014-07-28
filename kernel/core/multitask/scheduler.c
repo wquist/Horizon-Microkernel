@@ -35,7 +35,7 @@ void scheduler_start()
 	thread_t* thread = thread_get(active_thread);
 	thread->sched.timeslice = SCHEDULER_TIMESLICE;
 
-	//arch_timer_init(SCHEDULER_FREQ, timer_tick);
+	arch_timer_init(SCHEDULER_FREQ, timer_tick);
 
 	paging_pas_load(process_get(thread->owner)->addr_space);
 	task_start(&(thread->task));

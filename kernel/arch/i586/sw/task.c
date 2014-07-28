@@ -34,7 +34,7 @@ void task_init(task_info_t* info)
 /*! Remember to change address spaces first. */
 void task_start(task_info_t* info)
 {
-	tss_init(&kernel_task, __kernel_stack); //< FIXME: set up a new stack somewhere?
+	tss_init(&kernel_task, __kernel_stack-16); //< FIXME: set up a new stack somewhere?
 	tss_load(&kernel_task);
 
 	_ASM
