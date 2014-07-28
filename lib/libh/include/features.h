@@ -2,27 +2,37 @@
 #define _FEATURES_H
 
 #if defined(__GNUC__)
-#define _Packed __attribute__ ((__packed__))
-#elif defined(_KERNEL_SOURCE)
-#error "Packed attribute required for kernel compilation."
-#endif
-
-#if __STDC_VERSION__ < 201112L
-#if defined(__GNUC__)
-#define _Noreturn __attribute__ ((__noreturn__))
+#define __packed __attribute__ ((__packed__))
 #else
-#define _Noreturn
-#endif
 #endif
 
 #if defined(__GNUC__)
-#define _ASM __asm__ __volatile__
+#define __weak __attribute__ ((__weak__))
 #else
-#define _ASM asm
 #endif
 
-#if !defined(_KERNEL_SOURCE)
-#define HAS_STDIO
+#if __STDC_VERSION__ >= 201112L
+#define __noreturn _Noreturn
+#elif defined(__GNUC__)
+#define __noreturn __attribute__ ((__noreturn__))
+#else
+#define __noreturn
+#endif
+
+#if __STDC_VERSION__ >= 199901L
+#define __inline inline
+#define __forceinline __attribute__ ((__always_inline__))
+#else
+#endif
+
+#if defined(__GNUC__)
+#define __asm __asm__ __volatile__
+#else
+#define __asm asm
+#endif
+
+#if !defined(_KERNEL)
+#define _HAS_STDIO
 #endif
 
 #endif
