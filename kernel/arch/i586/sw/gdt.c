@@ -85,8 +85,7 @@ void gdt_load(const gdt_t* table)
 	dassert(table);
 
 	lgdt(&(table->gdtr));
-	_ASM
-	(
+	__asm (
 		"mov $0x10, %%ax;" //< Load the new kernel data segment to all segments. (except code)
 		"mov %%ax,  %%ds;"
 		"mov %%ax,  %%es;"

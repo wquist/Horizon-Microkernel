@@ -37,7 +37,7 @@ struct task_info
 
 //! The TSS format. Only one per CPU.
 typedef struct tss tss_t;
-struct _Packed tss
+struct __packed tss
 {
 	uint32_t prev; //!< Unused for SW task switching.
 	

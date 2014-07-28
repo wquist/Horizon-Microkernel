@@ -94,7 +94,7 @@ enum pic_buffer_mode
 typedef union pic_icw1 pic_icw1_t;
 union pic_icw1
 {
-	struct __attribute__ ((packed))
+	struct __packed
 	{
 		bool icw4          : 1; //!< ICW4 will be sent in this command.
 		bool single        : 1; //!< This is the only PIC in the system.
@@ -103,7 +103,7 @@ union pic_icw1
 		bool always_1      : 1;
 		uint8_t            : 3;
 	};
-	struct __attribute__ ((packed))
+	struct __packed
 	{
 		uint8_t           : 5;
 		uint8_t vector3_5 : 3; //!< Vector bits 3-5.
@@ -115,11 +115,11 @@ union pic_icw1
 typedef union pic_icw2 pic_icw2_t;
 union pic_icw2
 {
-	struct __attribute__ ((packed))
+	struct __packed
 	{
 		uint8_t vector8_15; //!< Vector bits 8-15.
 	} mode_mcs8X;
-	struct __attribute__ ((packed))
+	struct __packed
 	{
 		uint8_t  : 3;
 		uint8_t vector3_7 : 5; //!< Vector bits 3-7.
@@ -131,11 +131,11 @@ union pic_icw2
 typedef union pic_icw3 pic_icw3_t;
 union pic_icw3
 {
-	struct __attribute__ ((packed))
+	struct __packed
 	{
 		uint8_t ir_slaves; //!< Each bit represents an IR-IN that has a slave.
 	} master;
-	struct __attribute__ ((packed))
+	struct __packed
 	{
 		uint8_t slave_id : 3;
 		uint8_t          : 5;
@@ -147,7 +147,7 @@ union pic_icw3
 typedef union pic_icw4 pic_icw4_t;
 union pic_icw4
 {
-	struct __attribute__ ((packed))
+	struct __packed
 	{
 		bool    sys_mode     : 1; //!< Use PIC_SYS_MODE.
 		bool    auto_eoi     : 1;

@@ -45,7 +45,7 @@ enum cpuid_code
 typedef union cpuid_ecx cpuid_ecx_t;
 union cpuid_ecx
 {
-	struct _Packed
+	struct __packed
 	{
 		bool SSE3    : 1; //!< SSE3 available.
 		bool PCMUL   : 1; //!< PCLMULDQ available.
@@ -87,7 +87,7 @@ union cpuid_ecx
 typedef union cpuid_edx cpuid_edx_t;
 union cpuid_edx
 {
-	struct _Packed
+	struct __packed
 	{
 		bool FPU   : 1; //!< FPU onboard.
 		bool VME   : 1; //!< Virtual Mode Extensions.
@@ -129,7 +129,7 @@ union cpuid_edx
 typedef union eflags eflags_t;
 union eflags
 {
-	struct _Packed
+	struct __packed
 	{
 		bool    CF   : 1;  //!< Carry Flag.
 		bool         : 1; 
@@ -246,7 +246,7 @@ enum msr
 typedef union msr_apic_base msr_apic_base_t;
 union msr_apic_base
 {
-	struct _Packed
+	struct __packed
 	{
 		uint8_t            : 8;
 		bool bsp           : 1;
@@ -256,7 +256,7 @@ union msr_apic_base
 		uint32_t base      : 24;
 		uint32_t           : 28;
 	};
-	struct _Packed
+	struct __packed
 	{
 		uint32_t low;
 		uint32_t high;
@@ -268,7 +268,7 @@ union msr_apic_base
 typedef union msr_misc_enable msr_misc_enable_t;
 union msr_misc_enable
 {
-	struct _Packed
+	struct __packed
 	{
 		bool FSE     : 1; //!< Fast-Strings Enable
 		bool LPPE    : 1;
@@ -303,7 +303,7 @@ union msr_misc_enable
 		bool L1IPPRD : 1;
 		uint32_t     : 24;
 	};
-	struct _Packed
+	struct __packed
 	{
 		uint32_t low;
 		uint32_t high;
@@ -315,14 +315,14 @@ union msr_misc_enable
 static inline uint32_t eflags_read()
 {
 	uint32_t ret;
-	_ASM ("pushfl; popl %0" : "=r" (ret));
+	__asm ("pushfl; popl %0" : "=r" (ret));
 	return ret;
 }
 
 //! Write new values to processor flags.
 static inline void eflags_write(uint32_t val)
 {
-	_ASM ("pushl %0; popfl" :: "r" (val) : "memory");
+	__asm ("pushl %0; popfl" :: "r" (val) : "memory");
 }
 
 //! Check if the CPUID instruction is available.
@@ -342,7 +342,7 @@ static inline bool cpuid_is_available()
 static inline void cpuid(uint32_t code, uint32_t* res[4])
 {
 	uint32_t regs[4] = {0};
-	_ASM ("cpuid" : "=a" (regs[0]), "=b" (regs[1]), "=c" (regs[2]), "=d" (regs[3]) : "a" (code));
+	__asm ("cpuid" : "=a" (regs[0]), "=b" (regs[1]), "=c" (regs[2]), "=d" (regs[3]) : "a" (code));
 
 	if (res[0]) *(res[0]) = regs[0];
 	if (res[1]) *(res[1]) = regs[1];
@@ -353,17 +353,17 @@ static inline void cpuid(uint32_t code, uint32_t* res[4])
 //! Read from a Model Specific Register.
 static inline void rdmsr(MSR msr, uint32_t* low, uint32_t* high)
 {
-	_ASM ("rdmsr" : "=a" (*low), "=d" (*high) : "c" (msr));
+	__asm ("rdmsr" : "=a" (*low), "=d" (*high) : "c" (msr));
 }
 
 //! Write to a Model Specific Register.
 static inline void wrmsr(MSR msr, uint32_t low, uint32_t high)
 {
-	_ASM ("wrmsr" :: "a" (low), "d" (high), "c" (msr) : "memory");
+	__asm ("wrmsr" :: "a" (low), "d" (high), "c" (msr) : "memory");
 }
 
 //! Get the CPU's cycle count.
 static inline void rdtsc(uint32_t* low, uint32_t* high)
 {
-	_ASM ("rdtsc" : "=a" (*low), "=d" (*high));
+	__asm ("rdtsc" : "=a" (*low), "=d" (*high));
 }

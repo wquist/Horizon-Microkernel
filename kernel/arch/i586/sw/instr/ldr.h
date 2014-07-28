@@ -27,18 +27,18 @@
 //! Load a new GDT for the CPU.
 static inline void lgdt(const void* gdtr)
 {
-	_ASM ("lgdt (%0)" :: "r" (gdtr) : "memory");
+	__asm ("lgdt (%0)" :: "r" (gdtr) : "memory");
 }
 
 //! Load a new IDT for the CPU.
 static inline void lidt(const void* idtr)
 {
-	_ASM ("lidt (%0)" :: "r" (idtr) : "memory");
+	__asm ("lidt (%0)" :: "r" (idtr) : "memory");
 }
 
 //! Load a new task register segment.
 static inline void ltr(uint16_t seg, size_t dpl)
 {
 	uint16_t val = seg | (uint16_t)dpl;
-	_ASM ("ltr %0" :: "r" (val) : "memory");
+	__asm ("ltr %0" :: "r" (val) : "memory");
 }

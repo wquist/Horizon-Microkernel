@@ -26,5 +26,5 @@
 //! Prevents optimization of tight/idle loops.
 static inline void pause()
 {
-	_ASM ("pause" ::: "memory");
+	__asm ("pause" ::: "memory");
 }

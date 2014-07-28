@@ -26,11 +26,11 @@
 //! Enable interrupts.
 static inline void sti()
 {
-	_ASM ("sti" ::: "memory");
+	__asm ("sti" ::: "memory");
 }
 
 //! Disable interrupts.
 static inline void cli()
 {
-	_ASM ("cli" ::: "memory");
+	__asm ("cli" ::: "memory");
 }

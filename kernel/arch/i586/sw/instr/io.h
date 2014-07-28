@@ -27,12 +27,12 @@
 static inline uint8_t inb(uint16_t port)
 {
 	uint8_t ret;
-	_ASM ("inb %1, %0" : "=a" (ret) : "d" (port));
+	__asm ("inb %1, %0" : "=a" (ret) : "d" (port));
 	return ret;
 }
 
 //! Write a byte of data to an I/O port.
 static inline void outb(uint16_t port, uint8_t val)
 {
-	_ASM ("outb %0, %1" :: "a" (val), "d" (port) : "memory");
+	__asm ("outb %0, %1" :: "a" (val), "d" (port) : "memory");
 }

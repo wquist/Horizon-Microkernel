@@ -51,7 +51,7 @@ enum idt_entrytype
 
 //! An IDT description. Identical to the GDTR.
 typedef struct idt_desc idt_desc_t;
-struct _Packed idt_desc
+struct __packed idt_desc
 {
 	uint16_t limit; //!< The size.
 	uint32_t base;  //!< The address.
@@ -61,7 +61,7 @@ struct _Packed idt_desc
 typedef union idt_entry idt_entry_t;
 union idt_entry
 {
-	struct _Packed
+	struct __packed
 	{
 		uint16_t base_low  : 16;
 		uint16_t segment   : 16; //!< The GDT segment the ISR should be called from.

@@ -26,5 +26,5 @@
 //! Invalidate a single page table entry.
 static inline void invlpg(uintptr_t addr)
 {
-	_ASM ("invlpg (%0)" :: "r" (addr) : "memory");
+	__asm ("invlpg (%0)" :: "r" (addr) : "memory");
 }

@@ -101,7 +101,7 @@ enum elf_ptype
 
 //! The format of an ELF file header.
 typedef struct elf_file_header elf_file_header_t;
-struct _Packed elf_file_header
+struct __packed elf_file_header
 {
 	uint8_t fid[ELF_FID_LENGTH];
 
@@ -124,7 +124,7 @@ struct _Packed elf_file_header
 
 //! The format of an ELF program header.
 typedef struct elf_program_header elf_program_header_t;
-struct _Packed elf_program_header
+struct __packed elf_program_header
 {
 	uint32_t type;
 	uint32_t offset;

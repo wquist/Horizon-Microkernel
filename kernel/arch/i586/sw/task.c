@@ -37,8 +37,7 @@ void task_start(task_info_t* info)
 	tss_init(&kernel_task, __kernel_stack-16); //< FIXME: set up a new stack somewhere?
 	tss_load(&kernel_task);
 
-	_ASM
-	(
+	__asm (
 		"movw  $0x20|0x3, %%ax; "
 		"movw  %%ax,      %%ds; " //< Set the user data segment for each reg.
 		"movw  %%ax,      %%es; "
@@ -55,8 +54,7 @@ void task_start(task_info_t* info)
 		"iret;                  "
 		:: "r" (info->stack),
 		   "r" (info->entry)
-		:  "memory"
-	);
+		:  "memory");
 }
 
 //! Switch to another task during an interrupt.
@@ -108,10 +106,8 @@ void tss_load(const tss_t* task)
 	gdt_entry_set(curr_gdt, GDT_SEGMENT_TSS, base, limit, GDT_ENTRYTYPE_TSS, 0);
 	gdt_load(curr_gdt);
 
-	_ASM
-	(
+	__asm (
 		"movw $0x28|0x3, %%ax;"
 		"ltr  %%ax;           "
-	    ::: "memory"
-	);
+	    ::: "memory");
 }

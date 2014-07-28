@@ -52,7 +52,7 @@ enum gdt_entrytype
 //! The description portion of a GDT.
 /*! The limit should be the actual size - 1. */
 typedef struct gdt_desc gdt_desc_t;
-struct _Packed gdt_desc
+struct __packed gdt_desc
 {
 	uint16_t limit; //!< The size.
 	uint32_t base;  //!< The address.
@@ -66,7 +66,7 @@ struct _Packed gdt_desc
 typedef union gdt_entry gdt_entry_t;
 union gdt_entry
 {
-	struct _Packed
+	struct __packed
 	{
 		uint16_t limit_low   : 16;
 		uint32_t base_low    : 24;

@@ -149,7 +149,7 @@ struct multiboot_info
  *  location -4, addr is at 0, etc.
  */
 typedef struct multiboot_mmap_entry multiboot_mmap_t;
-struct _Packed multiboot_mmap_entry
+struct __packed multiboot_mmap_entry
 {
     uint32_t size;
 

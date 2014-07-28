@@ -38,7 +38,7 @@
 static uint16_t startp_load(const module_t* mod);
 
 // The kernel C entry point.
-void _Noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
+void __noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 {
 	debug_init();
 	dassert(magic == BOOTLOADER_MAGIC);

@@ -24,7 +24,7 @@
 #include <stdint.h>
 
 typedef struct message message_t;
-struct _Packed message //!< This should always be 16 bytes.
+struct __packed message //!< This should always be 16 bytes.
 {
 	uint16_t sender;
 	uint8_t  flags;

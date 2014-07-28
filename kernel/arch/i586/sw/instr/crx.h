@@ -28,7 +28,7 @@
 typedef union cr0 cr0_t;
 union cr0
 {
-	struct _Packed
+	struct __packed
 	{
 		bool PE  : 1;  //!< Protected Mode Enable.
 		bool MP  : 1;  //!< Monitor Co-Processor. (Controls behavior of WAIT/FWAIT)
@@ -52,7 +52,7 @@ union cr0
 typedef union cr3 cr3_t;
 union cr3
 {
-	struct _Packed
+	struct __packed
 	{
 		uint8_t       : 3;
 		bool     PWT  : 1;  //!< Page Write Through
@@ -67,7 +67,7 @@ union cr3
 typedef union cr4 cr4_t;
 union cr4
 {
-	struct _Packed
+	struct __packed
 	{
 		bool VME      : 1; //!< Virtual 8086 Extensions. (Allow the VIF flag in V8086 mode)
 		bool PVI      : 1; //!< Protected Virtual Interrupts. (Allow the VIF flag in protected mode)
@@ -97,8 +97,8 @@ union cr4
 
 // Defines crx_read() and crx_write().
 #define crx_rw_pair_IMP(x) \
-static inline uint32_t cr##x##_read() { uint32_t ret; _ASM ("movl %%cr"#x", %0" : "=a" (ret)); return ret; } \
-static inline void cr##x##_write(uint32_t val) { _ASM ("movl %0, %%cr"#x :: "r" (val) : "memory"); }
+static inline uint32_t cr##x##_read() { uint32_t ret; __asm ("movl %%cr"#x", %0" : "=a" (ret)); return ret; } \
+static inline void cr##x##_write(uint32_t val) { __asm ("movl %0, %%cr"#x :: "r" (val) : "memory"); }
 
 crx_rw_pair_IMP(0); //!< Processor flags like pmode, v8086, caching, and paging.
 crx_rw_pair_IMP(2); //!< Source address after a page fault.

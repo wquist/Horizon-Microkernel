@@ -26,19 +26,19 @@
 //! Load default values into FPU.
 static inline void fninit()
 {
-	_ASM ("fninit" ::: "memory");
+	__asm ("fninit" ::: "memory");
 }
 
 //! Store FPU status word.
 //! \param stsw	The address to store the status word at.
 static inline void fnstsw(uint16_t* stsw)
 {
-	_ASM ("fnstsw (%0)" :: "p" (stsw));
+	__asm ("fnstsw (%0)" :: "p" (stsw));
 }
 
 //! Load FPU control word.
 //! \param cw	The control word to load.
 static inline void fldcw(uint16_t cw)
 {
-	_ASM ("fldcw %0" :: "m" (cw) : "memory");
+	__asm ("fldcw %0" :: "m" (cw) : "memory");
 }

@@ -44,7 +44,7 @@ enum paging_flags
 typedef union paging_dirent paging_dirent_t;
 union paging_dirent
 {
-	struct _Packed
+	struct __packed
 	{
 		bool 	 present   : 1;
 		bool 	 writable  : 1;
@@ -65,7 +65,7 @@ union paging_dirent
 typedef union paging_tblent paging_tblent_t;
 union paging_tblent
 {
-	struct _Packed
+	struct __packed
 	{
 		bool 	 present    : 1;
 		bool 	 writable   : 1;

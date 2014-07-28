@@ -58,7 +58,7 @@ enum exception
 typedef union exception_errcode exception_errcode_t;
 union exception_errcode
 {
-	struct _Packed
+	struct __packed
 	{
 		bool     e     : 1;
 		uint8_t  tbl   : 2;

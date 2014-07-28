@@ -77,7 +77,7 @@ typedef union pit_command pit_command_t;
 union pit_command
 {
 	//! A setup command.
-	struct _Packed
+	struct __packed
 	{
 		bool    count_mode  : 1; //!< PIT_CNTMODE.
 		uint8_t output_mode : 3; //!< PIT_OUTMODE.
@@ -85,7 +85,7 @@ union pit_command
 		uint8_t channel     : 2; //!< TIMERX the command is targeting.
 	};
 	//! A status command.
-	struct _Packed
+	struct __packed
 	{
 		bool             : 1; //!< Should be 0.
 		bool readback_t0 : 1; //!< Get TIMER0 status.
@@ -102,7 +102,7 @@ union pit_command
 typedef union pit_status pit_status_t;
 union pit_status
 {
-	struct _Packed
+	struct __packed
 	{
 		bool    count_mode   : 1;
 		uint8_t output_mode  : 3;
@@ -120,7 +120,7 @@ typedef union pit_control pit_control_t;
 union pit_control
 {
 	// FIXME: Properly document these bits.
-	struct _Packed
+	struct __packed
 	{
 		bool gate_ch2      : 1;
 		bool speaker       : 1;
