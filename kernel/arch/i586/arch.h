@@ -29,6 +29,7 @@
 #include <sw/int/frame.h>
 #include <sw/int/ctl.h>
 #include <sw/int/callback.h>
+#include <sw/int/syscall.h>
 #include <sw/instr/io.h>
 #include <hw/console.h>
 

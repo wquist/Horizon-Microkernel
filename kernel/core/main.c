@@ -28,6 +28,7 @@
 #include <memory/virtual.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <system/syscalls.h>
 #include <debug/ctl.h>
 #include <debug/error.h>
 #include <spec/elf/module.h>
@@ -60,6 +61,7 @@ void __noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 	// Initialize multitasking.
 	int_init();
 	process_init();
+	syscall_init();
 
 	// Load available modules as processes.
 	for (size_t i = 0; i != module_count_get(); ++i)
