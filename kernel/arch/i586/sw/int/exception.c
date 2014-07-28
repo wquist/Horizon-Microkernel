@@ -123,11 +123,11 @@ void exception_debug(isr_t isr, irq_t irq)
 		case EXCEPTION_PF:
 		{
 			// Each bit represents cpu state when the bad page was accessed.
-			bool p = sel.raw & (1 << 0);
-			bool w = sel.raw & (1 << 1);
-			bool u = sel.raw & (1 << 2);
-			bool r = sel.raw & (1 << 3);
-			bool i = sel.raw & (1 << 4);
+			bool p = !!(sel.raw & (1 << 0));
+			bool w = !!(sel.raw & (1 << 1));
+			bool u = !!(sel.raw & (1 << 2));
+			bool r = !!(sel.raw & (1 << 3));
+			bool i = !!(sel.raw & (1 << 4));
 
 			dtrace("Page fault: 0x%08X -> 0x%08X (P:%i W:%i U:%i R:%i I:%i).", frame->EIP, cr2_read(), p,w,u,r,i);
 			break;

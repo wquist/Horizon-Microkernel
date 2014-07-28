@@ -39,20 +39,20 @@ void task_start(task_info_t* info)
 
 	_ASM
 	(
-		"movw  0x20|0x3, %%ax; "
-		"movw  %%ax,     %%ds; " //< Set the user data segment for each reg.
-		"movw  %%ax,     %%es; "
-		"movw  %%ax,     %%fs; "
-		"movw  %%ax,     %%gs; "
-		"pushl 0x20|0x3;       " //< Also place user data seg on stack as SS.
-		"pushl %0;             " //< Push the specified stack pointer.
-		"pushf;                "
-		"popl  %%eax;          " //< Pop EFLAGS into EAX.
-		"or    $0x200,   %%eax;" //< Enable interrupts.
-		"pushl %%eax;          " //< Set the new EFLAGS.
-		"pushl 0x18|0x3;       " //< Set the user code segment.
-		"pushl %1;             " //< Push the new EIP.
-		"iret;                 "
+		"movw  $0x20|0x3, %%ax; "
+		"movw  %%ax,      %%ds; " //< Set the user data segment for each reg.
+		"movw  %%ax,      %%es; "
+		"movw  %%ax,      %%fs; "
+		"movw  %%ax,      %%gs; "
+		"pushl $0x20|0x3;       " //< Also place user data seg on stack as SS.
+		"pushl %0;              " //< Push the specified stack pointer.
+		"pushf;                 "
+		"popl  %%eax;           " //< Pop EFLAGS into EAX.
+		"or    $0x200,    %%eax;" //< Enable interrupts.
+		"pushl %%eax;           " //< Set the new EFLAGS.
+		"pushl $0x18|0x3;       " //< Set the user code segment.
+		"pushl %1;              " //< Push the new EIP.
+		"iret;                  "
 		:: "r" (info->stack),
 		   "r" (info->entry)
 		:  "memory"
@@ -110,8 +110,8 @@ void tss_load(const tss_t* task)
 
 	_ASM
 	(
-		"movw 0x28|0x3, %%ax;"
-		"ltr  %%ax;          "
+		"movw $0x28|0x3, %%ax;"
+		"ltr  %%ax;           "
 	    ::: "memory"
 	);
 }
