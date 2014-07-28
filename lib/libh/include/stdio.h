@@ -4,7 +4,7 @@
 #include <features.h>
 #include <stdarg.h>
 
-#if defined(HAS_STDIO)
+#if defined(_HAS_STDIO)
 int putchar(char c);
 #else
 extern int putchar(char c);
