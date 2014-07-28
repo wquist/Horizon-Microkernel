@@ -7,22 +7,24 @@
 #define uintmax_t unsigned long
 #define  intmax_t long
 
+#define FMT(s, x) char* prev = s; x; if (s == prev) *--s = '0';
+
 static const char xdigits[16] = { "0123456789ABCDEF" };
 static char* fmt_x(uintmax_t x, char* s, char lower)
 {
-	for (; x; x >>= 4) *--s = xdigits[(x & 0xF)] | (lower & 0x20);
+	FMT(s, for (; x; x >>= 4) *--s = xdigits[(x & 0xF)] | (lower & 0x20));
 	return s;
 }
 
 static char* fmt_o(uintmax_t o, char* s)
 {
-	for (; o; o >>= 3) *--s = '0' + (o & 0x7);
+	FMT(s, for (; o; o >>= 3) *--s = '0' + (o & 0x7));
 	return s;
 }
 
 static char* fmt_u(uintmax_t u, char* s)
 {
-	for (; u; u /= 10) *--s = '0' + (u % 10);
+	FMT(s, for (; u; u /= 10) *--s = '0' + (u % 10));
 	return s;
 }
 
