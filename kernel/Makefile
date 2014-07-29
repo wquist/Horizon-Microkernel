@@ -38,7 +38,7 @@ LDSCRIPT = $(ARCH_ROOT)/link.ld
 LDFLAGS  = -T $(LDSCRIPT)
 
 # Define global macros
-DEFINES = _KERNEL_SOURCE _DEBUG
+DEFINES = _KERNEL _DEBUG
 
 # The raw include directories - more can be added in an arch's "Makefile.inc"
 INC_DIRS =                        \
