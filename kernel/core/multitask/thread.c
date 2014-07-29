@@ -20,6 +20,7 @@
 #include "process.h"
 #include <memory/region.h>
 #include <memory/virtual.h>
+#include <multitask/scheduler.h>
 #include <util/bmstack.h>
 #include <util/addr.h>
 #include <debug/log.h>
@@ -72,7 +73,7 @@ uint16_t thread_new(uint16_t pid, uintptr_t entry)
 	task_init(&(thread->task));
 	thread->task.entry = (entry) ? entry : owner->entry;
 
-	// Add the thread to the process's slots and update the bitmap.
+	// Add the thread to a process thread slot and update the bitmap.
 	/* FIXME: Should the thread add itself or the process add the thread? */
 	size_t slot = bitmap_find_and_set(owner->threads.bitmap, PROCESS_THREAD_MAX);
 	owner->threads.slots[slot] = index;
@@ -91,7 +92,10 @@ void thread_kill(uint16_t tid)
 	thread_t* target = thread_get(tid);
 	dassert(target);
 
-	// FIXME: Destory any IPC data (messages, etc).
+	if (target->sched.state == THREAD_STATE_ACTIVE)
+		scheduler_remove(tid);
+
+	// FIXME: Destory any IPC data (messages, etc)?
 
 	process_t* owner = process_get(target->owner);
 	bitmap_clear(owner->threads.bitmap, target->lid);

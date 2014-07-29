@@ -122,6 +122,8 @@ void scheduler_next()
 	active_thread = curr->sched.queue.next;
 
 	thread_t* next = thread_get(active_thread);
+	dassert(next);
+
 	next->sched.timeslice = SCHEDULER_TIMESLICE;
 
 	// Do the threads share the same address space?
