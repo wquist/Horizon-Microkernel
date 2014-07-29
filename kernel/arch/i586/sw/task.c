@@ -63,8 +63,9 @@ void task_switch(task_info_t* curr, task_info_t* next)
 {
 	int_frame_t* frame = int_callback_frame_get();
 
-	// Save the old state.
-	memcpy(&(curr->frame), frame, sizeof(int_frame_t));
+	// Save the old state, if desired.
+	if (curr)
+		memcpy(&(curr->frame), frame, sizeof(int_frame_t));
 
 	if (!(next->frame.EIP)) //< This is a new task.
 	{

@@ -19,9 +19,12 @@
 #include <arch.h>
 #include <multitask/process.h>
 #include <debug/error.h>
+#include <stddef.h>
+#include <stdbool.h>
 
 // FIXME: Will have to be modified for multi-core.
 static uint16_t active_thread = 0;
+static bool locked = false;
 
 static void timer_tick(uint8_t isr, int8_t irq);
 
@@ -80,33 +83,47 @@ void scheduler_add(uint16_t tid)
 /*! The thread cannot be the the scheduler_curr thread. */
 void scheduler_remove(uint16_t tid)
 {
-	// FIXME: Allow the currently running thread to be removed.
-
-	// The thread must exist in the scheduler queue and not be running.
+	// The thread must exist in the scheduler queue.
 	thread_t* target = thread_get(tid);
 	dassert(target);
-	dassert(target->sched.timeslice == 0);
 	dassert(target->sched.state == THREAD_STATE_ACTIVE);
 
-	target->sched.state = THREAD_STATE_NEW;
+	// When not locked, the target cannot be running.
+	if (!locked)
+		dassert(active_thread != target->tid);
 
 	thread_t* next = thread_get(target->sched.queue.next);
 	thread_t* prev = thread_get(target->sched.queue.prev);
 
-	// Remove the target from the linked list.
-	next->sched.queue.prev = prev->tid;
-	prev->sched.queue.next = next->tid;
+	if (next->tid == target->tid)
+	{
+		// The last thread in queue has been removed.
+		active_thread = 0;
+	}
+	else
+	{
+		// The thread was running, so set active to the next.
+		/* The schuduler is locked here. */
+		if (active_thread == target->tid)
+			active_thread = next->tid;
+
+		// Remove the target from the linked list.
+		next->sched.queue.prev = prev->tid;
+		prev->sched.queue.next = next->tid;
+	}
+
+	target->sched.state = THREAD_STATE_OLD;
 }
 
 //! Switch to the next thread in the scheduler queue.
 void scheduler_next()
 {
 	thread_t* curr = thread_get(active_thread);
-	curr->sched.timeslice = 0;
-	
 	active_thread = curr->sched.queue.next;
 
 	thread_t* next = thread_get(active_thread);
+	dassert(next);
+
 	next->sched.timeslice = SCHEDULER_TIMESLICE;
 
 	// Do the threads share the same address space?
@@ -118,19 +135,38 @@ void scheduler_next()
 		task_switch(&(curr->task), &(next->task));
 }
 
+//! Enable a no-thread state during a context switch.
+void scheduler_lock()
+{
+	locked = true;
+}
+
+//! Re-enable the scheduler before returning from a context switch.
+void scheduler_unlock()
+{
+	// FIXME: Wait for an interrupt instead of panicking.
+	dassert(active_thread);
+
+	locked = false;
+
+	// FIXME: Store last addr space to avoid reloading PAS every time?
+	thread_t* curr = thread_get(active_thread);
+	paging_pas_load(process_get(curr->owner)->addr_space);
+	task_switch(NULL, &(curr->task));
+}
+
 //! Get the currently running thread.
 uint16_t scheduler_curr()
 {
-	return active_thread;
+	return (locked) ? 0 : active_thread;
 }
 
 void timer_tick(uint8_t isr, int8_t irq)
 {
+	// A thread should always exist at this point.
 	thread_t* curr = thread_get(active_thread);
-	if (!curr) //< No thread to switch to.
-		return;
-
 	--(curr->sched.timeslice);
+
 	if (!(curr->sched.timeslice))
 		scheduler_next();
 }

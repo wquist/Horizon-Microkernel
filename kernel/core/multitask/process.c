@@ -88,7 +88,12 @@ void process_kill(uint16_t pid)
 	bmstack_clear(&block_map, pid);
 	paging_pas_destroy(target->addr_space);
 
-	// FIXME: Kill any alive threads?
+	// FIXME: Add bitmap function to find first set bit.
+	for (size_t i = 0; i != PROCESS_THREAD_MAX; ++i)
+	{
+		if (bitmap_test(target->threads.bitmap, i))
+			thread_kill(target->threads.slots[i]);
+	}
 
 	dtrace("Destroyed process with PID %i.", pid);
 }
