@@ -19,19 +19,23 @@
 #include <arch.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <horizon/proc.h>
 #include <horizon/errno.h>
 
-void syscall_launch(uint16_t pid, uintptr_t entry)
+void syscall_detach(uint16_t tid, int code)
 {
-	// The target process must not have any threads running.
-	process_t* target = process_get(pid);
-	if (!target || target->threads.count != 0)
+	thread_t* caller = thread_get(scheduler_curr());
+
+	if (tid == TID_SELF)
+		tid = caller->tid;
+
+	thread_t* target = thread_get(tid);
+	if (!target)
 		return syscall_return_set(-e_notavail);
 
-	// The starting thread executes at 'entry'.
-	target->entry = entry;
-	uint16_t tid = thread_new(pid, 0);
+	process_t* owner = process_get(target->owner);
+	if (owner->priv > caller->priv)
+		return syscall_return_set(-e_badpriv);
 
-	scheduler_add(tid);
-	syscall_return_set(tid);
+	// Kill the thread.
 }
