@@ -42,7 +42,8 @@ typedef enum thread_state THREAD_STATE;
 enum thread_state
 {
 	THREAD_STATE_NEW,
-	THREAD_STATE_ACTIVE
+	THREAD_STATE_ACTIVE,
+	THREAD_STATE_OLD,
 };
 
 //! A process control block (PCB).

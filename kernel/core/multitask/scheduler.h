@@ -32,4 +32,7 @@ void scheduler_add(uint16_t tid);
 void scheduler_remove(uint16_t tid);
 
 void scheduler_next();
+void scheduler_lock();
+void scheduler_unlock();
+
 uint16_t scheduler_curr();
