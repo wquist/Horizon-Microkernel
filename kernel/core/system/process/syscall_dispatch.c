@@ -25,7 +25,7 @@ void syscall_dispatch(uintptr_t entry)
 	thread_t* caller = thread_get(scheduler_curr());
 
 	// Create a new thread under the caller process.
-	uint16_t tid = thread_new(curr->owner, entry);
+	uint16_t tid = thread_new(caller->owner, entry);
 
 	scheduler_add(tid);
 	syscall_return_set(tid);

@@ -22,35 +22,27 @@
 #include <horizon/proc.h>
 #include <horizon/errno.h>
 
-void syscall_detach(uint16_t tid)
+void syscall_kill(uint16_t pid)
 {
-	if (tid == TID_ANY)
+	if (pid == PID_KERNEL || pid == PID_ANY)
 		return syscall_return_set(-e_badparam);
 
 	thread_t* caller = thread_get(scheduler_curr());
-	if (tid == TID_SELF)
-		tid = caller->tid;
+	if (pid == PID_SELF)
+		pid = caller->owner;
 
-	thread_t* target = thread_get(tid);
+	process_t* target = process_get(pid);
 	if (!target)
 		return syscall_return_set(-e_notavail);
 
-	// Can only kill threads with <= priv level.
-	process_t* owner = process_get(target->owner);
-	if (owner->priv > process_get(caller->owner)->priv)
+	if (target->priv > process_get(caller->owner)->priv)
 		return syscall_return_set(-e_badpriv);
 
-	// Lock the scheduler to remove the current thread.
-	if (tid == caller->tid)
+	if (pid == caller->owner)
 		scheduler_lock();
 
-	// The main thread or the last thread? Process killed.
-	if (target->lid == 0 || owner->threads.count == 1)
-		process_kill(owner->pid);
-	else
-		thread_kill(tid);
+	process_kill(pid);
 
-	// Is the scheduler locked?
 	if (!scheduler_curr())
 		scheduler_unlock();
 	else

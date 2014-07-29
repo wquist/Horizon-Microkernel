@@ -26,16 +26,16 @@
 void syscall_spawn();
 void syscall_launch(uint16_t pid, uintptr_t entry);
 void syscall_dispatch(uintptr_t entry);
-void syscall_detach(uint16_t tid, int code);
-void syscall_kill(uint16_t pid, int code);
+void syscall_detach(uint16_t tid);
+void syscall_kill(uint16_t pid);
 
 SYSCALL_TABLE = 
 {
 	{ syscall_spawn,    0 },
 	{ syscall_launch,   2 },
 	{ syscall_dispatch, 1 },
-	{ syscall_detach,   2 },
-	{ syscall_kill,     2 },
+	{ syscall_detach,   1 },
+	{ syscall_kill,     1 },
 
 	0
 };
