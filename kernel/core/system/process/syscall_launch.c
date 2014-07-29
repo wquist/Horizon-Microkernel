@@ -15,27 +15,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file core/system/syscalls.h
- *  \date June 2014
- */
-
-#pragma once
-
+#include <system/syscalls.h>
 #include <arch.h>
+#include <multitask/process.h>
+#include <multitask/scheduler.h>
+#include <horizon/errno.h>
 
-void syscall_spawn();
-void syscall_launch(uint16_t pid, uintptr_t entry);
-void syscall_dispatch(uintptr_t entry);
-void syscall_detach(uint16_t tid, int code);
-void syscall_kill(uint16_t pid, int code);
-
-SYSCALL_TABLE = 
+void syscall_launch(uint16_t pid, uintptr_t entry)
 {
-	{ syscall_spawn,    0 },
-	{ syscall_launch,   2 },
-	{ syscall_dispatch, 1 },
-	{ syscall_detach,   2 },
-	{ syscall_kill,     2 },
+	// The target process must not have any threads running.
+	process_t* target = process_get(pid);
+	if (!target || target->threads.count != 0)
+		return syscall_return_set(e_notavail);
 
-	0
-};
+	// The starting thread executes at 'entry'.
+	target->entry = entry;
+	uint16_t tid = thread_new(pid, 0);
+	thread_t* thread = thread_get(tid);
+
+	scheduler_add(tid);
+	syscall_return_set(tid);
+}

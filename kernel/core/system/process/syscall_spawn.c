@@ -15,27 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file core/system/syscalls.h
- *  \date June 2014
- */
-
-#pragma once
-
+#include <system/syscalls.h>
 #include <arch.h>
+#include <multitask/process.h>
+#include <multitask/scheduler.h>
 
-void syscall_spawn();
-void syscall_launch(uint16_t pid, uintptr_t entry);
-void syscall_dispatch(uintptr_t entry);
-void syscall_detach(uint16_t tid, int code);
-void syscall_kill(uint16_t pid, int code);
-
-SYSCALL_TABLE = 
+void syscall_spawn()
 {
-	{ syscall_spawn,    0 },
-	{ syscall_launch,   2 },
-	{ syscall_dispatch, 1 },
-	{ syscall_detach,   2 },
-	{ syscall_kill,     2 },
+	thread_t* caller = thread_get(scheduler_curr());
 
-	0
-};
+	// The new process is created as a child of the caller.
+	uint16_t pid = process_new(caller->owner, 0);
+	syscall_return_set(pid);
+}

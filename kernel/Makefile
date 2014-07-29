@@ -49,18 +49,23 @@ INC_DIRS =                        \
 	$(LIB_ROOT)/libh/arch/$(ARCH)
 
 # Each directory contains C or assembly files - "Makefile.inc" adds to this as well
-SRC_DIRS =         \
-	core           \
-	core/ipc       \
-	core/memory	   \
-	core/multitask \
-	core/system    \
-	debug          \
-	spec/elf       \
-	spec/multiboot \
-	spec/pic8259   \
-	spec/pit8253   \
-	util           \
+SRC_DIRS =              \
+	core                \
+	core/ipc            \
+	core/memory	        \
+	core/multitask      \
+	core/system         \
+	core/system/control \
+	core/system/memory  \
+	core/system/message \
+	core/system/process \
+	core/system/service \
+	debug               \
+	spec/elf            \
+	spec/multiboot      \
+	spec/pic8259        \
+	spec/pit8253        \
+	util                \
 	$(ARCH_ROOT)
 
 # The names of all libraries to link
