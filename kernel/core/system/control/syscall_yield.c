@@ -15,31 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file core/system/syscalls.h
- *  \date June 2014
- */
+#include <system/syscalls.h>
+#include <multitask/scheduler.h>
 
-#pragma once
-
-#include <arch.h>
-
-void syscall_spawn();
-void syscall_launch(uint16_t pid, uintptr_t entry);
-void syscall_dispatch(uintptr_t entry);
-void syscall_detach(uint16_t tid);
-void syscall_kill(uint16_t pid);
-
-void syscall_yield();
-
-SYSCALL_TABLE = 
+void syscall_yield()
 {
-	{ syscall_spawn,    0 },
-	{ syscall_launch,   2 },
-	{ syscall_dispatch, 1 },
-	{ syscall_detach,   1 },
-	{ syscall_kill,     1 },
-
-	{ syscall_yield,    0 },
-
-	0
-};
+	scheduler_next();
+}
