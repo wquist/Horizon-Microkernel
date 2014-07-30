@@ -16,34 +16,23 @@
  */
 
 #include <system/syscalls.h>
-#include <arch.h>
+#include <memory/virtual.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <horizon/proc.h>
+#include <util/addr.h>
 #include <horizon/errno.h>
 
-void syscall_kill(uint16_t pid)
+void syscall_vmap(uintptr_t dest, size_t size)
 {
-	if (pid == PID_KERNEL || pid == PID_ANY)
-		return syscall_return_set(-e_badparam);
+	if (dest + size >= KERNEL_VIRT_BASE)
+		return syscall_return_set(-e_badaddr);
+	if (!size)
+		return syscall_return_set(-e_badsize);
 
 	thread_t* caller = thread_get(scheduler_curr());
-	if (pid == PID_SELF)
-		pid = caller->owner;
+	process_t* owner = procss_get(caller->owner);
 
-	process_t* target = process_get(pid);
-	if (!target)
-		return syscall_return_set(-e_notavail);
-	if (target->priv > process_get(caller->owner)->priv)
-		return syscall_return_set(-e_badpriv);
-
-	if (pid == caller->owner)
-		scheduler_lock();
-
-	process_kill(pid);
-
-	if (!scheduler_curr())
-		scheduler_unlock();
-	else
-		syscall_return_set(-e_success);
+	uintptr_t actual = addr_align(dest, ARCH_PGSIZE);
+	virtual_alloc(owner->pid, actual, size);
+	syscall_return_set(actual);
 }
