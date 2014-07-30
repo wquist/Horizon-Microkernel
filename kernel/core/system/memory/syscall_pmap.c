@@ -20,6 +20,7 @@
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
 #include <util/addr.h>
+#include <horizon/priv.h>
 #include <horizon/errno.h>
 
 void syscall_pmap(uintptr_t dest, uintptr_t src, size_t size)
@@ -37,8 +38,9 @@ void syscall_pmap(uintptr_t dest, uintptr_t src, size_t size)
 		return syscall_return_set(-e_badalign);
 
 	thread_t* caller = thread_get(scheduler_curr());
-	process_t* owner = procss_get(caller->owner);
-	// FIXME: Check owner privilege.
+	process_t* owner = process_get(caller->owner);
+	if (owner->priv != PRIV_DRIVER)
+		return syscall_return_set(-e_badpriv);
 
 	// Dest address space must be empty.
 	if (virtual_is_mapped(owner->pid, dest, size))

@@ -30,7 +30,7 @@ void syscall_vmap(uintptr_t dest, size_t size)
 		return syscall_return_set(-e_badsize);
 
 	thread_t* caller = thread_get(scheduler_curr());
-	process_t* owner = procss_get(caller->owner);
+	process_t* owner = process_get(caller->owner);
 
 	uintptr_t actual = addr_align(dest, ARCH_PGSIZE);
 	virtual_alloc(owner->pid, actual, size);

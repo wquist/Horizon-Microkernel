@@ -22,6 +22,7 @@
 #include <util/addr.h>
 #include <debug/log.h>
 #include <debug/error.h>
+#include <horizon/priv.h>
 #include <memory.h>
 
 static process_t* blocks = NULL;
@@ -69,7 +70,7 @@ uint16_t process_new(uint16_t ppid, uintptr_t entry)
 	process_t* parent = process_get(ppid);
 	process->pid    = index;
 	process->parent = (parent) ? ppid : 0;
-	process->priv   = (parent) ? parent->priv : 0; //< FIXME: higher privelege = lower number?
+	process->priv   = (parent) ? parent->priv : PRIV_DRIVER;
 
 	process->entry = entry;
 	process->addr_space = paging_pas_create();
