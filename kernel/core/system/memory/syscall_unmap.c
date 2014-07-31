@@ -23,32 +23,28 @@
 #include <horizon/priv.h>
 #include <horizon/errno.h>
 
-void syscall_pmap(uintptr_t dest, uintptr_t src, size_t size)
+void syscall_unmap(uintptr_t addr, size_t size)
 {
-	// FIXME: Check if phys is in kernel space or allocated memory?
-	if (dest + size > KERNEL_VIRT_BASE)
+	if (addr + size > KERNEL_VIRT_BASE)
 		return syscall_return_set(-e_badaddr);
 	if (!size)
 		return syscall_return_set(-e_badsize);
 
-	// FIXME: pmem OK to force alignment?
-	if (addr_align(dest, ARCH_PGSIZE) != dest)
-		return syscall_return_set(-e_badalign);
-	if (addr_align(src, ARCH_PGSIZE) != src)
+	if (addr_align(addr, ARCH_PGSIZE) != addr)
 		return syscall_return_set(-e_badalign);
 	if (size % ARCH_PGSIZE != 0)
 		return syscall_return_set(-e_badsize);
 
-	// Only drivers can map physical memory.
 	thread_t* caller = thread_get(scheduler_curr());
 	process_t* owner = process_get(caller->owner);
-	if (owner->priv != PRIV_DRIVER)
+	// FIXME: no priv cannot map, so it cannot unmap either...
+	if (owner->priv < PRIV_SERVER)
 		return syscall_return_set(-e_badpriv);
 
-	// Dest address space must be empty.
-	if (virtual_is_mapped(owner->pid, dest, size) != 0)
+	// Target address space must be allocated to unmap.
+	if (virtual_is_mapped(owner->pid, addr, size) != 1)
 		return syscall_return_set(-e_notavail);
 
-	virtual_map(owner->pid, dest, (void*)src, size);
-	syscall_return_set(dest);
+	virtual_alloc(owner->pid, addr, size);
+	syscall_return_set(addr);
 }

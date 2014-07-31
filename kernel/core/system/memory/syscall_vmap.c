@@ -20,19 +20,32 @@
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
 #include <util/addr.h>
+#include <horizon/priv.h>
 #include <horizon/errno.h>
 
 void syscall_vmap(uintptr_t dest, size_t size)
 {
-	if (dest + size >= KERNEL_VIRT_BASE)
+	if (dest + size > KERNEL_VIRT_BASE)
 		return syscall_return_set(-e_badaddr);
 	if (!size)
 		return syscall_return_set(-e_badsize);
 
+	// FIXME: How can the alignment prereq be removed?
+	if (addr_align(dest, ARCH_PGSIZE) != dest)
+		return syscall_return_set(-e_badalign);
+	if (size % ARCH_PGSIZE != 0)
+		return syscall_return_set(-e_badsize);
+
 	thread_t* caller = thread_get(scheduler_curr());
 	process_t* owner = process_get(caller->owner);
+	// FIXME: Only drivers and servers can call directly?
+	if (owner->priv < PRIV_SERVER)
+		return syscall_return_set(-e_badpriv);
 
-	uintptr_t actual = addr_align(dest, ARCH_PGSIZE);
-	virtual_alloc(owner->pid, actual, size);
-	syscall_return_set(actual);
+	// Cannot overlap with already-mapped memory.
+	if (virtual_is_mapped(owner->pid, dest, size) != 0)
+		return syscall_return_set(-e_notavail);
+
+	virtual_alloc(owner->pid, dest, size);
+	syscall_return_set(dest);
 }
