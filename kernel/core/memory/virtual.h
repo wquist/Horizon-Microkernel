@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <horizon/types.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -39,9 +40,9 @@ enum virtual_clone_mode
  *    i.e., it will not be overwritten/cloned etc.
  */
 
-void virtual_map(uint16_t pid, uintptr_t virt, const void* phys, size_t size);
-void virtual_unmap(uint16_t pid, uintptr_t virt, size_t size);
-int  virtual_is_mapped(uint16_t pid, uintptr_t virt, size_t size);
+void virtual_map(pid_t pid, uintptr_t virt, const void* phys, size_t size);
+void virtual_unmap(pid_t pid, uintptr_t virt, size_t size);
+int  virtual_is_mapped(pid_t pid, uintptr_t virt, size_t size);
 
-void virtual_alloc(uint16_t pid, uintptr_t virt, size_t size);
-void virtual_clone(uint16_t dest, uint16_t src, uintptr_t from, uintptr_t to, size_t size, VIRTUAL_CLONE_MODE mode);
+void virtual_alloc(pid_t pid, uintptr_t virt, size_t size);
+void virtual_clone(pid_t dest, pid_t src, uintptr_t from, uintptr_t to, size_t size, VIRTUAL_CLONE_MODE mode);

@@ -55,7 +55,7 @@ void process_init()
 
 //! Create a new process with the given parent and default entry point.
 /*! The parent determines the new process's privilege. */
-uint16_t process_new(uint16_t ppid, uintptr_t entry)
+pid_t process_new(pid_t ppid, uintptr_t entry)
 {
 	size_t index = bmstack_find_and_set(&block_map);
 	dassert(index != -1); //< No PID available.
@@ -76,11 +76,11 @@ uint16_t process_new(uint16_t ppid, uintptr_t entry)
 	process->addr_space = paging_pas_create();
 
 	dtrace("Created process with PID %i.", index);
-	return index;
+	return (pid_t)index;
 }
 
 //! Destroy a process, along with its address space.
-void process_kill(uint16_t pid)
+void process_kill(pid_t pid)
 {
 	process_t* target = process_get(pid);
 	dassert(target);
@@ -100,7 +100,7 @@ void process_kill(uint16_t pid)
 }
 
 //! Get the PCB for the given PID.
-process_t* process_get(uint16_t pid)
+process_t* process_get(pid_t pid)
 {
 	dassert(pid < PROCESS_MAX);
 

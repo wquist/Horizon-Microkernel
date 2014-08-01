@@ -52,7 +52,7 @@ void thread_init()
 
 //! Allocate a new thread for the given process.
 /*! If entry is passed as 0, the process's entry point is used. */
-uint16_t thread_new(uint16_t pid, uintptr_t entry)
+tid_t thread_new(pid_t pid, uintptr_t entry)
 {
 	process_t* owner = process_get(pid);
 	dassert(owner); //< The process must be alive.
@@ -83,11 +83,11 @@ uint16_t thread_new(uint16_t pid, uintptr_t entry)
 	thread->sched.state = THREAD_STATE_NEW; //< A thread is new until it is scheduled.
 
 	dtrace("Created thread with TID %i, owned by PID %i.", index, pid);
-	return index;
+	return (tid_t)index;
 }
 
 //! Destroy a thread and remove it from the owner process.
-void thread_kill(uint16_t tid)
+void thread_kill(tid_t tid)
 {
 	thread_t* target = thread_get(tid);
 	dassert(target);
@@ -106,7 +106,7 @@ void thread_kill(uint16_t tid)
 }
 
 //! Get the actual TCB structure for a given thread.
-thread_t* thread_get(uint16_t tid)
+thread_t* thread_get(tid_t tid)
 {
 	dassert(tid < THREAD_MAX);
 

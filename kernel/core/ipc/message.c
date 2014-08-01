@@ -22,9 +22,9 @@
 #include <stddef.h>
 #include <string.h>
 
-void message_send(uint16_t dest, message_t* msg)
+void message_send(tid_t from, tid_t dest, struct msg* info)
 {
-	dassert(msg);
+	dassert(info);
 
 	// Make sure the thread exists and has room in its queue.
 	thread_t* thread = thread_get(dest);
@@ -35,7 +35,13 @@ void message_send(uint16_t dest, message_t* msg)
 	dassert(slot != -1);
 
 	message_t* tail = &(thread->messages.slots[slot]);
-	memcpy(tail, msg, sizeof(message_t));
+	tail->sender = from;
+
+	tail->code = info->code;
+	tail->arg  = info->arg;
+	tail->data = info->data;
+
+	// FIXME: Mark payload flags.
 
 	tail->next = -1; //< Mark the end of the linked list.
 	if (thread->messages.count != 0)
@@ -56,8 +62,10 @@ void message_send(uint16_t dest, message_t* msg)
 	++(thread->messages.count);
 }
 
-void message_recv(uint16_t src, message_t* msg)
+void message_recv(tid_t src, struct msg* dest)
 {
+	dassert(dest);
+
 	// A message must be in queue for recv to work.
 	thread_t* thread = thread_get(src);
 	dassert(thread);
@@ -65,7 +73,15 @@ void message_recv(uint16_t src, message_t* msg)
 
 	// Head is also valid under the same conditions as tail.
 	message_t* head = &(thread->messages.slots[thread->messages.head]);
-	memcpy(msg, head, sizeof(message_t));
+
+	thread_t* sender = thread_get(head->sender);
+	dest->from = (sender->owner << 16) | (sender->tid);
+
+	dest->code = head->code;
+	dest->arg  = head->arg;
+	dest->data = head->data;
+
+	// FIXME: Signal payload size somehow? Maybe with return bool.
 
 	thread->messages.head = head->next;
 

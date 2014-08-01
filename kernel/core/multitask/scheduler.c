@@ -23,10 +23,10 @@
 #include <stdbool.h>
 
 // FIXME: Will have to be modified for multi-core.
-static uint16_t active_thread = 0;
-static bool locked = false;
+static tid_t active_thread = 0;
+static bool  locked = false;
 
-static void timer_tick(uint8_t isr, int8_t irq);
+static void timer_tick(isr_t isr, irq_t irq);
 
 //! Initialize the scheduler and start the first usermode process.
 /*! scheduler_add must be called prior at least once. */
@@ -45,7 +45,7 @@ void scheduler_start()
 }
 
 //! Add a thread to the scheduler queue.
-void scheduler_add(uint16_t tid)
+void scheduler_add(tid_t tid)
 {
 	// The thread must exists and not be in a queue.
 	thread_t* target = thread_get(tid);
@@ -81,7 +81,7 @@ void scheduler_add(uint16_t tid)
 
 //! Remove a thread from the schduler queue.
 /*! The thread cannot be the the scheduler_curr thread. */
-void scheduler_remove(uint16_t tid)
+void scheduler_remove(tid_t tid)
 {
 	// The thread must exist in the scheduler queue.
 	thread_t* target = thread_get(tid);
@@ -156,12 +156,12 @@ void scheduler_unlock()
 }
 
 //! Get the currently running thread.
-uint16_t scheduler_curr()
+tid_t scheduler_curr()
 {
 	return (locked) ? 0 : active_thread;
 }
 
-void timer_tick(uint8_t isr, int8_t irq)
+void timer_tick(isr_t isr, irq_t irq)
 {
 	// A thread should always exist at this point.
 	thread_t* curr = thread_get(active_thread);

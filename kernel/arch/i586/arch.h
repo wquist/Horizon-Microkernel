@@ -27,6 +27,8 @@
 #include <sw/paging.h>
 #include <sw/task.h>
 #include <sw/int/frame.h>
+#include <sw/int/isr.h>
+#include <sw/int/irq.h>
 #include <sw/int/ctl.h>
 #include <sw/int/callback.h>
 #include <sw/int/syscall.h>
