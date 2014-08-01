@@ -31,6 +31,13 @@
 #define __asm asm
 #endif
 
+// FIXME: Actual support starts at 2.95.
+#if defined(__GNUC__) && (__GNUC__ > 2)
+#define NONAMELESSFIELD(x)
+#else
+#define NONAMELESSFIELD(x) x
+#endif
+
 #if !defined(_KERNEL)
 #define _HAS_STDIO
 #endif
