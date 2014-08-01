@@ -25,6 +25,11 @@
 #include <horizon/types.h>
 #include <stdint.h>
 
+enum message_flags
+{
+	MESSAGE_FLAG_PAYLOAD = (1 << 0),
+};
+
 typedef struct message message_t;
 struct __packed message //!< This should always be 16 bytes.
 {
@@ -40,4 +45,4 @@ struct __packed message //!< This should always be 16 bytes.
 };
 
 void message_send(tid_t from, tid_t dest, struct msg* info);
-void message_recv(tid_t src, struct msg* dest);
+uint8_t message_recv(tid_t src, struct msg* dest);

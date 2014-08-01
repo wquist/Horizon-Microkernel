@@ -41,7 +41,8 @@ void message_send(tid_t from, tid_t dest, struct msg* info)
 	tail->arg  = info->arg;
 	tail->data = info->data;
 
-	// FIXME: Mark payload flags.
+	if (info->payload.buf)
+		tail->flags |= MESSAGE_FLAG_PAYLOAD;
 
 	tail->next = -1; //< Mark the end of the linked list.
 	if (thread->messages.count != 0)
@@ -62,7 +63,7 @@ void message_send(tid_t from, tid_t dest, struct msg* info)
 	++(thread->messages.count);
 }
 
-void message_recv(tid_t src, struct msg* dest)
+uint8_t message_recv(tid_t src, struct msg* dest)
 {
 	dassert(dest);
 
@@ -81,9 +82,8 @@ void message_recv(tid_t src, struct msg* dest)
 	dest->arg  = head->arg;
 	dest->data = head->data;
 
-	// FIXME: Signal payload size somehow? Maybe with return bool.
-
 	thread->messages.head = head->next;
-
 	--(thread->messages.count);
+
+	return head->flags;
 }

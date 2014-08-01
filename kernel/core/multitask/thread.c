@@ -92,6 +92,7 @@ void thread_kill(tid_t tid)
 	thread_t* target = thread_get(tid);
 	dassert(target);
 
+	// FIXME: Thread should not deal with scheduler...
 	if (target->sched.state == THREAD_STATE_ACTIVE)
 		scheduler_remove(tid);
 
