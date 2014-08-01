@@ -21,7 +21,7 @@
 #include <multitask/scheduler.h>
 #include <horizon/errno.h>
 
-void syscall_launch(uint16_t pid, uintptr_t entry)
+void syscall_launch(pid_t pid, uintptr_t entry)
 {
 	// The target process must not have any threads running.
 	process_t* target = process_get(pid);
@@ -30,7 +30,7 @@ void syscall_launch(uint16_t pid, uintptr_t entry)
 
 	// The starting thread executes at 'entry'.
 	target->entry = entry;
-	uint16_t tid = thread_new(pid, 0);
+	tid_t tid = thread_new(pid, 0);
 
 	scheduler_add(tid);
 	syscall_return_set(tid);

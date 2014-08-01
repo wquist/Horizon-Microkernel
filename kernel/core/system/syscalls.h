@@ -22,20 +22,25 @@
 #pragma once
 
 #include <arch.h>
+#include <horizon/types.h>
+#include <horizon/msg.h>
 #include <stddef.h>
 #include <stdint.h>
 
 void syscall_spawn();
-void syscall_launch(uint16_t pid, uintptr_t entry);
+void syscall_launch(pid_t pid, uintptr_t entry);
 void syscall_dispatch(uintptr_t entry);
-void syscall_detach(uint16_t tid);
-void syscall_kill(uint16_t pid);
+void syscall_detach(tid_t tid);
+void syscall_kill(pid_t pid);
 
 void syscall_yield();
 
 void syscall_vmap(uintptr_t dest, size_t size);
 void syscall_pmap(uintptr_t dest, uintptr_t src, size_t size);
 void syscall_unmap(uintptr_t addr, size_t size);
+
+void syscall_send(struct msg* src);
+void syscall_recv(struct msg* dest);
 
 SYSCALL_TABLE = 
 {
@@ -50,6 +55,9 @@ SYSCALL_TABLE =
 	{ syscall_vmap,     2 },
 	{ syscall_pmap,     3 },
 	{ syscall_unmap,    2 },
+
+	{ syscall_send,     1 },
+	{ syscall_recv,     1 },
 
 	0
 };

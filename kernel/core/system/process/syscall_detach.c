@@ -22,7 +22,7 @@
 #include <horizon/proc.h>
 #include <horizon/errno.h>
 
-void syscall_detach(uint16_t tid)
+void syscall_detach(tid_t tid)
 {
 	if (tid == TID_ANY)
 		return syscall_return_set(-e_badparam);

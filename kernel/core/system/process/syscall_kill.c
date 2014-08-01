@@ -22,7 +22,7 @@
 #include <horizon/proc.h>
 #include <horizon/errno.h>
 
-void syscall_kill(uint16_t pid)
+void syscall_kill(pid_t pid)
 {
 	if (pid == PID_KERNEL || pid == PID_ANY)
 		return syscall_return_set(-e_badparam);

@@ -39,6 +39,5 @@ struct __packed message //!< This should always be 16 bytes.
 	msgarg_t data;
 };
 
-// FIXME: Maybe replace these with the library message type.
 void message_send(tid_t from, tid_t dest, struct msg* info);
 void message_recv(tid_t src, struct msg* dest);

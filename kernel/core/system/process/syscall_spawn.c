@@ -25,6 +25,6 @@ void syscall_spawn()
 	thread_t* caller = thread_get(scheduler_curr());
 
 	// The new process is created as a child of the caller.
-	uint16_t pid = process_new(caller->owner, 0);
+	pid_t pid = process_new(caller->owner, 0);
 	syscall_return_set(pid);
 }
