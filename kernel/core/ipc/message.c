@@ -22,36 +22,44 @@
 #include <stddef.h>
 #include <string.h>
 
-void message_send(tid_t from, tid_t dest, struct msg* info)
+void message_send(tid_t from, tid_t to, struct msg* info, bool head)
 {
 	dassert(info);
 
 	// Make sure the thread exists and has room in its queue.
-	thread_t* thread = thread_get(dest);
+	thread_t* thread = thread_get(to);
 	dassert(thread);
 	dassert(thread->messages.count < THREAD_MESSAGE_MAX);
 
 	uint8_t slot = bitmap_find_and_set(thread->messages.bitmap, THREAD_MESSAGE_MAX);
 	dassert(slot != -1);
 
-	message_t* tail = &(thread->messages.slots[slot]);
-	tail->sender = from;
+	message_t* target = &(thread->messages.slots[slot]);
+	target->sender = from;
 
-	tail->code = info->code;
-	tail->arg  = info->arg;
-	tail->data = info->data;
+	target->code = info->code;
+	target->arg  = info->arg;
+	target->data = info->data;
 
 	if (info->payload.buf)
-		tail->flags |= MESSAGE_FLAG_PAYLOAD;
+		target->flags |= MESSAGE_FLAG_PAYLOAD;
 
-	tail->next = -1; //< Mark the end of the linked list.
+	target->next = -1; //< Mark the end of the linked list.
 	if (thread->messages.count != 0)
 	{
-		// Tail is always valid when there are messages in the queue (count > 0).
-		message_t* last = &(thread->messages.slots[thread->messages.tail]);
+		if (head) //< Put this message at the front of the list.
+		{
+			target->next = thread->messages.head;
+			thread->messages.head = slot;
+		}
+		else
+		{
+			// Tail is always valid when there are messages in the queue (count > 0).
+			message_t* last = &(thread->messages.slots[thread->messages.tail]);
 
-		last->next = slot;
-		thread->messages.tail = slot;
+			last->next = slot;
+			thread->messages.tail = slot;
+		}
 	}
 	else
 	{
@@ -76,6 +84,8 @@ uint8_t message_recv(tid_t src, struct msg* dest)
 	message_t* head = &(thread->messages.slots[thread->messages.head]);
 
 	thread_t* sender = thread_get(head->sender);
+	dassert(sender);
+
 	dest->from = (sender->owner << 16) | (sender->tid);
 
 	dest->code = head->code;

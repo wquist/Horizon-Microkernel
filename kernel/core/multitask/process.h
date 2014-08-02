@@ -44,6 +44,8 @@ enum thread_state
 {
 	THREAD_STATE_NEW,
 	THREAD_STATE_ACTIVE,
+	THREAD_STATE_SENDING,
+	THREAD_STATE_WAITING,
 	THREAD_STATE_OLD,
 };
 
@@ -80,6 +82,14 @@ struct thread
 		uint8_t timeslice;
 		THREAD_STATE state;
 	} sched;
+
+	struct
+	{
+		msgsrc_t waiting_for;
+
+		uintptr_t payload_addr;
+		size_t payload_size;
+	} call_data;
 
 	struct
 	{

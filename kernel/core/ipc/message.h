@@ -24,6 +24,7 @@
 #include <horizon/msg.h>
 #include <horizon/types.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 enum message_flags
 {
@@ -44,5 +45,5 @@ struct __packed message //!< This should always be 16 bytes.
 	msgarg_t data;
 };
 
-void message_send(tid_t from, tid_t dest, struct msg* info);
+void message_send(tid_t from, tid_t to, struct msg* info, bool head);
 uint8_t message_recv(tid_t src, struct msg* dest);
