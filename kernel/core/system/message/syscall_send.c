@@ -18,6 +18,7 @@
 #include <system/syscalls.h>
 #include <arch.h>
 #include <memory/virtual.h>
+#include <ipc/message.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
 #include <debug/error.h>
@@ -51,8 +52,10 @@ void syscall_send(struct msg* src)
 		default: return syscall_return_set(-e_badparam);
 	}
 
-	// The destination must be alive.
+	// The destination must be alive and have room in queue.
 	if (!dest)
+		return syscall_return_set(-e_notavail);
+	if (dest->messages.count >= THREAD_MESSAGE_MAX)
 		return syscall_return_set(-e_notavail);
 
 	// Extra information means the sender blocks.
@@ -110,4 +113,6 @@ void syscall_send(struct msg* src)
 	// Remember to unlock the scheduler if needed.
 	if (!scheduler_curr())
 		scheduler_unlock();
+	else
+		syscall_return_set(-e_success);
 }
