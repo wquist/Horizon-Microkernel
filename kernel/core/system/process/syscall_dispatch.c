@@ -20,12 +20,13 @@
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
 
-void syscall_dispatch(uintptr_t entry)
+void syscall_dispatch(uintptr_t entry, uintptr_t stack)
 {
 	thread_t* caller = thread_get(scheduler_curr());
 
 	// Create a new thread under the caller process.
 	tid_t tid = thread_new(caller->owner, entry);
+	thread_get(tid)->task.stack = stack;
 
 	scheduler_add(tid);
 	syscall_return_set(tid);
