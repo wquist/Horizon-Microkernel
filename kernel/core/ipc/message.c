@@ -172,7 +172,7 @@ bool message_find(tid_t src, msgdst_t search)
 tid_t message_dest_get(msgdst_t dest)
 {
 	uint16_t uid = MSGDEST_UID(dest);
-	if (uid == TID_ANY || uid == PID_KERNEL)
+	if (uid == TID_ANY || uid == TID_KERNEL)
 		return uid;
 
 	switch (MSGDEST_TYPE(dest))
@@ -200,7 +200,7 @@ bool message_dest_compare(msgdst_t dest, uint16_t caller)
 		return true;
 
 	if (uid == PID_KERNEL)
-		return (caller == PID_KERNEL);
+		return (caller == TID_KERNEL);
 
 	switch (MSGDEST_TYPE(dest))
 	{

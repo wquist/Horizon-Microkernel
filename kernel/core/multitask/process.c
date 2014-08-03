@@ -45,7 +45,6 @@ void process_init()
 	// Reserve some special PIDs (self, kernel, any).
 	bmstack_set(&block_map, 0);
 	bmstack_set(&block_map, 1);
-	bmstack_set(&block_map, PROCESS_MAX-1);
 
 	bmstack_link(&block_map, PROCESS_MAX);
 	dtrace("Initialized process bitmap. (%iKB)", BMSTACK_SIZE(PROCESS_MAX)/1024);

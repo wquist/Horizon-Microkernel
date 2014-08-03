@@ -43,8 +43,9 @@ void thread_init()
 	bmstack_init(&block_map, (void*)map_start);
 	virtual_alloc(0, map_start, BMSTACK_SIZE(THREAD_MAX));
 
-	// Only TID 0 is reserved.
+	// Mark reserved TIDs.
 	bmstack_set(&block_map, 0);
+	bmstack_set(&block_map, 1);
 
 	bmstack_link(&block_map, THREAD_MAX);
 	dtrace("Initialized thread bitmap. (%iKB)", BMSTACK_SIZE(THREAD_MAX)/1024);

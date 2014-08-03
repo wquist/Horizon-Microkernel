@@ -46,6 +46,8 @@ void syscall_wait(msgdst_t sender)
 	// Put the thread into the generic waiting state.
 	caller->sched.state = THREAD_STATE_WAITING;
 
+	// FIXME: Do not set the success code early.
+	syscall_return_set(-e_success);
 	caller->call_data.wait_for = wait_for;
 
 	// Do not return since the thread is gone now.
