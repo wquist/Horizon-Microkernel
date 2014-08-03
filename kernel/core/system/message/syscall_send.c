@@ -21,7 +21,6 @@
 #include <ipc/message.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <debug/error.h>
 #include <horizon/errno.h>
 
 void syscall_send(struct msg* src)
@@ -52,13 +51,12 @@ void syscall_send(struct msg* src)
 
 		// The running thread will be removed from queue.
 		scheduler_lock();
+		scheduler_remove(caller->tid);
+		// Put the sender into a 'wait-for-send' state.
+		caller->sched.state = THREAD_STATE_SENDING;
 
 		caller->call_data.payload_addr = addr;
 		caller->call_data.payload_size = size;
-
-		// Put the sender into a waiting state.
-		scheduler_remove(caller->tid);
-		caller->sched.state = THREAD_STATE_SENDING;
 	}
 
 	// Try to wake up the thread if needed.

@@ -19,6 +19,7 @@
 #include <multitask/process.h>
 #include <util/bitmap.h>
 #include <debug/error.h>
+#include <horizon/proc.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -99,9 +100,12 @@ uint8_t message_recv(tid_t src, struct msg* dest)
 	dest->arg  = head->arg;
 	dest->data = head->data;
 
-	thread->messages.head = head->next;
-	--(thread->messages.count);
+	// Update the head and the tail.
+	if (thread->messages.tail == thread->messages.head)
+		thread->messages.tail = -1;
+	thread->messages.head = head->next; //< 'next' could be msg or -1.
 
+	--(thread->messages.count);
 	return head->flags;
 }
 
@@ -126,16 +130,63 @@ uint8_t message_peek(tid_t src, msgsrc_t* from)
 	return head->flags;
 }
 
+//! Search for a message from the given sender and put it at the queue head.
+bool message_find(tid_t src, msgdst_t search)
+{
+	thread_t* thread = thread_get(src);
+	dassert(thread);
+	
+	uint8_t prev = -1;
+	uint8_t curr = thread->messages.head;
+	while (curr != -1)
+	{
+		message_t* msg = &(thread->messages.slots[curr]);
+		if (message_dest_compare(search, msg->sender))
+		{
+			if (prev != -1) //< The message is in the middle or at the end.
+				thread->messages.slots[prev].next = msg->next;
+			else // The message was the head.
+				thread->messages.head = msg->next;
+
+			// Was the message also the tail?
+			if (thread->messages.tail == curr)
+				thread->messages.tail = prev;
+
+			// FIXME: Do not just replace the msg at head.
+			msg->next = thread->messages.head;
+			thread->messages.head = curr;
+			if (thread->messages.tail == -1)
+				thread->messages.tail = curr;
+
+			return true;
+		}
+
+		prev = curr;
+		curr = msg->next;
+	}
+
+	return false;
+}
+
 //! Convert the msgdest type into a TID value.
-uint16_t message_dest_get(msgdst_t dest)
+tid_t message_dest_get(msgdst_t dest)
 {
 	uint16_t uid = MSGDEST_UID(dest);
+	if (uid == TID_ANY || uid == PID_KERNEL)
+		return uid;
+
 	switch (MSGDEST_TYPE(dest))
 	{
 		case MTOTID:
+		{
 			return uid;
+		}
 		case MTOPID:
-			return process_get(uid)->threads.slots[0];
+		{
+			process_t* proc = process_get(uid);
+			if (proc)
+				return proc->threads.slots[0];
+		}
 	}
 
 	return 0;
@@ -145,16 +196,24 @@ uint16_t message_dest_get(msgdst_t dest)
 bool message_dest_compare(msgdst_t dest, uint16_t caller)
 {
 	uint16_t uid = MSGDEST_UID(dest);
-	if (uid == 0xFFFF)
+	if (uid == TID_ANY)
 		return true;
 
-	thread_t* thread = thread_get(caller);
+	if (uid == PID_KERNEL)
+		return (caller == PID_KERNEL);
+
 	switch (MSGDEST_TYPE(dest))
 	{
 		case MTOTID:
-			return (thread->tid == uid);
+		{
+			return (uid == caller);
+		}
 		case MTOPID:
-			return (thread->owner == uid);
+		{
+			thread_t* thread = thread_get(caller);
+			if (thread)
+				return (uid == thread->owner);
+		}
 	}
 
 	return false;

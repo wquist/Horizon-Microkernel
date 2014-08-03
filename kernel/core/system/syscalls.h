@@ -34,6 +34,7 @@ void syscall_detach(tid_t tid);
 void syscall_kill(pid_t pid);
 
 void syscall_yield();
+void syscall_wait(msgdst_t sender);
 
 void syscall_vmap(uintptr_t dest, size_t size);
 void syscall_pmap(uintptr_t dest, uintptr_t src, size_t size);
@@ -51,6 +52,7 @@ SYSCALL_TABLE =
 	{ syscall_kill,     1 },
 
 	{ syscall_yield,    0 },
+	{ syscall_wait,     1 },
 
 	{ syscall_vmap,     2 },
 	{ syscall_pmap,     3 },
