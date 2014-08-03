@@ -24,33 +24,13 @@
 #include <debug/error.h>
 #include <horizon/errno.h>
 
-// FIXME: Add some message utilities to get destination thread, etc.
 void syscall_send(struct msg* src)
 {
 	if (!src)
 		return syscall_return_set(-e_badparam);
 
 	thread_t* caller = thread_get(scheduler_curr());
-
-	thread_t* dest;
-	switch ((src->to >> 16) & 0xFFFF) //< Get the destination type.
-	{
-		case MTOTID: //< Send to a specific TID.
-		{
-			dest = thread_get(src->to & 0xFFFF);
-			break;
-		}
-		case MTOPID: //< Send to the main thread of a PID.
-		{
-			process_t* owner = process_get(src->to & 0xFFFF);
-			if (!owner)
-				return syscall_return_set(-e_notavail);
-
-			dest = thread_get(owner->threads.slots[0]);
-			break;
-		}
-		default: return syscall_return_set(-e_badparam);
-	}
+	thread_t* dest   = thread_get(message_dest_get(src->to));
 
 	// The destination must be alive and have room in queue.
 	if (!dest)
@@ -84,26 +64,7 @@ void syscall_send(struct msg* src)
 	// Try to wake up the thread if needed.
 	bool woken = false;
 	if (dest->sched.state == THREAD_STATE_WAITING)
-	{
-		uint16_t target_id = 0;
-		switch ((dest->call_data.waiting_for >> 16) & 0xFFFF)
-		{
-			case MTOTID:
-				target_id = caller->tid;
-				break;
-			case MTOPID:
-				target_id = caller->owner;
-				break;
-			case 0xFFFF:
-				target_id = 0xFFFF;
-				break;
-			default: dpanic("Invalid wait type for receiving thread.");
-		}
-
-		uint16_t twait = dest->call_data.waiting_for & 0xFFFF;
-		if (twait == target_id || target_id == 0xFFFF)
-			woken = true;
-	}
+		woken = message_dest_compare(dest->call_data.wait_for, caller->tid);
 
 	// Here, 'woken' determines if msg is placed at head or tail of queue.
 	message_send(caller->tid, dest->tid, src, woken);

@@ -22,6 +22,11 @@
 #include <stddef.h>
 #include <string.h>
 
+#define MSGDEST_UID(x)  ((uint16_t)(x & 0xFFFF))
+#define MSGDEST_TYPE(x) ((uint16_t)((x >> 16) & 0xFFFF))
+
+//! Send a message from with the given info to a TID.
+/*! 'head' determines if the message is pushed to the front or back of the queue. */
 void message_send(tid_t from, tid_t to, struct msg* info, bool head)
 {
 	dassert(info);
@@ -71,6 +76,7 @@ void message_send(tid_t from, tid_t to, struct msg* info, bool head)
 	++(thread->messages.count);
 }
 
+//! Copy message info to the given struct and remove it from the queue.
 uint8_t message_recv(tid_t src, struct msg* dest)
 {
 	dassert(dest);
@@ -84,9 +90,10 @@ uint8_t message_recv(tid_t src, struct msg* dest)
 	message_t* head = &(thread->messages.slots[thread->messages.head]);
 
 	thread_t* sender = thread_get(head->sender);
-	dassert(sender);
-
-	dest->from = (sender->owner << 16) | (sender->tid);
+	if (sender)
+		dest->from = (sender->owner << 16) | (sender->tid);
+	else
+		dest->from = sender->tid;
 
 	dest->code = head->code;
 	dest->arg  = head->arg;
@@ -96,4 +103,59 @@ uint8_t message_recv(tid_t src, struct msg* dest)
 	--(thread->messages.count);
 
 	return head->flags;
+}
+
+//! Get the message sender and flags from a queue head.
+/*! FIXME: Consolidate with message_recv? */
+uint8_t message_peek(tid_t src, msgsrc_t* from)
+{
+	dassert(from);
+
+	thread_t* thread = thread_get(src);
+	dassert(thread);
+	dassert(thread->messages.count);
+
+	message_t* head = &(thread->messages.slots[thread->messages.head]);
+
+	thread_t* sender = thread_get(head->sender);
+	if (sender)
+		*from = (sender->owner << 16) | (sender->tid);
+	else
+		*from = sender->tid;
+
+	return head->flags;
+}
+
+//! Convert the msgdest type into a TID value.
+uint16_t message_dest_get(msgdst_t dest)
+{
+	uint16_t uid = MSGDEST_UID(dest);
+	switch (MSGDEST_TYPE(dest))
+	{
+		case MTOTID:
+			return uid;
+		case MTOPID:
+			return process_get(uid)->threads.slots[0];
+	}
+
+	return 0;
+}
+
+//! Compare a msgdest type with a TID to see if they are equal.
+bool message_dest_compare(msgdst_t dest, uint16_t caller)
+{
+	uint16_t uid = MSGDEST_UID(dest);
+	if (uid == 0xFFFF)
+		return true;
+
+	thread_t* thread = thread_get(caller);
+	switch (MSGDEST_TYPE(dest))
+	{
+		case MTOTID:
+			return (thread->tid == uid);
+		case MTOPID:
+			return (thread->owner == uid);
+	}
+
+	return false;
 }

@@ -34,8 +34,10 @@ void syscall_recv(struct msg* dest)
 	if (caller->messages.count == 0)
 		return syscall_return_set(-e_notavail);
 
-	uint8_t flags = message_recv(caller->tid, dest);
-	thread_t* sender = thread_get(MSRCTID(dest->from));
+	msgsrc_t from;
+	// Peek the message first in case there is a problem with payload.
+	uint8_t flags = message_peek(caller->tid, &from);
+	thread_t* sender = thread_get(MSRCTID(from));
 
 	if (sender && (flags & MESSAGE_FLAG_PAYLOAD))
 	{
@@ -65,5 +67,7 @@ void syscall_recv(struct msg* dest)
 		scheduler_add(sender->tid);
 	}
 
+	// Everything is OK, so actually receive the message.
+	message_recv(caller->tid, dest);
 	syscall_return_set(-e_success);
 }
