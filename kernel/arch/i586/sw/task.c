@@ -80,6 +80,14 @@ void task_switch(task_info_t* curr, task_info_t* next)
 	}
 }
 
+//! Save the current state into a task structure.
+/*! FIXME: Could take this functionality out of task_switch. */
+void task_preserve(task_info_t* info)
+{
+	int_frame_t* frame = int_callback_frame_get();
+	memcpy(&(info->frame), frame, sizeof(int_frame_t));
+}
+
 //! Initialize a TSS structure.
 /*! Called somewhere internally in arch code. */
 void tss_init(tss_t* task, uintptr_t kstack)

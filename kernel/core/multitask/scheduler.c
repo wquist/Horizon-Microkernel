@@ -139,6 +139,9 @@ void scheduler_next()
 void scheduler_lock()
 {
 	locked = true;
+
+	thread_t* curr = thread_get(active_thread);
+	task_preserve(&(curr->task));
 }
 
 //! Re-enable the scheduler before returning from a context switch.
