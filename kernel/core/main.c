@@ -33,8 +33,10 @@
 #include <debug/error.h>
 #include <spec/elf/module.h>
 #include <util/addr.h>
+#include <util/compare.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <memory.h>
 
 static uint16_t startp_load(const module_t* mod);
 
@@ -108,8 +110,29 @@ uint16_t startp_load(const module_t* mod)
 
 		// Then map any remaining with new memory.
 		ssize_t rem_size = sect->reserve - sect->size;
-		if (rem_size > 0)
-			virtual_alloc(pid, virt + sect->size, rem_size);
+		if (rem_size)
+		{
+			uintptr_t zero_addr = virt + sect->size;
+			virtual_alloc(pid, zero_addr, rem_size);
+
+			process_t* from = process_get(pid);
+
+			// FIXME: more portable way to zero the BSS.
+			uintptr_t end = zero_addr + rem_size;
+			while (zero_addr < end)
+			{
+				uintptr_t aligned = addr_align(zero_addr, ARCH_PGSIZE);
+				void* phys = paging_mapping_get(from->addr_space, aligned);
+
+				uintptr_t diff = zero_addr - aligned;
+				void* data = paging_map_temp(phys) + diff;
+
+				size_t to_copy = min(ARCH_PGSIZE - diff, end - zero_addr);
+				memset(data, 0, to_copy);
+
+				zero_addr += to_copy;
+			}
+		}
 	}
 
 	return pid;
