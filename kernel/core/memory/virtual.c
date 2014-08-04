@@ -20,7 +20,9 @@
 #include <multitask/process.h>
 #include <debug/error.h>
 #include <util/addr.h>
+#include <util/compare.h>
 #include <stdbool.h>
+#include <memory.h>
 
 static PAGING_FLAGS get_dir(pid_t pid, paging_pas_t** pas)
 {
@@ -105,6 +107,7 @@ int virtual_is_mapped(pid_t pid, uintptr_t virt, size_t size)
 }
 
 //! Map a region with newly allocated physical memory.
+/*! Set any allocated memory to 0. */
 void virtual_alloc(pid_t pid, uintptr_t virt, size_t size)
 {
 	dassert(size);
@@ -117,16 +120,23 @@ void virtual_alloc(pid_t pid, uintptr_t virt, size_t size)
 	for (; curr < end; curr += ARCH_PGSIZE)
 	{
 		// Ignore already mapped pages.
-		if (paging_is_mapped(pas, curr))
-			continue;
+		if (!paging_is_mapped(pas, curr))
+		{
+			void* block = physical_alloc();
+			paging_map(pas, curr, block, flags);
+		}
 
-		/* FIXME: Instead of checking if the page is mapped, check if the result
-		 * of paging_map, and if false reuse the block for the next loop iter or
-		 * free it and move on. Since ignoring will rarely occur, may be more
-		 * efficient that way than to check each block?
-		 */
-		void* block = physical_alloc();
-		paging_map(pas, curr, block, flags);
+		// FIXME: Use the following as a fallback.
+		/* 'block' can just be zero-ed otherwise. */
+
+		// Determine the actual start of allocated memory.
+		uintptr_t zero_start = max(curr, virt);
+		size_t diff = zero_start - curr;
+
+		// Map the allocated memory into the kernel address space to clear.
+		void*  phys = paging_mapping_get(pas, curr) + diff;
+		size_t size = min(ARCH_PGSIZE - diff, end - curr);
+		memset(paging_map_temp(phys), 0, ARCH_PGSIZE - diff);
 	}
 }
 
