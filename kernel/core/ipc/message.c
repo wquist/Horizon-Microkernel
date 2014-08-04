@@ -89,6 +89,7 @@ uint8_t message_recv(tid_t src, struct msg* dest)
 
 	// Head is also valid under the same conditions as tail.
 	message_t* head = &(thread->messages.slots[thread->messages.head]);
+	bitmap_clear(thread->messages.bitmap, thread->messages.head);
 
 	thread_t* sender = thread_get(head->sender);
 	if (sender)
