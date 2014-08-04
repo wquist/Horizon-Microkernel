@@ -44,29 +44,33 @@ void syscall_recv(struct msg* dest)
 	{
 		uintptr_t addr_from = sender->call_data.payload_addr;
 		uintptr_t addr_to   = (uintptr_t)(dest->payload.buf);
+		size_t size_from = sender->call_data.payload_size;
+		size_t size_to   = dest->payload.size;
 
-		size_t size = dest->payload.size;
-		if (!size)
+		if (!size_to)
 			return syscall_return_set(-e_badsize);
-		if (size < sender->call_data.payload_size)
+		if (size_to < size_from)
 			return syscall_return_set(-e_badsize);
-		if (virtual_is_mapped(caller->owner, addr_to, size) != 1)
+		if (virtual_is_mapped(caller->owner, addr_to, size_from) != 1)
 			return syscall_return_set(-e_badaddr);
 
 		process_t* from = process_get(sender->owner);
 
 		// Copy the payload to the current address space.
-		uintptr_t end = addr_to + size;
+		uintptr_t end = addr_to + size_from;
 		while (addr_to < end)
 		{
 			uintptr_t aligned = addr_align(addr_from, ARCH_PGSIZE);
 			void* phys = paging_mapping_get(from->addr_space, aligned);
 
-			void* data = paging_map_temp(phys);
-			memcpy((void*)addr_to, data, min(ARCH_PGSIZE, end - addr_to));
+			uintptr_t diff = addr_from - aligned;
+			void* data = paging_map_temp(phys) + diff;
 
-			addr_from += ARCH_PGSIZE;
-			addr_to   += ARCH_PGSIZE;
+			size_t to_copy = min(ARCH_PGSIZE - diff, end - addr_to);
+			memcpy((void*)addr_to, data, to_copy);
+
+			addr_from += to_copy;
+			addr_to   += to_copy;
 		}
 
 		scheduler_add(sender->tid);
