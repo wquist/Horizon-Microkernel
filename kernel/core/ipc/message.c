@@ -136,6 +136,10 @@ bool message_find(tid_t src, msgdst_t search)
 {
 	thread_t* thread = thread_get(src);
 	dassert(thread);
+
+	// Bail out early if there is nothing to search.
+	if (thread->messages.count == 0)
+		return false;
 	
 	uint8_t prev = -1;
 	uint8_t curr = thread->messages.head;

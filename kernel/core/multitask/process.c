@@ -101,10 +101,12 @@ void process_kill(pid_t pid)
 //! Get the PCB for the given PID.
 process_t* process_get(pid_t pid)
 {
-	dassert(pid < PROCESS_MAX);
+	// Check for invalid processes.
+	if (pid >= PROCESS_MAX)
+		return NULL;
 
 	// Check for reserved PIDs.
-	if (pid == 0 || pid == 1 || pid == PROCESS_MAX-1)
+	if (pid == 0 || pid == 1)
 		return NULL;
 
 	if (!bmstack_test(&block_map, pid))

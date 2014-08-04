@@ -110,10 +110,12 @@ void thread_kill(tid_t tid)
 //! Get the actual TCB structure for a given thread.
 thread_t* thread_get(tid_t tid)
 {
-	dassert(tid < THREAD_MAX);
+	// Check for invalid threads.
+	if (tid >= THREAD_MAX)
+		return NULL;
 
 	// Check for reserved TIDs.
-	if (tid == 0)
+	if (tid == 0 || tid == 1)
 		return NULL;
 
 	if (!bmstack_test(&block_map, tid))
