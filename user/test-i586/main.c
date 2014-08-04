@@ -1,14 +1,22 @@
 // main.c
 
+#include <horizon/proc.h>
+#include <horizon/msg.h>
 #include <stdint.h>
 #include <memory.h>
 
 int dispatch(void* entry, void* stack) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (2), "b" (entry), "c" (stack)); return ret; }
-int vmap(void* dest, size_t size) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (8), "b" (dest), "c" (size)); return ret; }
+
+int wait(msgdst_t wait_for) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (6), "b" (wait_for)); return ret; }
+
+int vmap(void* dest, size_t size) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (7), "b" (dest), "c" (size)); return ret; }
 int pmap(void* dest, void* phys, size_t size) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (8), "b" (dest), "c" (phys), "d" (size)); return ret; }
 
+int send(struct msg* msg) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (10), "b" (msg)); return ret; }
+int recv(struct msg* msg) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (11), "b" (msg)); return ret; }
+
 uint16_t* const video_mem = (void*)0xA0000000;
-size_t cursor;
+size_t cursor = 0;
 
 void async();
 void print(const char* s);
@@ -18,12 +26,23 @@ void main()
 	pmap(video_mem, (void*)0xB8000, 4096);
 	memset(video_mem, 0, 80*25*sizeof(uint16_t));
 
-	print("Hello.");
-
 	vmap((void*)0xB0000000, 4096);
 	dispatch(async, (void*)(0xB0000000+4095));
 
-	print("Hello again.");
+	print("Hello.");
+
+	wait(TID_ANY);
+	print("Awoken.");
+
+	uint32_t extra = 0;
+
+	struct msg m = {{0}};
+	m.payload.buf  = &extra;
+	m.payload.size = 4;
+
+	recv(&m);
+	if (extra == 5)
+		print("Read payload.");
 
 	for (;;);
 }
@@ -31,6 +50,18 @@ void main()
 void async()
 {
 	print("Hello from thread.");
+
+	uint32_t extra = 5;
+
+	struct msg m = {{0}};
+	m.to   = MDSTFMT(2, MTOTID);
+	m.code = 1;
+	m.payload.buf  = &extra;
+	m.payload.size = 4;
+
+	print("Sending.");
+	send(&m);
+	print("Received.");
 
 	for (;;);
 }
