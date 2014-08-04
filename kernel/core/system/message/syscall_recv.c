@@ -21,6 +21,7 @@
 #include <ipc/message.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <util/addr.h>
 #include <util/compare.h>
 #include <horizon/errno.h>
 #include <memory.h>
@@ -41,27 +42,31 @@ void syscall_recv(struct msg* dest)
 
 	if (sender && (flags & MESSAGE_FLAG_PAYLOAD))
 	{
-		uintptr_t addr = sender->call_data.payload_addr;
-		uintptr_t size = sender->call_data.payload_size;
+		uintptr_t addr_from = sender->call_data.payload_addr;
+		uintptr_t addr_to   = (uintptr_t)(dest->payload.buf);
 
-		// FIXME: Only peek message if something is wrong.
-		/* Then the caller can try again with more size. */
+		size_t size = dest->payload.size;
 		if (!size)
 			return syscall_return_set(-e_badsize);
-		if (virtual_is_mapped(caller->owner, addr, size) != 1)
+		if (size < sender->call_data.payload_size)
+			return syscall_return_set(-e_badsize);
+		if (virtual_is_mapped(caller->owner, addr_to, size) != 1)
 			return syscall_return_set(-e_badaddr);
 
 		process_t* from = process_get(sender->owner);
 
 		// Copy the payload to the current address space.
-		uintptr_t end = addr + size;
-		while (addr < end)
+		uintptr_t end = addr_to + size;
+		while (addr_to < end)
 		{
-			void* phys = paging_mapping_get(from->addr_space, addr);
-			void* data = paging_map_temp(phys);
-			memcpy((void*)addr, data, min(ARCH_PGSIZE, end - addr));
+			uintptr_t aligned = addr_align(addr_from, ARCH_PGSIZE);
+			void* phys = paging_mapping_get(from->addr_space, aligned);
 
-			addr += ARCH_PGSIZE;
+			void* data = paging_map_temp(phys);
+			memcpy((void*)addr_to, data, min(ARCH_PGSIZE, end - addr_to));
+
+			addr_from += ARCH_PGSIZE;
+			addr_to   += ARCH_PGSIZE;
 		}
 
 		scheduler_add(sender->tid);
