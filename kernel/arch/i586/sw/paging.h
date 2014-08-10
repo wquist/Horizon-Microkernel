@@ -46,16 +46,16 @@ union paging_dirent
 {
 	struct __packed
 	{
-		bool 	 present   : 1;
-		bool 	 writable  : 1;
-		bool 	 user 	   : 1;
-		bool 	 writethru : 1; //!< Write-through cache mode.
-		bool 	 nocache   : 1; //!< Prevent adress from being cached.
-		bool 	 accessed  : 1; //!< Set to 1 on read/write. Never auto-reset to 0.
-		bool  		 	   : 1;
-		bool 	 big 	   : 1; //!< Point to a 4MB range instead of a pgtbl.
-		bool     global    : 1; //!< Ignored for PDEs...
-		uint8_t  available : 3;
+		uint32_t present   : 1;
+		uint32_t writable  : 1;
+		uint32_t user      : 1;
+		uint32_t writethru : 1; //!< Write-through cache mode.
+		uint32_t nocache   : 1; //!< Prevent adress from being cached.
+		uint32_t accessed  : 1; //!< Set to 1 on read/write. Never auto-reset to 0.
+		uint32_t           : 1;
+		uint32_t big       : 1; //!< Point to a 4MB range instead of a pgtbl.
+		uint32_t global    : 1; //!< Ignored for PDEs...
+		uint32_t available : 3;
 		uint32_t frame     : 20;
 	};
 	uint32_t raw;
@@ -67,16 +67,16 @@ union paging_tblent
 {
 	struct __packed
 	{
-		bool 	 present    : 1;
-		bool 	 writable   : 1;
-		bool 	 user 	    : 1;
-		bool 	 writethru  : 1;
-		bool 	 nocache    : 1;
-		bool 	 accessed   : 1;
-		bool  	 dirty 	    : 1; //!< Set to 1 on write. Never auto-resets.
-		bool 	 attr_index : 1; //!< Always 0. (?)
-		bool     global     : 1; //!< This cache entry is not reset on CR3 reload.
-		uint8_t  available  : 3;
+		uint32_t present    : 1;
+		uint32_t writable   : 1;
+		uint32_t user       : 1;
+		uint32_t writethru  : 1;
+		uint32_t nocache    : 1;
+		uint32_t accessed   : 1;
+		uint32_t dirty      : 1; //!< Set to 1 on write. Never auto-resets.
+		uint32_t attr_index : 1; //!< Always 0. (?)
+		uint32_t global     : 1; //!< This cache entry is not reset on CR3 reload.
+		uint32_t  available : 3;
 		uint32_t frame      : 20;
 	};
 	uint32_t raw;

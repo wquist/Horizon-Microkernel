@@ -68,25 +68,25 @@ union gdt_entry
 {
 	struct __packed
 	{
-		uint16_t limit_low   : 16;
-		uint32_t base_low    : 24;
+		uint64_t limit_low   : 16;
+		uint64_t base_low    : 24;
 
-		uint8_t  accessed    :  1; //!< Can also differentiate TSS/LDT (1 for TSS).
-		uint8_t  readwrite   :  1;
-		uint8_t  expand_down :  1;
-		uint8_t  code 		 :  1; //!< Can also be width of TSS (1 for 32-bit).
-		uint8_t  normal      :  1; //!< Always 1 for segments, 0 for TSS/LDT.
-		uint8_t  privilege   :  2;
-		uint8_t  present  	 :  1;
+		uint64_t accessed    :  1; //!< Can also differentiate TSS/LDT (1 for TSS).
+		uint64_t readwrite   :  1;
+		uint64_t expand_down :  1;
+		uint64_t code        :  1; //!< Can also be width of TSS (1 for 32-bit).
+		uint64_t normal      :  1; //!< Always 1 for segments, 0 for TSS/LDT.
+		uint64_t privilege   :  2;
+		uint64_t present     :  1;
 
-		uint8_t  limit_high	 :  4;
+		uint64_t limit_high  :  4;
 
-		uint8_t  available   :  1; //!< \todo Should this always be 0 for segments?
-		uint8_t              :  1; //!< Always 0.
-		uint8_t  width		 :  1; //!< 1 for 32-bits (leave 0 when TSS).
-		uint8_t  granularity :  1; //!< 1 for page granularity.
+		uint64_t available   :  1; //!< \todo Should this always be 0 for segments?
+		uint64_t             :  1; //!< Always 0.
+		uint64_t width       :  1; //!< 1 for 32-bits (leave 0 when TSS).
+		uint64_t granularity :  1; //!< 1 for page granularity.
 
-		uint8_t base_high    :  8;
+		uint64_t base_high   :  8;
 	};
 	uint64_t raw;
 };

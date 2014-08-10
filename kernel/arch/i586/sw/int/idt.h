@@ -63,16 +63,16 @@ union idt_entry
 {
 	struct __packed
 	{
-		uint16_t base_low  : 16;
-		uint16_t segment   : 16; //!< The GDT segment the ISR should be called from.
-		uint8_t            : 8;  //!< Always 0.
+		uint64_t base_low  : 16;
+		uint64_t segment   : 16; //!< The GDT segment the ISR should be called from.
+		uint64_t           : 8;  //!< Always 0.
 
-		uint8_t  gate_type : 4;
-		uint8_t  storage   : 1;  //!< Should be 0 for interrupt gates.
-		uint8_t  privilege : 2;
-		uint8_t  present   : 1;
+		uint64_t gate_type : 4;
+		uint64_t storage   : 1;  //!< Should be 0 for interrupt gates.
+		uint64_t privilege : 2;
+		uint64_t present   : 1;
 
-		uint16_t base_high : 16;
+		uint64_t base_high : 16;
 	};
 	uint64_t raw;
 };
