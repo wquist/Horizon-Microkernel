@@ -48,6 +48,7 @@ struct __packed message //!< This should always be 16 bytes.
 void message_send(tid_t from, tid_t to, struct msg* info, bool head);
 uint8_t message_recv(tid_t src, struct msg* dest);
 uint8_t message_peek(tid_t src, msgsrc_t* from);
+
 bool message_find(tid_t src, msgdst_t search);
 
 tid_t message_dest_get(msgdst_t dest);

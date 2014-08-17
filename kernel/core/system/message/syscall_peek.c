@@ -20,36 +20,22 @@
 #include <ipc/message.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <horizon/proc.h>
+#include <horizon/msg.h>
 #include <horizon/errno.h>
 
-void syscall_wait(msgdst_t sender)
+void syscall_peek()
 {
-	// The desired message may already by in queue.
 	thread_t* caller = thread_get(scheduler_curr());
-	if (message_find(caller->tid, sender))
-		return syscall_return_set(-e_success); //< Now use 'recv' to get it.
+	if (caller->messages.count == 0)
+		return syscall_return_set(-e_notavail);
 
-	// The dest thread must exist.
-	tid_t wait_for = message_dest_get(sender);
-	thread_t* target = thread_get(wait_for);
-	if (!target)
-	{
-		// The target may be any thread or the kernel.
-		if (wait_for != TID_ANY && wait_for != PID_KERNEL)
-			return syscall_return_set(-e_notavail);
-	}
+	msgsrc_t from;
+	uint8_t flags = message_peek(caller->tid, &from);
+	thread_t* sender = thread_get(MSRCTID(from));
 
-	// The caller is going to be removed.
-	scheduler_lock();
-	scheduler_remove(caller->tid);
-	// Put the thread into the generic waiting state.
-	caller->sched.state = THREAD_STATE_WAITING;
+	if (!sender || !(flags & MESSAGE_FLAG_PAYLOAD))
+		return syscall_return_set(0);
 
-	// FIXME: Do not set the success code early.
-	syscall_return_set(-e_success);
-	caller->call_data.wait_for = wait_for;
-
-	// Do not return since the thread is gone now.
-	scheduler_unlock();
+	size_t size = sender->call_data.payload_size;
+	syscall_return_set(size);
 }

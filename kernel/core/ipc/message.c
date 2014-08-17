@@ -78,10 +78,9 @@ void message_send(tid_t from, tid_t to, struct msg* info, bool head)
 }
 
 //! Copy message info to the given struct and remove it from the queue.
+/*! The destination message can be null; the msg will still be removed. */
 uint8_t message_recv(tid_t src, struct msg* dest)
 {
-	dassert(dest);
-
 	// A message must be in queue for recv to work.
 	thread_t* thread = thread_get(src);
 	dassert(thread);
@@ -91,15 +90,18 @@ uint8_t message_recv(tid_t src, struct msg* dest)
 	message_t* head = &(thread->messages.slots[thread->messages.head]);
 	bitmap_clear(thread->messages.bitmap, thread->messages.head);
 
-	thread_t* sender = thread_get(head->sender);
-	if (sender)
-		dest->from = (sender->owner << 16) | (sender->tid);
-	else
-		dest->from = sender->tid;
+	if (dest)
+	{
+		thread_t* sender = thread_get(head->sender);
+		if (sender)
+			dest->from = (sender->owner << 16) | (sender->tid);
+		else
+			dest->from = sender->tid;
 
-	dest->code = head->code;
-	dest->arg  = head->arg;
-	dest->data = head->data;
+		dest->code = head->code;
+		dest->arg  = head->arg;
+		dest->data = head->data;
+	}
 
 	// Update the head and the tail.
 	if (thread->messages.tail == thread->messages.head)

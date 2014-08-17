@@ -21,6 +21,7 @@
 #include <ipc/message.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <horizon/msg.h>
 #include <horizon/errno.h>
 
 void syscall_send(struct msg* src)

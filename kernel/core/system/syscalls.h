@@ -42,6 +42,8 @@ void syscall_unmap(uintptr_t addr, size_t size);
 
 void syscall_send(struct msg* src);
 void syscall_recv(struct msg* dest);
+void syscall_peek();
+void syscall_drop(struct msg* info);
 
 SYSCALL_TABLE = 
 {
@@ -60,6 +62,8 @@ SYSCALL_TABLE =
 
 	{ syscall_send,     1 },
 	{ syscall_recv,     1 },
+	{ syscall_peek,     0 },
+	{ syscall_drop,     1 },
 
 	0
 };

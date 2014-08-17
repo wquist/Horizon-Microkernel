@@ -23,6 +23,7 @@
 #include <multitask/scheduler.h>
 #include <util/addr.h>
 #include <util/compare.h>
+#include <horizon/msg.h>
 #include <horizon/errno.h>
 #include <memory.h>
 
