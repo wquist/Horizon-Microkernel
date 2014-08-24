@@ -18,9 +18,10 @@
 #include <system/syscalls.h>
 #include <arch.h>
 #include <memory/virtual.h>
-#include <ipc/message.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <ipc/target.h>
+#include <ipc/message.h>
 #include <horizon/msg.h>
 #include <horizon/errno.h>
 
@@ -30,7 +31,7 @@ void syscall_send(struct msg* src)
 		return syscall_return_set(-e_badparam);
 
 	thread_t* caller = thread_get(scheduler_curr());
-	thread_t* dest   = thread_get(message_dest_get(src->to));
+	thread_t* dest   = thread_get(ipc_dest_get(src->to));
 
 	// The destination must be alive and have room in queue.
 	if (!dest)
@@ -63,7 +64,7 @@ void syscall_send(struct msg* src)
 	// Try to wake up the thread if needed.
 	bool woken = false;
 	if (dest->sched.state == THREAD_STATE_WAITING)
-		woken = message_dest_compare(dest->call_data.wait_for, caller->tid);
+		woken = ipc_dest_compare(dest->call_data.wait_for, caller->tid);
 
 	// Here, 'woken' determines if msg is placed at head or tail of queue.
 	message_send(caller->tid, dest->tid, src, woken);

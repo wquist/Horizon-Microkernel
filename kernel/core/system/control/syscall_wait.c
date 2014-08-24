@@ -17,9 +17,10 @@
 
 #include <system/syscalls.h>
 #include <arch.h>
-#include <ipc/message.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <ipc/target.h>
+#include <ipc/message.h>
 #include <horizon/ipc.h>
 #include <horizon/errno.h>
 
@@ -31,7 +32,7 @@ void syscall_wait(ipcdst_t sender)
 		return syscall_return_set(-e_success); //< Now use 'recv' to get it.
 
 	// The dest thread must exist.
-	tid_t wait_for = message_dest_get(sender);
+	tid_t wait_for = ipc_dest_get(sender);
 	thread_t* target = thread_get(wait_for);
 	if (!target)
 	{

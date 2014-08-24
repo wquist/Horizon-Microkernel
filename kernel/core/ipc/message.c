@@ -17,18 +17,12 @@
 
 #include "message.h"
 #include <multitask/process.h>
+#include <ipc/target.h>
 #include <util/bitmap.h>
 #include <debug/error.h>
 #include <horizon/ipc.h>
 #include <stddef.h>
 #include <string.h>
-
-// FIXME: Better way than these macros?
-/* This info probably is not needed in libh/user programs. */
-#define MSGDEST_UID(x)  ((uint16_t)(x & 0xFFFF))
-#define MSGDEST_TYPE(x) ((uint16_t)((x >> 16) & 0xFFFF))
-#define MSGDEST_TYPE_PID 0x0
-#define MSGDEST_TYPE_TID 0x1
 
 //! Send a message from with the given info to a TID.
 /*! 'head' determines if the message is pushed to the front or back of the queue. */
@@ -152,7 +146,7 @@ bool message_find(tid_t src, ipcdst_t search)
 	while (curr != -1)
 	{
 		message_t* msg = &(thread->messages.slots[curr]);
-		if (message_dest_compare(search, msg->sender))
+		if (ipc_dest_compare(search, msg->sender))
 		{
 			if (prev != -1) //< The message is in the middle or at the end.
 				thread->messages.slots[prev].next = msg->next;
@@ -174,57 +168,6 @@ bool message_find(tid_t src, ipcdst_t search)
 
 		prev = curr;
 		curr = msg->next;
-	}
-
-	return false;
-}
-
-//! Convert the msgdest type into a TID value.
-tid_t message_dest_get(ipcdst_t dest)
-{
-	uint16_t uid = MSGDEST_UID(dest);
-	if (uid == IDST_ANY || uid == IDST_KERNEL)
-		return uid;
-
-	switch (MSGDEST_TYPE(dest))
-	{
-		case MSGDEST_TYPE_TID:
-		{
-			return uid;
-		}
-		case MSGDEST_TYPE_PID:
-		{
-			process_t* proc = process_get(uid);
-			if (proc)
-				return proc->threads.slots[0];
-		}
-	}
-
-	return 0;
-}
-
-//! Compare a msgdest type with a TID to see if they are equal.
-bool message_dest_compare(ipcdst_t dest, uint16_t caller)
-{
-	uint16_t uid = MSGDEST_UID(dest);
-	if (uid == IDST_ANY)
-		return true;
-
-	if (uid == IDST_KERNEL)
-		return (caller == IDST_KERNEL);
-
-	switch (MSGDEST_TYPE(dest))
-	{
-		case MSGDEST_TYPE_TID:
-		{
-			return (uid == caller);
-		}
-		case MSGDEST_TYPE_PID:
-		{
-			thread_t* thread = thread_get(caller);
-			if (thread)
-				return (uid == thread->owner);
-		}
 	}
 
 	return false;

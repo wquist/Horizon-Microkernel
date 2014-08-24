@@ -15,38 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file core/ipc/message.h
- *  \date July 2014
+/*! \file core/ipc/target.h
+ *  \date August 2014
  */
 
 #pragma once
 
-#include <horizon/msg.h>
 #include <horizon/types.h>
 #include <stdint.h>
 #include <stdbool.h>
 
-enum message_flags
-{
-	MESSAGE_FLAG_PAYLOAD = (1 << 0),
-};
-
-typedef struct message message_t;
-struct __packed message //!< This should always be 16 bytes.
-{
-	tid_t sender;
-	uint8_t flags;
-
-	//! Maintain a linked list for the queue.
-	/*! Current queue max is 128 so 256 should be plenty. */
-	uint8_t next;
-
-	msgarg_t code, arg;
-	msgarg_t data;
-};
-
-void message_send(tid_t from, tid_t to, struct msg* info, bool head);
-uint8_t message_recv(tid_t src, struct msg* dest);
-uint8_t message_peek(tid_t src, msgsrc_t* from);
-
-bool message_find(tid_t src, ipcdst_t search);
+tid_t ipc_dest_get(ipcdst_t dest);
+bool ipc_dest_compare(ipcdst_t dest, uint16_t caller);
