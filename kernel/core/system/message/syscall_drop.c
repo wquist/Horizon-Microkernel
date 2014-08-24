@@ -29,7 +29,7 @@ void syscall_drop(struct msg* info)
 		return syscall_return_set(-e_notavail);
 
 	uint8_t flags = message_recv(caller->tid, info);
-	thread_t* sender = thread_get(MSRCTID(info->from));
+	thread_t* sender = thread_get(MSRC_TID(info->from));
 
 	// If the sender was waiting, it must be woken.
 	if (sender && (flags & MESSAGE_FLAG_PAYLOAD))

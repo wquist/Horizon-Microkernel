@@ -19,16 +19,16 @@
 #include <arch.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <horizon/proc.h>
+#include <horizon/ipc.h>
 #include <horizon/errno.h>
 
 void syscall_detach(tid_t tid)
 {
-	if (tid == TID_ANY)
+	if (tid == IDST_ANY)
 		return syscall_return_set(-e_badparam);
 
 	thread_t* caller = thread_get(scheduler_curr());
-	if (tid == TID_SELF)
+	if (tid == 0) //< FIXME: Make macro.
 		tid = caller->tid;
 
 	thread_t* target = thread_get(tid);
@@ -44,8 +44,8 @@ void syscall_detach(tid_t tid)
 	if (tid == caller->tid)
 		scheduler_lock();
 
-	// The main thread or the last thread? Process killed.
-	if (target->lid == 0 || owner->threads.count == 1)
+	// The main thread? Process killed.
+	if (target->lid == 0)
 		process_kill(owner->pid);
 	else
 		thread_kill(tid);

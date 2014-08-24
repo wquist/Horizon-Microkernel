@@ -19,12 +19,16 @@
 #include <multitask/process.h>
 #include <util/bitmap.h>
 #include <debug/error.h>
-#include <horizon/proc.h>
+#include <horizon/ipc.h>
 #include <stddef.h>
 #include <string.h>
 
+// FIXME: Better way than these macros?
+/* This info probably is not needed in libh/user programs. */
 #define MSGDEST_UID(x)  ((uint16_t)(x & 0xFFFF))
 #define MSGDEST_TYPE(x) ((uint16_t)((x >> 16) & 0xFFFF))
+#define MSGDEST_TYPE_PID 0x0
+#define MSGDEST_TYPE_TID 0x1
 
 //! Send a message from with the given info to a TID.
 /*! 'head' determines if the message is pushed to the front or back of the queue. */
@@ -134,7 +138,7 @@ uint8_t message_peek(tid_t src, msgsrc_t* from)
 }
 
 //! Search for a message from the given sender and put it at the queue head.
-bool message_find(tid_t src, msgdst_t search)
+bool message_find(tid_t src, ipcdst_t search)
 {
 	thread_t* thread = thread_get(src);
 	dassert(thread);
@@ -176,19 +180,19 @@ bool message_find(tid_t src, msgdst_t search)
 }
 
 //! Convert the msgdest type into a TID value.
-tid_t message_dest_get(msgdst_t dest)
+tid_t message_dest_get(ipcdst_t dest)
 {
 	uint16_t uid = MSGDEST_UID(dest);
-	if (uid == TID_ANY || uid == TID_KERNEL)
+	if (uid == IDST_ANY || uid == IDST_KERNEL)
 		return uid;
 
 	switch (MSGDEST_TYPE(dest))
 	{
-		case MTOTID:
+		case MSGDEST_TYPE_TID:
 		{
 			return uid;
 		}
-		case MTOPID:
+		case MSGDEST_TYPE_PID:
 		{
 			process_t* proc = process_get(uid);
 			if (proc)
@@ -200,22 +204,22 @@ tid_t message_dest_get(msgdst_t dest)
 }
 
 //! Compare a msgdest type with a TID to see if they are equal.
-bool message_dest_compare(msgdst_t dest, uint16_t caller)
+bool message_dest_compare(ipcdst_t dest, uint16_t caller)
 {
 	uint16_t uid = MSGDEST_UID(dest);
-	if (uid == TID_ANY)
+	if (uid == IDST_ANY)
 		return true;
 
-	if (uid == PID_KERNEL)
-		return (caller == TID_KERNEL);
+	if (uid == IDST_KERNEL)
+		return (caller == IDST_KERNEL);
 
 	switch (MSGDEST_TYPE(dest))
 	{
-		case MTOTID:
+		case MSGDEST_TYPE_TID:
 		{
 			return (uid == caller);
 		}
-		case MTOPID:
+		case MSGDEST_TYPE_PID:
 		{
 			thread_t* thread = thread_get(caller);
 			if (thread)

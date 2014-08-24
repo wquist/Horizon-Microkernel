@@ -39,8 +39,9 @@ void syscall_recv(struct msg* dest)
 	msgsrc_t from;
 	// Peek the message first in case there is a problem with payload.
 	uint8_t flags = message_peek(caller->tid, &from);
-	thread_t* sender = thread_get(MSRCTID(from));
+	thread_t* sender = thread_get(MSRC_TID(from));
 
+	uintptr_t recv_size = 0;
 	if (sender && (flags & MESSAGE_FLAG_PAYLOAD))
 	{
 		uintptr_t addr_from = sender->call_data.payload_addr;
@@ -74,10 +75,11 @@ void syscall_recv(struct msg* dest)
 			addr_to   += to_copy;
 		}
 
+		recv_size = size_from;
 		scheduler_add(sender->tid);
 	}
 
 	// Everything is OK, so actually receive the message.
 	message_recv(caller->tid, dest);
-	syscall_return_set(-e_success);
+	syscall_return_set(recv_size);
 }

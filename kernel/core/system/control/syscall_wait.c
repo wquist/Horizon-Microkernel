@@ -20,10 +20,10 @@
 #include <ipc/message.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <horizon/proc.h>
+#include <horizon/ipc.h>
 #include <horizon/errno.h>
 
-void syscall_wait(msgdst_t sender)
+void syscall_wait(ipcdst_t sender)
 {
 	// The desired message may already by in queue.
 	thread_t* caller = thread_get(scheduler_curr());
@@ -36,7 +36,7 @@ void syscall_wait(msgdst_t sender)
 	if (!target)
 	{
 		// The target may be any thread or the kernel.
-		if (wait_for != TID_ANY && wait_for != PID_KERNEL)
+		if (wait_for != IDST_ANY && wait_for != IDST_KERNEL)
 			return syscall_return_set(-e_notavail);
 	}
 

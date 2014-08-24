@@ -49,7 +49,7 @@ void message_send(tid_t from, tid_t to, struct msg* info, bool head);
 uint8_t message_recv(tid_t src, struct msg* dest);
 uint8_t message_peek(tid_t src, msgsrc_t* from);
 
-bool message_find(tid_t src, msgdst_t search);
+bool message_find(tid_t src, ipcdst_t search);
 
-tid_t message_dest_get(msgdst_t dest);
-bool message_dest_compare(msgdst_t dest, uint16_t caller);
+tid_t message_dest_get(ipcdst_t dest);
+bool message_dest_compare(ipcdst_t dest, uint16_t caller);

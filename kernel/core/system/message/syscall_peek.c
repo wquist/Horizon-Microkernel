@@ -31,7 +31,7 @@ void syscall_peek()
 
 	msgsrc_t from;
 	uint8_t flags = message_peek(caller->tid, &from);
-	thread_t* sender = thread_get(MSRCTID(from));
+	thread_t* sender = thread_get(MSRC_TID(from));
 
 	if (!sender || !(flags & MESSAGE_FLAG_PAYLOAD))
 		return syscall_return_set(0);

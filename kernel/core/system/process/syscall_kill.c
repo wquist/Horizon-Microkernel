@@ -19,16 +19,16 @@
 #include <arch.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <horizon/proc.h>
+#include <horizon/ipc.h>
 #include <horizon/errno.h>
 
 void syscall_kill(pid_t pid)
 {
-	if (pid == PID_KERNEL || pid == PID_ANY)
+	if (pid == IDST_KERNEL || pid == IDST_ANY)
 		return syscall_return_set(-e_badparam);
 
 	thread_t* caller = thread_get(scheduler_curr());
-	if (pid == PID_SELF)
+	if (pid == 0) //< FIXME: Macro.
 		pid = caller->owner;
 
 	process_t* target = process_get(pid);

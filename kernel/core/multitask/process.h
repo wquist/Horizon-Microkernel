@@ -85,7 +85,7 @@ struct thread
 
 	struct
 	{
-		msgdst_t wait_for;
+		ipcdst_t wait_for;
 
 		uintptr_t payload_addr;
 		size_t payload_size;
