@@ -4,22 +4,14 @@
 #include <features.h>
 #include <horizon/types.h>
 
-#define MDSTFMT(uid, knd) ((msgdst_t)(uid) | ((msgdst_t)(knd) << 16))
-
-#define MSRCPID(src) ((pid_t)(((msgsrc_t)(src) >> 16) & 0xFFFF))
-#define MSRCTID(src) ((tid_t)((msgsrc_t)(src) & 0xFFFF))
-
-enum
-{
-	MTOPID = 0,
-	MTOTID
-};
+#define MSRC_PID(src) ((pid_t)(((msgsrc_t)(src) >> 16) & 0xFFFF))
+#define MSRC_TID(src) ((tid_t)((msgsrc_t)(src) & 0xFFFF))
 
 struct msg
 {
 	union
 	{
-		msgdst_t to;
+		ipcdst_t to;
 		msgsrc_t from;
 	} NONAMELESSFIELD(info);
 
