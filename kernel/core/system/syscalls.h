@@ -23,6 +23,7 @@
 
 #include <arch.h>
 #include <horizon/types.h>
+#include <horizon/shm.h>
 #include <horizon/msg.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -39,6 +40,10 @@ void syscall_wait(ipcdst_t sender);
 void syscall_vmap(uintptr_t dest, size_t size);
 void syscall_pmap(uintptr_t dest, uintptr_t src, size_t size);
 void syscall_unmap(uintptr_t addr, size_t size);
+
+void syscall_grant(struct shm* info, uintptr_t dest);
+void syscall_share(struct shm* info);
+void syscall_accept(shmid_t sid, uintptr_t dest);
 
 void syscall_send(struct msg* src);
 void syscall_recv(struct msg* dest);
@@ -59,6 +64,10 @@ SYSCALL_TABLE =
 	{ syscall_vmap,     2 },
 	{ syscall_pmap,     3 },
 	{ syscall_unmap,    2 },
+
+	{ syscall_grant,    2 },
+	{ syscall_share,    1 },
+	{ syscall_accept,   2 },
 
 	{ syscall_send,     1 },
 	{ syscall_recv,     1 },

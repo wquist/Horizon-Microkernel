@@ -25,6 +25,7 @@
 #include <ipc/message.h>
 #include <util/bitmap.h>
 #include <horizon/types.h>
+#include <horizon/shm.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -58,6 +59,13 @@ struct process
 
 	uintptr_t entry;
 	paging_pas_t* addr_space;
+
+	struct
+	{
+		// FIXME: Macro this/put it in another file.
+		struct shm shm_slots[16];
+		uint8_t shm_next;
+	} call_data;
 
 	struct
 	{

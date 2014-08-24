@@ -21,6 +21,7 @@
 #include <debug/error.h>
 #include <util/addr.h>
 #include <util/compare.h>
+#include <horizon/shm.h>
 #include <stdbool.h>
 #include <memory.h>
 
@@ -141,7 +142,8 @@ void virtual_alloc(pid_t pid, uintptr_t virt, size_t size)
 }
 
 //! Point virtual memory to the same physical region that is mapped in another process.
-void virtual_clone(pid_t dest, pid_t src, uintptr_t from, uintptr_t to, size_t size, VIRTUAL_CLONE_MODE mode)
+//  FIXME: Too many parameters in this function.
+void virtual_share(pid_t dest, pid_t src, uintptr_t to, uintptr_t from, size_t size, uint8_t mode)
 {
 	// No need for get_dir since both processes must exist.
 	process_t* pdest = process_get(dest);
@@ -156,12 +158,12 @@ void virtual_clone(pid_t dest, pid_t src, uintptr_t from, uintptr_t to, size_t s
 	PAGING_FLAGS flags = PAGING_FLAG_USER;
 	switch (mode)
 	{
-		case VIRTUAL_CLONE_READ: 
+		case SPROT_READ: 
 			break;
-		case VIRTUAL_CLONE_WRITE:
+		case SPROT_WRITE:
 			flags |= PAGING_FLAG_WRITE;
 			break;
-		default: dpanic("Invalid VIRTUAL_CLONE mode.");
+		default: dpanic("Invalid virtual_share mode.");
 	}
 
 	uintptr_t curr   = addr_align(from, ARCH_PGSIZE);
