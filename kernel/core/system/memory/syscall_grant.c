@@ -33,12 +33,11 @@ void syscall_grant(struct shm* info, uintptr_t dest)
 	process_t* owner = process_get(caller->owner);
 
 	// The target has to exist.
-	thread_t* map_to = thread_get(ipc_dest_get(info->to));
-	if (!map_to)
+	process_t* target = process_get(info->to);
+	if (!target)
 		return syscall_return_set(-e_notavail);
 
 	// Can only map if higher priv or the parent of the target process.
-	process_t* target = process_get(map_to->owner);
 	if (!(owner->priv > target->priv || target->parent == owner->pid))
 		return syscall_return_set(-e_badpriv);
 

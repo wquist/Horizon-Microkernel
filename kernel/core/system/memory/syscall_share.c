@@ -25,6 +25,7 @@
 #include <horizon/errno.h>
 #include <memory.h>
 
+// FIXME: Move the shm PCB info management into its own class.
 void syscall_share(struct shm* info)
 {
 	if (!info)
@@ -34,8 +35,7 @@ void syscall_share(struct shm* info)
 	process_t* owner = process_get(caller->owner);
 
 	// FIXME: The target always has to exist?
-	thread_t* map_to = thread_get(ipc_dest_get(info->to));
-	if (!map_to && info->to != IDST_ANY)
+	if (!process_get(info->to) && info->to != IDST_ANY)
 		return syscall_return_set(-e_notavail);
 
 	// The memory must be mapped in the source.
@@ -64,7 +64,7 @@ void syscall_share(struct shm* info)
 	if (owner->call_data.shm_next >= 16)
 		owner->call_data.shm_next = 0;
 
-	// The shmid is formatted as: |PID (16)|avail (8)|index (8)|
-	shmid_t ret_id = ((shmid_t)(info->to) << 16) | ((shmid_t)(index));
+	// The shmid is formatted as: |avail (8)|PID (16)|index (8)|
+	shmid_t ret_id = (shmid_t)((shmid_t)(info->to) << 8) | ((shmid_t)(index));
 	syscall_return_set(ret_id);
 }
