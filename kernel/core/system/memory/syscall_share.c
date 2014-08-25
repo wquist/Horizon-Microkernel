@@ -56,8 +56,8 @@ void syscall_share(struct shm* info)
 	}
 
 	// Store the shm info in the PCB of the caller.
-	uint8_t index = (owner->call_data.shm_next)++;
-	memcpy(&(owner->call_data.shm_slots[index]), info, sizeof(struct shm));
+	uint8_t slot = (owner->call_data.shm_next)++;
+	memcpy(&(owner->call_data.shm_slots[slot]), info, sizeof(struct shm));
 
 	// The slots are a circular buffer, check if it needs to loop.
 	/* FIXME: Get rid of the magic number. */
@@ -65,6 +65,6 @@ void syscall_share(struct shm* info)
 		owner->call_data.shm_next = 0;
 
 	// The shmid is formatted as: |avail (8)|PID (16)|index (8)|
-	shmid_t ret_id = (shmid_t)((shmid_t)(info->to) << 8) | ((shmid_t)(index));
-	syscall_return_set(ret_id);
+	shmid_t sid = (shmid_t)((shmid_t)(owner->pid) << 8) | ((shmid_t)(slot));
+	syscall_return_set(sid);
 }
