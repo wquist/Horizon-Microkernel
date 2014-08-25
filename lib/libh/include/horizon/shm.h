@@ -8,8 +8,6 @@
 
 struct shm
 {
-	ipcdst_t to;
-
 	void*  addr;
 	size_t size;
 
