@@ -23,8 +23,9 @@
 #include <ipc/target.h>
 #include <horizon/ipc.h>
 #include <horizon/errno.h>
+#include <memory.h>
 
-void syscall_grant(struct shm* info, uintptr_t dest)
+void syscall_share(struct shm* info)
 {
 	if (!info)
 		return syscall_return_set(-e_badparam);
@@ -32,37 +33,38 @@ void syscall_grant(struct shm* info, uintptr_t dest)
 	thread_t* caller = thread_get(scheduler_curr());
 	process_t* owner = process_get(caller->owner);
 
-	// The target has to exist.
+	// FIXME: The target always has to exist?
 	thread_t* map_to = thread_get(ipc_dest_get(info->to));
-	if (!map_to)
+	if (!map_to && info->to != IDST_ANY)
 		return syscall_return_set(-e_notavail);
 
-	// Can only map if higher priv or the parent of the target process.
-	process_t* target = process_get(map_to->owner);
-	if (!(owner->priv > target->priv || target->parent == owner->pid))
-		return syscall_return_set(-e_badpriv);
-
-	// The space must exist in the caller, and be free in the target.
+	// The memory must be mapped in the source.
 	uintptr_t src = (uintptr_t)(info->addr);
-	if (!info->size)
-		return syscall_return_set(-e_badsize);
+	if (!(info->size))
+		return syscall_return_set(-e_badparam);
 	if (virtual_is_mapped(owner->pid, src, info->size) != 1)
 		return syscall_return_set(-e_badaddr);
-	if (virtual_is_mapped(target->pid, dest, info->size) != 0)
-		return syscall_return_set(-e_notavail);
 
-	// Make sure the protection field is valid.
+	// Make sure the protection is valid.
 	switch (info->prot)
 	{
 		case SPROT_READ:
 		case SPROT_WRITE:
-			// FIXME: Single function so there is not an extra retain-release?
-			virtual_share(target->pid, owner->pid, dest, src, info->size, info->prot);
-			virtual_unmap(owner->pid, src, info->size);
 			break;
 		default:
 			return syscall_return_set(-e_badparam);
 	}
 
-	syscall_return_set(-e_success);
+	// Store the shm info in the PCB of the caller.
+	uint8_t index = (owner->call_data.shm_next)++;
+	memcpy(&(owner->call_data.shm_slots[index]), info, sizeof(struct shm));
+
+	// The slots are a circular buffer, check if it needs to loop.
+	/* FIXME: Get rid of the magic number. */
+	if (owner->call_data.shm_next >= 16)
+		owner->call_data.shm_next = 0;
+
+	// The shmid is formatted as: |PID (16)|avail (8)|index (8)|
+	shmid_t ret_id = ((shmid_t)(info->to) << 16) | ((shmid_t)(index));
+	syscall_return_set(ret_id);
 }
