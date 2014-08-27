@@ -38,7 +38,7 @@ void syscall_grant(struct shm* info, uintptr_t dest)
 		return syscall_return_set(-e_notavail);
 
 	// Can only map if higher priv or the parent of the target process.
-	if (!(owner->priv > target->priv || target->parent == owner->pid))
+	if (!((owner->priv > target->priv) || (target->parent == owner->pid)))
 		return syscall_return_set(-e_badpriv);
 
 	// The space must exist in the caller, and be free in the target.

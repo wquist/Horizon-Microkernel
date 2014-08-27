@@ -62,13 +62,6 @@ struct process
 
 	struct
 	{
-		// FIXME: Macro this/put it in another file.
-		struct shm shm_slots[16];
-		uint8_t shm_next;
-	} call_data;
-
-	struct
-	{
 		size_t count;
 		uint16_t slots[PROCESS_THREAD_MAX];
 		bitmap_t bitmap[BITMAP_LENGTH(PROCESS_THREAD_MAX)];
@@ -97,6 +90,8 @@ struct thread
 
 		uintptr_t payload_addr;
 		size_t payload_size;
+
+		struct shm shm_offer;
 	} call_data;
 
 	struct

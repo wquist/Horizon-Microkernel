@@ -26,7 +26,7 @@
 #include <memory.h>
 
 // FIXME: Move the shm PCB info management into its own class.
-void syscall_share(struct shm* info)
+void syscall_share(struct shm* info, size_t flags)
 {
 	if (!info)
 		return syscall_return_set(-e_badparam);
@@ -34,7 +34,12 @@ void syscall_share(struct shm* info)
 	thread_t* caller = thread_get(scheduler_curr());
 	process_t* owner = process_get(caller->owner);
 
-	// FIXME: The target always has to exist?
+	// First check if there is already shm being shared.
+	if (!((caller->call_data.shm_offer.to) || (flags & SOPT_FORCE)))
+		return syscall_return_set(-e_notavail);
+
+	// The target must exist, unless it is any process.
+	/* FIXME: Allow IDST_ANY as a valid option? */
 	if (!process_get(info->to) && info->to != IDST_ANY)
 		return syscall_return_set(-e_notavail);
 
@@ -55,16 +60,10 @@ void syscall_share(struct shm* info)
 			return syscall_return_set(-e_badparam);
 	}
 
-	// Store the shm info in the PCB of the caller.
-	uint8_t slot = (owner->call_data.shm_next)++;
-	memcpy(&(owner->call_data.shm_slots[slot]), info, sizeof(struct shm));
+	// Store the shm info in the TCB of the caller.
+	memcpy(&(caller->call_data.shm_offer), info, sizeof(struct shm));
 
-	// The slots are a circular buffer, check if it needs to loop.
-	/* FIXME: Get rid of the magic number. */
-	if (owner->call_data.shm_next >= 16)
-		owner->call_data.shm_next = 0;
-
-	// The shmid is formatted as: |avail (8)|PID (16)|index (8)|
-	shmid_t sid = (shmid_t)((shmid_t)(owner->pid) << 8) | ((shmid_t)(slot));
+	// The shmid is just a TID for now.
+	shmid_t sid = caller->tid;
 	syscall_return_set(sid);
 }

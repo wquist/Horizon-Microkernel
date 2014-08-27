@@ -29,19 +29,16 @@ void syscall_accept(shmid_t sid, uintptr_t dest)
 	thread_t* caller = thread_get(scheduler_curr());
 	process_t* owner = process_get(caller->owner);
 
-	// The shmid is formatted as: |avail (8)|PID (16)|index (8)|
-	pid_t from_id = (sid >> 8) & 0xFFFF;
-	process_t* map_from = process_get(from_id);
-	if (!map_from)
+	// The shmid is only the TID for now.
+	tid_t from_tid = sid & 0xFFFF;
+	thread_t* info_from = thread_get(from_tid);
+	if (!info_from)
 		return syscall_return_set(-e_notavail);
 
-	// FIXME: Move this check into a shm class.
-	uint8_t slot = sid & 0xFF;
-	if (slot > 15)
-		return syscall_return_set(-e_badparam);
+	process_t* map_from = process_get(info_from->owner);
 
 	// Make sure the caller is allowed to accept.
-	struct shm* info = &(map_from->call_data.shm_slots[slot]);
+	struct shm* info = &(info_from->call_data.shm_offer);
 	if (!ipc_dest_compare(caller->tid, info->to))
 		return syscall_return_set(-e_badpriv);
 
@@ -52,6 +49,10 @@ void syscall_accept(shmid_t sid, uintptr_t dest)
 	// The protection was already checked in share, so just map.
 	uintptr_t src = (uintptr_t)(info->addr);
 	virtual_share(owner->pid, map_from->pid, dest, src, info->size, info->prot);
+
+	// Unset the shm offer so the source knows it was accepted.
+	if (info->to != IDST_ANY)
+		info->to = 0;
 
 	syscall_return_set(-e_success);
 }
