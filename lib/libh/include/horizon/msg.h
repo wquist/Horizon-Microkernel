@@ -13,7 +13,7 @@ struct msg
 	{
 		ipcdst_t to;
 		msgsrc_t from;
-	} NONAMELESSFIELD(info);
+	};
 
 	msgarg_t code, arg;
 	msgarg_t data;
