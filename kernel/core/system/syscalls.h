@@ -50,6 +50,9 @@ void syscall_recv(struct msg* dest);
 void syscall_peek();
 void syscall_drop(struct msg* info);
 
+void syscall_svcown(size_t svc);
+void syscall_svcid(size_t svc);
+
 SYSCALL_TABLE = 
 {
 	{ syscall_spawn,    0 },
@@ -73,6 +76,9 @@ SYSCALL_TABLE =
 	{ syscall_recv,     1 },
 	{ syscall_peek,     0 },
 	{ syscall_drop,     1 },
+
+	{ syscall_svcown,   1 },
+	{ syscall_svcid,    1 },
 
 	0
 };

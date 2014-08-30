@@ -15,11 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
 #include "service.h"
 #include <multitask/process.h>
 #include <horizon/svc.h>
+#include <debug/error.h>
 
 // FIXME: Make SVC_MAX or similar in libh.
 static uint32_t service_ids[64] = {0};
