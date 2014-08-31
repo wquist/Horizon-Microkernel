@@ -1,0 +1,5 @@
+enum
+{
+	SYSCMD_INB,
+	SYSCMD_OUTB
+};
