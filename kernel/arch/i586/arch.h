@@ -67,4 +67,4 @@ typedef struct paging_dir paging_pas_t;
 void arch_init();
 void arch_timer_init(size_t freq, int_callback_t handle);
 
-bool arch_syscmd(size_t action, size_t arg, uintptr_t data);
+int arch_syscmd(size_t action, size_t arg, uintptr_t data);

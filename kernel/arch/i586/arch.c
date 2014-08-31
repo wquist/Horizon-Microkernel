@@ -21,6 +21,9 @@
 #include <hw/int/pic.h>
 #include <hw/pit.h>
 #include <debug/log.h>
+#include <horizon/cmd.h>
+#include <horizon/errno.h>
+#include <limits.h>
 #include <stdbool.h>
 
 // The actual value of a linker variable is its address.
@@ -54,7 +57,28 @@ void arch_timer_init(size_t freq, int_callback_t handle)
 	pit_timer_set(PIT_TIMER0, freq, PIT_OUTMODE_SQRWAVE);
 }
 
-bool arch_syscmd(size_t action, size_t arg, uintptr_t data)
+int arch_syscmd(size_t action, size_t arg, uintptr_t data)
 {
-	//
+	switch (action)
+	{
+		case SYSCMD_INB:
+		{
+			// Make sure the values are within valid bounds.
+			if (arg > USHORT_MAX)
+				return -e_badparam;
+
+			return inb((uint16_t)arg);
+		}
+		case SYSCMD_OUTB:
+		{
+			if (arg > USHORT_MAX)
+				return -e_badparam;
+			if (data > UCHAR_MAX)
+				return -e_badparam;
+
+			outb((uint16_t)arg, (uint8_t)data);
+			return -e_success;
+		}
+		default: return -e_badparam;
+	}
 }

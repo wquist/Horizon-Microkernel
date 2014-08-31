@@ -53,6 +53,8 @@ void syscall_drop(struct msg* info);
 void syscall_svcown(size_t svc);
 void syscall_svcid(size_t svc);
 
+void syscall_syscmd(size_t action, size_t arg, uintptr_t data);
+
 SYSCALL_TABLE = 
 {
 	{ syscall_spawn,    0 },
@@ -79,6 +81,8 @@ SYSCALL_TABLE =
 
 	{ syscall_svcown,   1 },
 	{ syscall_svcid,    1 },
+
+	{ syscall_syscmd,   3 },
 
 	0
 };
