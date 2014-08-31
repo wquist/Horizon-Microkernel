@@ -19,11 +19,12 @@
 #include <arch.h>
 #include <multitask/process.h>
 #include <ipc/service.h>
+#include <horizon/svc.h>
 #include <horizon/errno.h>
 
 void syscall_svcid(size_t svc)
 {
-	if (svc >= 64)
+	if (svc >= SVCMAX)
 		return syscall_return_set(-e_badparam);
 
 	tid_t tid = service_get(svc);

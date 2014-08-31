@@ -21,7 +21,7 @@
 #include <hw/int/pic.h>
 #include <hw/pit.h>
 #include <debug/log.h>
-#include <horizon/cmd.h>
+#include <horizon/io.h>
 #include <horizon/errno.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -61,7 +61,7 @@ int arch_sysio(size_t action, size_t arg, uintptr_t data)
 {
 	switch (action)
 	{
-		case SYSCMD_INB:
+		case IO_INB:
 		{
 			// Make sure the values are within valid bounds.
 			if (arg > USHORT_MAX)
@@ -69,7 +69,7 @@ int arch_sysio(size_t action, size_t arg, uintptr_t data)
 
 			return inb((uint16_t)arg);
 		}
-		case SYSCMD_OUTB:
+		case IO_OUTB:
 		{
 			if (arg > USHORT_MAX)
 				return -e_badparam;

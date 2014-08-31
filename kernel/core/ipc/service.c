@@ -20,17 +20,18 @@
 #include <horizon/svc.h>
 #include <debug/error.h>
 
-// FIXME: Make SVC_MAX or similar in libh.
-static uint32_t service_ids[64] = {0};
+static uint32_t service_ids[SVCMAX] = {0};
 
 //! Associate a TID with a service number.
 /*! Possibly set up the thread to receive kernel message for INTs. */
 void service_register(size_t svc, tid_t tid)
 {
-	dassert(svc < 64);
+	dassert(svc < SVCMAX);
 	dassert(!service_get(svc));
 
 	thread_t* thread = thread_get(tid);
+	dassert(thread);
+
 	service_ids[svc] = (thread->owner << 16) | tid;
 
 	// FIXME: Register interrupt if needed.
@@ -40,7 +41,7 @@ void service_register(size_t svc, tid_t tid)
 /*! Also checks if the TID is still valid, and clears it otherwise. */
 tid_t service_get(size_t svc)
 {
-	dassert(svc < 64);
+	dassert(svc < SVCMAX);
 
 	uint16_t tid = service_ids[svc] & 0xFFFF;
 	uint16_t pid = service_ids[svc] >> 16;

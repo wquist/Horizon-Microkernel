@@ -24,6 +24,5 @@
 #include <stddef.h>
 #include <horizon/types.h>
 
-// FIXME: Add a svcid_t in libh.
 void  service_register(size_t svc, tid_t tid);
 tid_t service_get(size_t svc);

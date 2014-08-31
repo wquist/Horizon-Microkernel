@@ -21,12 +21,13 @@
 #include <multitask/scheduler.h>
 #include <ipc/service.h>
 #include <horizon/priv.h>
+#include <horizon/svc.h>
 #include <horizon/errno.h>
 
 void syscall_svcown(size_t svc)
 {
 	// FIXME: Needs that constant from libh.
-	if (svc >= 64)
+	if (svc >= SVCMAX)
 		return syscall_return_set(-e_badparam);
 	if (service_get(svc) != 0)
 		return syscall_return_set(-e_notavail);
