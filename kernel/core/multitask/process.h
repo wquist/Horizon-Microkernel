@@ -54,7 +54,10 @@ enum thread_state
 typedef struct process process_t;
 struct process
 {
-	pid_t pid, parent;
+	pid_t pid;
+	uint16_t version;
+
+	pid_t parent;
 	size_t priv;
 
 	uintptr_t entry;
@@ -72,7 +75,10 @@ struct process
 typedef struct thread thread_t;
 struct thread
 {
-	tid_t tid, lid;
+	tid_t tid;
+	uint16_t version;
+
+	tid_t lid;
 	pid_t owner;
 
 	task_info_t task;

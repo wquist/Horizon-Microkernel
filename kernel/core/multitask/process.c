@@ -28,6 +28,8 @@
 static process_t* blocks = NULL;
 static bmstack_t  block_map = {0};
 
+static uint16_t version_next = 0;
+
 //! Initialize the process bitmap and call thread_init.
 void process_init()
 {
@@ -66,8 +68,15 @@ pid_t process_new(pid_t ppid, uintptr_t entry)
 	process_t* process = (process_t*)block;
 	memset(process, 0, PROCESS_BLOCK_SIZE);
 
+	// Version 0 and 1 are reserved for "any version" variants.
+	++version_next;
+	if (version_next < 2)
+		version_next = 2;
+
+	process->pid     = index;
+	process->version = version_next;
+
 	process_t* parent = process_get(ppid);
-	process->pid    = index;
 	process->parent = (parent) ? ppid : 0;
 	process->priv   = (parent) ? parent->priv : PRIV_DRIVER;
 

@@ -30,6 +30,8 @@
 static thread_t* blocks = NULL;
 static bmstack_t block_map = {0};
 
+static uint16_t version_next = 0;
+
 //! Initialize the thread bitmap.
 void thread_init()
 {
@@ -68,7 +70,13 @@ tid_t thread_new(pid_t pid, uintptr_t entry)
 	thread_t* thread = (thread_t*)block;
 	memset(thread, 0, THREAD_BLOCK_SIZE);
 
-	thread->tid   = index;
+	++version_next;
+	if (version_next < 2)
+		version_next = 2;
+
+	thread->tid     = index;
+	thread->version = version_next;
+
 	thread->owner = pid;
 
 	task_init(&(thread->task));
@@ -96,8 +104,6 @@ void thread_kill(tid_t tid)
 	// FIXME: Thread should not deal with scheduler...
 	if (target->sched.state == THREAD_STATE_ACTIVE)
 		scheduler_remove(tid);
-
-	// FIXME: Destory any IPC data (messages, etc)?
 
 	process_t* owner = process_get(target->owner);
 	bitmap_clear(owner->threads.bitmap, target->lid);
