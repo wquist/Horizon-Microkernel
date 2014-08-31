@@ -20,9 +20,12 @@
 #include <multitask/process.h>
 #include <debug/error.h>
 #include <util/addr.h>
+#include <util/compare.h>
+#include <horizon/shm.h>
 #include <stdbool.h>
+#include <memory.h>
 
-static PAGING_FLAGS get_dir(uint16_t pid, paging_pas_t** pas)
+static PAGING_FLAGS get_dir(pid_t pid, paging_pas_t** pas)
 {
 	// The paging functions use NULL to represent the kernel PAS.
 	*pas = NULL;
@@ -47,7 +50,7 @@ static PAGING_FLAGS get_dir(uint16_t pid, paging_pas_t** pas)
 }
 
 //! Map a range of memory to a corresponding region of physical memory.
-void virtual_map(uint16_t pid, uintptr_t virt, const void* phys, size_t size)
+void virtual_map(pid_t pid, uintptr_t virt, const void* phys, size_t size)
 {
 	dassert(size);
 
@@ -66,7 +69,7 @@ void virtual_map(uint16_t pid, uintptr_t virt, const void* phys, size_t size)
 }
 
 //! Remove a range of memory from the PAS.
-void virtual_unmap(uint16_t pid, uintptr_t virt, size_t size)
+void virtual_unmap(pid_t pid, uintptr_t virt, size_t size)
 {
 	dassert(size);
 
@@ -81,7 +84,7 @@ void virtual_unmap(uint16_t pid, uintptr_t virt, size_t size)
 
 //! Check if a region is completely or partially mapped.
 /*! Returns 0 if not mapped, 1 if mapped, or -1 if mixed. */
-int virtual_is_mapped(uint16_t pid, uintptr_t virt, size_t size)
+int virtual_is_mapped(pid_t pid, uintptr_t virt, size_t size)
 {
 	dassert(size);
 
@@ -105,7 +108,8 @@ int virtual_is_mapped(uint16_t pid, uintptr_t virt, size_t size)
 }
 
 //! Map a region with newly allocated physical memory.
-void virtual_alloc(uint16_t pid, uintptr_t virt, size_t size)
+/*! Set any allocated memory to 0. */
+void virtual_alloc(pid_t pid, uintptr_t virt, size_t size)
 {
 	dassert(size);
 
@@ -117,21 +121,29 @@ void virtual_alloc(uint16_t pid, uintptr_t virt, size_t size)
 	for (; curr < end; curr += ARCH_PGSIZE)
 	{
 		// Ignore already mapped pages.
-		if (paging_is_mapped(pas, curr))
-			continue;
+		if (!paging_is_mapped(pas, curr))
+		{
+			void* block = physical_alloc();
+			paging_map(pas, curr, block, flags);
+		}
 
-		/* FIXME: Instead of checking if the page is mapped, check if the result
-		 * of paging_map, and if false reuse the block for the next loop iter or
-		 * free it and move on. Since ignoring will rarely occur, may be more
-		 * efficient that way than to check each block?
-		 */
-		void* block = physical_alloc();
-		paging_map(pas, curr, block, flags);
+		// FIXME: Use the following as a fallback.
+		/* 'block' can just be zero-ed otherwise. */
+
+		// Determine the actual start of allocated memory.
+		uintptr_t zero_start = max(curr, virt);
+		size_t diff = zero_start - curr;
+
+		// Map the allocated memory into the kernel address space to clear.
+		void*  phys = paging_mapping_get(pas, curr) + diff;
+		size_t size = min(ARCH_PGSIZE - diff, end - curr);
+		memset(paging_map_temp(phys), 0, ARCH_PGSIZE - diff);
 	}
 }
 
 //! Point virtual memory to the same physical region that is mapped in another process.
-void virtual_clone(uint16_t dest, uint16_t src, uintptr_t from, uintptr_t to, size_t size, VIRTUAL_CLONE_MODE mode)
+//  FIXME: Too many parameters in this function.
+void virtual_share(pid_t dest, pid_t src, uintptr_t to, uintptr_t from, size_t size, uint8_t mode)
 {
 	// No need for get_dir since both processes must exist.
 	process_t* pdest = process_get(dest);
@@ -146,12 +158,12 @@ void virtual_clone(uint16_t dest, uint16_t src, uintptr_t from, uintptr_t to, si
 	PAGING_FLAGS flags = PAGING_FLAG_USER;
 	switch (mode)
 	{
-		case VIRTUAL_CLONE_READ: 
+		case SPROT_READ: 
 			break;
-		case VIRTUAL_CLONE_WRITE:
+		case SPROT_WRITE:
 			flags |= PAGING_FLAG_WRITE;
 			break;
-		default: dpanic("Invalid VIRTUAL_CLONE mode.");
+		default: dpanic("Invalid virtual_share mode.");
 	}
 
 	uintptr_t curr   = addr_align(from, ARCH_PGSIZE);

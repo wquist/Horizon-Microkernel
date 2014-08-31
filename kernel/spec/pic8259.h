@@ -96,12 +96,12 @@ union pic_icw1
 {
 	struct __packed
 	{
-		bool icw4          : 1; //!< ICW4 will be sent in this command.
-		bool single        : 1; //!< This is the only PIC in the system.
-		bool call_interval : 1; //!< Use PIC_CALL_INTERVAL.
-		bool trigger       : 1; //!< Use PIC_TRIGGER.
-		bool always_1      : 1;
-		uint8_t            : 3;
+		uint8_t icw4          : 1; //!< ICW4 will be sent in this command.
+		uint8_t single        : 1; //!< This is the only PIC in the system.
+		uint8_t call_interval : 1; //!< Use PIC_CALL_INTERVAL.
+		uint8_t trigger       : 1; //!< Use PIC_TRIGGER.
+		uint8_t always_1      : 1;
+		uint8_t               : 3;
 	};
 	struct __packed
 	{
@@ -121,7 +121,7 @@ union pic_icw2
 	} mode_mcs8X;
 	struct __packed
 	{
-		uint8_t  : 3;
+		uint8_t           : 3;
 		uint8_t vector3_7 : 5; //!< Vector bits 3-7.
 	} mode_808X;
 	uint8_t raw;
@@ -149,10 +149,10 @@ union pic_icw4
 {
 	struct __packed
 	{
-		bool    sys_mode     : 1; //!< Use PIC_SYS_MODE.
-		bool    auto_eoi     : 1;
+		uint8_t sys_mode     : 1; //!< Use PIC_SYS_MODE.
+		uint8_t auto_eoi     : 1;
 		uint8_t buffer_mode  : 2; //!< Use PIC_BUFFER_MODE.
-		bool    fully_nested : 1; //!< Enable special fully nested mode.
+		uint8_t fully_nested : 1; //!< Enable special fully nested mode.
 	};
 	uint8_t raw;
 };

@@ -17,34 +17,53 @@
 
 #include "message.h"
 #include <multitask/process.h>
+#include <ipc/target.h>
 #include <util/bitmap.h>
 #include <debug/error.h>
+#include <horizon/ipc.h>
 #include <stddef.h>
 #include <string.h>
 
-void message_send(uint16_t dest, message_t* msg)
+//! Send a message from with the given info to a TID.
+/*! 'head' determines if the message is pushed to the front or back of the queue. */
+void message_send(tid_t from, tid_t to, struct msg* info, bool head)
 {
-	dassert(msg);
+	dassert(info);
 
 	// Make sure the thread exists and has room in its queue.
-	thread_t* thread = thread_get(dest);
+	thread_t* thread = thread_get(to);
 	dassert(thread);
 	dassert(thread->messages.count < THREAD_MESSAGE_MAX);
 
 	uint8_t slot = bitmap_find_and_set(thread->messages.bitmap, THREAD_MESSAGE_MAX);
 	dassert(slot != -1);
 
-	message_t* tail = &(thread->messages.slots[slot]);
-	memcpy(tail, msg, sizeof(message_t));
+	message_t* target = &(thread->messages.slots[slot]);
+	target->sender = from;
 
-	tail->next = -1; //< Mark the end of the linked list.
+	target->code = info->code;
+	target->arg  = info->arg;
+	target->data = info->data;
+
+	if (info->payload.buf)
+		target->flags |= MESSAGE_FLAG_PAYLOAD;
+
+	target->next = -1; //< Mark the end of the linked list.
 	if (thread->messages.count != 0)
 	{
-		// Tail is always valid when there are messages in the queue (count > 0).
-		message_t* last = &(thread->messages.slots[thread->messages.tail]);
+		if (head) //< Put this message at the front of the list.
+		{
+			target->next = thread->messages.head;
+			thread->messages.head = slot;
+		}
+		else
+		{
+			// Tail is always valid when there are messages in the queue (count > 0).
+			message_t* last = &(thread->messages.slots[thread->messages.tail]);
 
-		last->next = slot;
-		thread->messages.tail = slot;
+			last->next = slot;
+			thread->messages.tail = slot;
+		}
 	}
 	else
 	{
@@ -56,7 +75,9 @@ void message_send(uint16_t dest, message_t* msg)
 	++(thread->messages.count);
 }
 
-void message_recv(uint16_t src, message_t* msg)
+//! Copy message info to the given struct and remove it from the queue.
+/*! The destination message can be null; the msg will still be removed. */
+uint8_t message_recv(tid_t src, struct msg* dest)
 {
 	// A message must be in queue for recv to work.
 	thread_t* thread = thread_get(src);
@@ -65,9 +86,89 @@ void message_recv(uint16_t src, message_t* msg)
 
 	// Head is also valid under the same conditions as tail.
 	message_t* head = &(thread->messages.slots[thread->messages.head]);
-	memcpy(msg, head, sizeof(message_t));
+	bitmap_clear(thread->messages.bitmap, thread->messages.head);
 
-	thread->messages.head = head->next;
+	if (dest)
+	{
+		thread_t* sender = thread_get(head->sender);
+		if (sender)
+			dest->from = (sender->owner << 16) | (sender->tid);
+		else
+			dest->from = sender->tid;
+
+		dest->code = head->code;
+		dest->arg  = head->arg;
+		dest->data = head->data;
+	}
+
+	// Update the head and the tail.
+	if (thread->messages.tail == thread->messages.head)
+		thread->messages.tail = -1;
+	thread->messages.head = head->next; //< 'next' could be msg or -1.
 
 	--(thread->messages.count);
+	return head->flags;
+}
+
+//! Get the message sender and flags from a queue head.
+/*! FIXME: Consolidate with message_recv? */
+uint8_t message_peek(tid_t src, msgsrc_t* from)
+{
+	dassert(from);
+
+	thread_t* thread = thread_get(src);
+	dassert(thread);
+	dassert(thread->messages.count);
+
+	message_t* head = &(thread->messages.slots[thread->messages.head]);
+
+	thread_t* sender = thread_get(head->sender);
+	if (sender)
+		*from = (sender->owner << 16) | (sender->tid);
+	else
+		*from = sender->tid;
+
+	return head->flags;
+}
+
+//! Search for a message from the given sender and put it at the queue head.
+bool message_find(tid_t src, ipcdst_t search)
+{
+	thread_t* thread = thread_get(src);
+	dassert(thread);
+
+	// Bail out early if there is nothing to search.
+	if (thread->messages.count == 0)
+		return false;
+	
+	uint8_t prev = -1;
+	uint8_t curr = thread->messages.head;
+	while (curr != -1)
+	{
+		message_t* msg = &(thread->messages.slots[curr]);
+		if (ipc_dest_compare(search, msg->sender))
+		{
+			if (prev != -1) //< The message is in the middle or at the end.
+				thread->messages.slots[prev].next = msg->next;
+			else // The message was the head.
+				thread->messages.head = msg->next;
+
+			// Was the message also the tail?
+			if (thread->messages.tail == curr)
+				thread->messages.tail = prev;
+
+			// FIXME: Do not just replace the msg at head.
+			msg->next = thread->messages.head;
+			thread->messages.head = curr;
+			if (thread->messages.tail == -1)
+				thread->messages.tail = curr;
+
+			return true;
+		}
+
+		prev = curr;
+		curr = msg->next;
+	}
+
+	return false;
 }

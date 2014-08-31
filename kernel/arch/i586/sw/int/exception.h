@@ -60,8 +60,8 @@ union exception_errcode
 {
 	struct __packed
 	{
-		bool     e     : 1;
-		uint8_t  tbl   : 2;
+		uint16_t e     : 1;
+		uint16_t tbl   : 2;
 		uint16_t index : 13;
 	};
 	uint16_t raw;

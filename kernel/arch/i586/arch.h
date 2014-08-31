@@ -27,6 +27,8 @@
 #include <sw/paging.h>
 #include <sw/task.h>
 #include <sw/int/frame.h>
+#include <sw/int/isr.h>
+#include <sw/int/irq.h>
 #include <sw/int/ctl.h>
 #include <sw/int/callback.h>
 #include <sw/int/syscall.h>
@@ -35,6 +37,7 @@
 
 #include <spec/multiboot.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 //! Define the active achitecture - may be useful elsewhere.
 #define ARCH_X86
@@ -63,3 +66,5 @@ typedef struct paging_dir paging_pas_t;
 
 void arch_init();
 void arch_timer_init(size_t freq, int_callback_t handle);
+
+int arch_sysio(size_t action, size_t arg, uintptr_t data);

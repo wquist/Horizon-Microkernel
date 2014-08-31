@@ -47,38 +47,38 @@ union cpuid_ecx
 {
 	struct __packed
 	{
-		bool SSE3    : 1; //!< SSE3 available.
-		bool PCMUL   : 1; //!< PCLMULDQ available.
-		bool DTES64  : 1; //!< 64-bit Debug Trace.
-		bool MONITOR : 1; //!< MONITOR and MWAIT instructions available.
-		bool DSCPL   : 1; //!< CPL Debug Store MSR.
-		bool VMX     : 1; //!< Virtual Machine Extensions.
-		bool SMX     : 1; //!< Safer Mode Extensions.
-		bool EST     : 1; //!< Enhanced SpeedStep Technology.
-		bool TM2     : 1; //!< THERM_INT + THERM_STAT MSR, APIC thermal LVT.
-		bool SSSE3   : 1; //!< Supplemental SSE3 instructions.
-		bool CID     : 1; //!< Context ID of the L1 Cache.
-		bool         : 1;
-		bool FMA     : 1; //!< FP Fused Multiply-Add.
-		bool CX16    : 1; //!< 16-bit CMPXCHG.
-		bool ETPRD   : 1; //!< Can disable task priority messages.
-		bool PDCM    : 1; //!< Performance Debug Capability MSR.
-		bool         : 1;
-		bool PCID    : 1; //!< Process Context Identifiers.
-		bool DCA     : 1; //!< Direct Cache Access.
-		bool SSE4_1  : 1; //!< SSE4.1 available.
-		bool SSE4_2  : 1; //!< SSE4.2 available.
-		bool X2APIC  : 1; //!< x2APIC onboard.
-		bool MOVBE   : 1; //!< MOVBE instruction available.
-		bool POPCNT  : 1; //!< POPCNT instruction available.
-		bool TSCD    : 1; //!< lAPIC supports 1-shot mode with TSC deadline.
-		bool AES     : 1; //!< AES instruction set present.
-		bool XSAVE   : 1; //!< XSAVE and XRESTOR.
-		bool OSXSAVE : 1; //!< Read only copy of XSAVE (in CR4).
-		bool AVX     : 1; //!< Advanced Vector Extensions.
-		bool F16C    : 1; //!< Half-precision FP available.
-		bool RDRAND  : 1; //!< On-chip random number generator.
-		bool HYPVSR  : 1; //!< CPU running as a hypervisor. (Always 0 on real CPU)
+		uint32_t SSE3    : 1; //!< SSE3 available.
+		uint32_t PCMUL   : 1; //!< PCLMULDQ available.
+		uint32_t DTES64  : 1; //!< 64-bit Debug Trace.
+		uint32_t MONITOR : 1; //!< MONITOR and MWAIT instructions available.
+		uint32_t DSCPL   : 1; //!< CPL Debug Store MSR.
+		uint32_t VMX     : 1; //!< Virtual Machine Extensions.
+		uint32_t SMX     : 1; //!< Safer Mode Extensions.
+		uint32_t EST     : 1; //!< Enhanced SpeedStep Technology.
+		uint32_t TM2     : 1; //!< THERM_INT + THERM_STAT MSR, APIC thermal LVT.
+		uint32_t SSSE3   : 1; //!< Supplemental SSE3 instructions.
+		uint32_t CID     : 1; //!< Context ID of the L1 Cache.
+		uint32_t         : 1;
+		uint32_t FMA     : 1; //!< FP Fused Multiply-Add.
+		uint32_t CX16    : 1; //!< 16-bit CMPXCHG.
+		uint32_t ETPRD   : 1; //!< Can disable task priority messages.
+		uint32_t PDCM    : 1; //!< Performance Debug Capability MSR.
+		uint32_t         : 1;
+		uint32_t PCID    : 1; //!< Process Context Identifiers.
+		uint32_t DCA     : 1; //!< Direct Cache Access.
+		uint32_t SSE4_1  : 1; //!< SSE4.1 available.
+		uint32_t SSE4_2  : 1; //!< SSE4.2 available.
+		uint32_t X2APIC  : 1; //!< x2APIC onboard.
+		uint32_t MOVBE   : 1; //!< MOVBE instruction available.
+		uint32_t POPCNT  : 1; //!< POPCNT instruction available.
+		uint32_t TSCD    : 1; //!< lAPIC supports 1-shot mode with TSC deadline.
+		uint32_t AES     : 1; //!< AES instruction set present.
+		uint32_t XSAVE   : 1; //!< XSAVE and XRESTOR.
+		uint32_t OSXSAVE : 1; //!< Read only copy of XSAVE (in CR4).
+		uint32_t AVX     : 1; //!< Advanced Vector Extensions.
+		uint32_t F16C    : 1; //!< Half-precision FP available.
+		uint32_t RDRAND  : 1; //!< On-chip random number generator.
+		uint32_t HYPVSR  : 1; //!< CPU running as a hypervisor. (Always 0 on real CPU)
 	};
 	uint32_t raw;
 };
@@ -89,38 +89,38 @@ union cpuid_edx
 {
 	struct __packed
 	{
-		bool FPU   : 1; //!< FPU onboard.
-		bool VME   : 1; //!< Virtual Mode Extensions.
-		bool DE    : 1; //!< Debugging Extensions.
-		bool PSE   : 1; //!< Page Size Extension.
-		bool TSC   : 1; //!< RDTSC available.
-		bool MSR   : 1; //!< Model Specific Registers present.
-		bool PAE   : 1; //!< Paging Address Extension.
-		bool MCE   : 1; //!< Machine Check Exception.
-		bool CX8   : 1; //!< CMPXCHG8 available.
-		bool APIC  : 1; //!< APIC onboard.
-		bool       : 1;
-		bool SEP   : 1; //!< SYSENTER and SYSEXIT instructions.
-		bool MTRR  : 1; //!< Memory Type Range Registers.
-		bool PGE   : 1; //!< Paging Global Enable.
-		bool MCA   : 1; //!< Machine Check Architecture.
-		bool CMOV  : 1; //!< Conditional move and FCMOV instructions.
-		bool PAT   : 1; //!< Page Attribute Table.
-		bool PSE36 : 1; //!< 36-bit Page Size Extension.
-		bool PSN   : 1; //!< Processor Serial Number available.
-		bool CLF   : 1; //!< CLFLUSH instruction.
-		bool       : 1;
-		bool DTES  : 1; //!< Debug Trace MSR.
-		bool ACPI  : 1; //!< THERM_CTL MSR.
-		bool MMX   : 1; //!< MMX instruction set.
-		bool FXSR  : 1; //!< FXSAVE and FXRESTOR instructions.
-		bool SSE   : 1; //!< SSE available.
-		bool SSE2  : 1; //!< SSE2 available.
-		bool SS    : 1; //!< Self Snoop.
-		bool HTT   : 1; //!< Hyper-Threading Technology.
-		bool TM1   : 1; //!< THERM_INT + THERM_STAT MSR, APIC thermal LVT.
-		bool IA64  : 1; //!< IA64 processor emulating x86.
-		bool PBE   : 1; //!< Pending Break Event.
+		uint32_t FPU   : 1; //!< FPU onboard.
+		uint32_t VME   : 1; //!< Virtual Mode Extensions.
+		uint32_t DE    : 1; //!< Debugging Extensions.
+		uint32_t PSE   : 1; //!< Page Size Extension.
+		uint32_t TSC   : 1; //!< RDTSC available.
+		uint32_t MSR   : 1; //!< Model Specific Registers present.
+		uint32_t PAE   : 1; //!< Paging Address Extension.
+		uint32_t MCE   : 1; //!< Machine Check Exception.
+		uint32_t CX8   : 1; //!< CMPXCHG8 available.
+		uint32_t APIC  : 1; //!< APIC onboard.
+		uint32_t       : 1;
+		uint32_t SEP   : 1; //!< SYSENTER and SYSEXIT instructions.
+		uint32_t MTRR  : 1; //!< Memory Type Range Registers.
+		uint32_t PGE   : 1; //!< Paging Global Enable.
+		uint32_t MCA   : 1; //!< Machine Check Architecture.
+		uint32_t CMOV  : 1; //!< Conditional move and FCMOV instructions.
+		uint32_t PAT   : 1; //!< Page Attribute Table.
+		uint32_t PSE36 : 1; //!< 36-bit Page Size Extension.
+		uint32_t PSN   : 1; //!< Processor Serial Number available.
+		uint32_t CLF   : 1; //!< CLFLUSH instruction.
+		uint32_t       : 1;
+		uint32_t DTES  : 1; //!< Debug Trace MSR.
+		uint32_t ACPI  : 1; //!< THERM_CTL MSR.
+		uint32_t MMX   : 1; //!< MMX instruction set.
+		uint32_t FXSR  : 1; //!< FXSAVE and FXRESTOR instructions.
+		uint32_t SSE   : 1; //!< SSE available.
+		uint32_t SSE2  : 1; //!< SSE2 available.
+		uint32_t SS    : 1; //!< Self Snoop.
+		uint32_t HTT   : 1; //!< Hyper-Threading Technology.
+		uint32_t TM1   : 1; //!< THERM_INT + THERM_STAT MSR, APIC thermal LVT.
+		uint32_t IA64  : 1; //!< IA64 processor emulating x86.
+		uint32_t PBE   : 1; //!< Pending Break Event.
 	};
 	uint32_t raw;
 };
@@ -131,28 +131,28 @@ union eflags
 {
 	struct __packed
 	{
-		bool    CF   : 1;  //!< Carry Flag.
-		bool         : 1; 
-		bool    PF   : 1;  //!< Parity Flag.
-		bool         : 1;
-		bool    AF   : 1;  //!< Adjust Flag.
-		bool         : 1;
-		bool    ZF   : 1;  //!< Zero Flag.
-		bool    SF   : 1;  //!< Sign Flag.
-		bool    TF   : 1;  //!< Trap Flag.
-		bool    IF   : 1;  //!< Interrupt Enable Flag.
-		bool    DF   : 1;  //!< Direction Flag.
-		bool    OF   : 1;  //!< Overflow Flag.
-		uint8_t IOPL : 2;  //!< I/O Privelege.
-		bool    NT   : 1;  //!< Nested Task.
-		bool         : 1; 
-		bool    RF   : 1;  //!< Resume Flag.
-		bool    VM   : 1;  //!< Virtual 8086 Mode.
-		bool    AC   : 1;  //!< Alignment Check.
-		bool    VIF  : 1;  //!< Virtual Interrupt Flag.
-		bool    VIP  : 1;  //!< Virtual Interrupt Pending.
-		bool    ID   : 1;  //!< CPUID instruction available.
-		uint16_t     : 10;
+		uint32_t CF   : 1;  //!< Carry Flag.
+		uint32_t      : 1; 
+		uint32_t PF   : 1;  //!< Parity Flag.
+		uint32_t      : 1;
+		uint32_t AF   : 1;  //!< Adjust Flag.
+		uint32_t      : 1;
+		uint32_t ZF   : 1;  //!< Zero Flag.
+		uint32_t SF   : 1;  //!< Sign Flag.
+		uint32_t TF   : 1;  //!< Trap Flag.
+		uint32_t IF   : 1;  //!< Interrupt Enable Flag.
+		uint32_t DF   : 1;  //!< Direction Flag.
+		uint32_t OF   : 1;  //!< Overflow Flag.
+		uint32_t IOPL : 2;  //!< I/O Privelege.
+		uint32_t NT   : 1;  //!< Nested Task.
+		uint32_t      : 1; 
+		uint32_t RF   : 1;  //!< Resume Flag.
+		uint32_t VM   : 1;  //!< Virtual 8086 Mode.
+		uint32_t AC   : 1;  //!< Alignment Check.
+		uint32_t VIF  : 1;  //!< Virtual Interrupt Flag.
+		uint32_t VIP  : 1;  //!< Virtual Interrupt Pending.
+		uint32_t ID   : 1;  //!< CPUID instruction available.
+		uint32_t      : 10;
 	};
 	uint32_t raw;
 };
@@ -248,13 +248,13 @@ union msr_apic_base
 {
 	struct __packed
 	{
-		uint8_t            : 8;
-		bool bsp           : 1;
-		bool               : 1;
-		bool x2apic_enable : 1;
-		bool global_enable : 1;
-		uint32_t base      : 24;
-		uint32_t           : 28;
+		uint64_t               : 8;
+		uint64_t bsp           : 1;
+		uint64_t               : 1;
+		uint64_t x2apic_enable : 1;
+		uint64_t global_enable : 1;
+		uint64_t base          : 24;
+		uint64_t               : 28;
 	};
 	struct __packed
 	{
@@ -270,38 +270,38 @@ union msr_misc_enable
 {
 	struct __packed
 	{
-		bool FSE     : 1; //!< Fast-Strings Enable
-		bool LPPE    : 1;
-		bool FCE     : 1;
-		bool TM1E    : 1; //!< Auto Thermal Control Enable (TM1)
-		bool SLD     : 1;
-		bool TCD     : 1;
-		bool L3D     : 1;
-		bool PMA     : 1; //!< Performance Monitoring Available
-		bool SLE     : 1;
-		bool PQD     : 1;
-		bool PBE     : 1;
-		bool BTSU    : 1; //!< Branch Trace Storage Unavailable
-		bool PEBSU   : 1; //!< Precise Event Based Storage Unavailable
-		bool TM2E    : 1;
-		bool         : 1;
-		bool GV1E    : 1;
-		bool GV3E    : 1; //!< Intel SpeedStep Technology Enable
-		bool BDPHE   : 1;
-		bool MONE    : 1; //!< FSM Monitor Enable
-		bool ASPD    : 1;
-		bool GV3L    : 1;
-		bool FPRE    : 1;
-		bool LCMV    : 1; //!< Limit CPUID Max Val
-		bool ETPRD   : 1; //!< xTPR Message Disable
-		bool L1DCCM  : 1;
-		uint16_t     : 9;
-		bool XDD     : 1; //!< XD Bit Disable
-		uint8_t      : 2;
-		bool L1STPRD : 1;
-		bool DAD     : 1;
-		bool L1IPPRD : 1;
-		uint32_t     : 24;
+		uint64_t FSE     : 1; //!< Fast-Strings Enable
+		uint64_t LPPE    : 1;
+		uint64_t FCE     : 1;
+		uint64_t TM1E    : 1; //!< Auto Thermal Control Enable (TM1)
+		uint64_t SLD     : 1;
+		uint64_t TCD     : 1;
+		uint64_t L3D     : 1;
+		uint64_t PMA     : 1; //!< Performance Monitoring Available
+		uint64_t SLE     : 1;
+		uint64_t PQD     : 1;
+		uint64_t PBE     : 1;
+		uint64_t BTSU    : 1; //!< Branch Trace Storage Unavailable
+		uint64_t PEBSU   : 1; //!< Precise Event Based Storage Unavailable
+		uint64_t TM2E    : 1;
+		uint64_t         : 1;
+		uint64_t GV1E    : 1;
+		uint64_t GV3E    : 1; //!< Intel SpeedStep Technology Enable
+		uint64_t BDPHE   : 1;
+		uint64_t MONE    : 1; //!< FSM Monitor Enable
+		uint64_t ASPD    : 1;
+		uint64_t GV3L    : 1;
+		uint64_t FPRE    : 1;
+		uint64_t LCMV    : 1; //!< Limit CPUID Max Val
+		uint64_t ETPRD   : 1; //!< xTPR Message Disable
+		uint64_t L1DCCM  : 1;
+		uint64_t         : 9;
+		uint64_t XDD     : 1; //!< XD Bit Disable
+		uint64_t         : 2;
+		uint64_t L1STPRD : 1;
+		uint64_t DAD     : 1;
+		uint64_t L1IPPRD : 1;
+		uint64_t         : 24;
 	};
 	struct __packed
 	{

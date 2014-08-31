@@ -21,15 +21,9 @@
 
 #pragma once
 
+#include <horizon/types.h>
 #include <stddef.h>
 #include <stdint.h>
-
-typedef enum virtual_clone_mode VIRTUAL_CLONE_MODE;
-enum virtual_clone_mode
-{
-	VIRTUAL_CLONE_READ,
-	VIRTUAL_CLONE_WRITE
-};
 
 /*! All of the virtual memory management functions operate on the passed
  *    process's address space, or the kernel PAS if NULL is passed.
@@ -39,9 +33,9 @@ enum virtual_clone_mode
  *    i.e., it will not be overwritten/cloned etc.
  */
 
-void virtual_map(uint16_t pid, uintptr_t virt, const void* phys, size_t size);
-void virtual_unmap(uint16_t pid, uintptr_t virt, size_t size);
-int  virtual_is_mapped(uint16_t pid, uintptr_t virt, size_t size);
+void virtual_map(pid_t pid, uintptr_t virt, const void* phys, size_t size);
+void virtual_unmap(pid_t pid, uintptr_t virt, size_t size);
+int  virtual_is_mapped(pid_t pid, uintptr_t virt, size_t size);
 
-void virtual_alloc(uint16_t pid, uintptr_t virt, size_t size);
-void virtual_clone(uint16_t dest, uint16_t src, uintptr_t from, uintptr_t to, size_t size, VIRTUAL_CLONE_MODE mode);
+void virtual_alloc(pid_t pid, uintptr_t virt, size_t size);
+void virtual_share(pid_t dest, pid_t src, uintptr_t to, uintptr_t from, size_t size, uint8_t mode);

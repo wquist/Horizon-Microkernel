@@ -30,20 +30,20 @@ union cr0
 {
 	struct __packed
 	{
-		bool PE  : 1;  //!< Protected Mode Enable.
-		bool MP  : 1;  //!< Monitor Co-Processor. (Controls behavior of WAIT/FWAIT)
-		bool EM  : 1;  //!< FPU Emulation. (FPU present if clear)
-		bool TS  : 1;  //!< Task Switched. (Allows saving of x87 context after call)
-		bool ET  : 1;  //!< Extension Type.
-		bool NE  : 1;  //!< Numeric Error. (Enable internal x87 FPU error reports)
-		uint16_t : 10;
-		bool WP  : 1;  //!< Write Protect. (Clear allows CPU to write to read-only pages)
-		bool     : 1;
-		bool AM  : 1;  //!< Alignment Mask. (Enables alignment check with EFLAGS bit AC)
-		uint16_t : 10;
-		bool NW  : 1;  //!< Not-Write Through. (Set disables write-back caching)
-		bool CD  : 1;  //!< Cache Disable. (Set disables the memory cache)
-		bool PG  : 1;  //!< Paging.
+		uint32_t PE : 1;  //!< Protected Mode Enable.
+		uint32_t MP : 1;  //!< Monitor Co-Processor. (Controls behavior of WAIT/FWAIT)
+		uint32_t EM : 1;  //!< FPU Emulation. (FPU present if clear)
+		uint32_t TS : 1;  //!< Task Switched. (Allows saving of x87 context after call)
+		uint32_t ET : 1;  //!< Extension Type.
+		uint32_t NE : 1;  //!< Numeric Error. (Enable internal x87 FPU error reports)
+		uint32_t    : 10;
+		uint32_t WP : 1;  //!< Write Protect. (Clear allows CPU to write to read-only pages)
+		uint32_t    : 1;
+		uint32_t AM : 1;  //!< Alignment Mask. (Enables alignment check with EFLAGS bit AC)
+		uint32_t    : 10;
+		uint32_t NW : 1;  //!< Not-Write Through. (Set disables write-back caching)
+		uint32_t CD : 1;  //!< Cache Disable. (Set disables the memory cache)
+		uint32_t PG : 1;  //!< Paging.
 	};
 	uint32_t raw;
 };
@@ -54,10 +54,10 @@ union cr3
 {
 	struct __packed
 	{
-		uint8_t       : 3;
-		bool     PWT  : 1;  //!< Page Write Through
-		bool     PCD  : 1;  //!< Page Cache Disable
-		uint8_t       : 7;
+		uint32_t      : 3;
+		uint32_t PWT  : 1;  //!< Page Write Through
+		uint32_t PCD  : 1;  //!< Page Cache Disable
+		uint32_t      : 7;
 		uint32_t PDBR : 20;
 	};
 	uint32_t raw;
@@ -69,28 +69,28 @@ union cr4
 {
 	struct __packed
 	{
-		bool VME      : 1; //!< Virtual 8086 Extensions. (Allow the VIF flag in V8086 mode)
-		bool PVI      : 1; //!< Protected Virtual Interrupts. (Allow the VIF flag in protected mode)
-		bool TSD      : 1; //!< Time Stamp Disable. (RDTSC can only be called from DPL0 when set)
-		bool DE       : 1; //!< Debugging Extensions.
-		bool PSE      : 1; //!< Page Size Extension.
-		bool PAE      : 1; //!< Physical Address Extension.
-		bool MCE      : 1; //!< Machine Check Exception.
-		bool PGE      : 1; //!< Page Global Enabled. (Set allows global bit in PDEs and PTEs)
-		bool PCE      : 1; //!< Perfomance Monitor Counter Enable (allows RDPMC at any DPL when set)
-		bool OSFXSR   : 1; //!< Support for FXSAVE and FXSTOR
-		bool OSXMEX   : 1; //!< Unmasked SIMD FP Exceptions.
-		uint8_t       : 2;
-		bool VMXE     : 1; //!< Virtual Machine Extensions. (Intel VT-x virtualization)
-		bool SMXE     : 1; //!< Safe Mode Exceptions.
-		bool          : 1;
-		bool FSGSBASE : 1; //!< Enable WRFSBASE/WRGSBASE and RDFSBASE/RDGSBASE. (Write to %fs and %gs in any ring without MSRs)
-		bool PCIDE    : 1; //!< PCID Enable (setting enables process-context identifiers)
-		bool OSXSAVE  : 1; //!< XSAVE and Processor Extended States.
-		bool          : 1;
-		bool SMEP     : 1; //!< Supervisor Execution Protection. (when set fault occurs when low DPL executes high DPL code)
-		bool SMAP     : 1; //!< Supervisor Access Protection. (when set fault occurs when low DPL accesses high DPL data)
-		uint16_t      : 10;
+		uint32_t VME      : 1; //!< Virtual 8086 Extensions. (Allow the VIF flag in V8086 mode)
+		uint32_t PVI      : 1; //!< Protected Virtual Interrupts. (Allow the VIF flag in protected mode)
+		uint32_t TSD      : 1; //!< Time Stamp Disable. (RDTSC can only be called from DPL0 when set)
+		uint32_t DE       : 1; //!< Debugging Extensions.
+		uint32_t PSE      : 1; //!< Page Size Extension.
+		uint32_t PAE      : 1; //!< Physical Address Extension.
+		uint32_t MCE      : 1; //!< Machine Check Exception.
+		uint32_t PGE      : 1; //!< Page Global Enabled. (Set allows global bit in PDEs and PTEs)
+		uint32_t PCE      : 1; //!< Perfomance Monitor Counter Enable (allows RDPMC at any DPL when set)
+		uint32_t OSFXSR   : 1; //!< Support for FXSAVE and FXSTOR
+		uint32_t OSXMEX   : 1; //!< Unmasked SIMD FP Exceptions.
+		uint32_t          : 2;
+		uint32_t VMXE     : 1; //!< Virtual Machine Extensions. (Intel VT-x virtualization)
+		uint32_t SMXE     : 1; //!< Safe Mode Exceptions.
+		uint32_t          : 1;
+		uint32_t FSGSBASE : 1; //!< Enable WRFSBASE/WRGSBASE and RDFSBASE/RDGSBASE. (Write to %fs and %gs in any ring without MSRs)
+		uint32_t PCIDE    : 1; //!< PCID Enable (setting enables process-context identifiers)
+		uint32_t OSXSAVE  : 1; //!< XSAVE and Processor Extended States.
+		uint32_t          : 1;
+		uint32_t SMEP     : 1; //!< Supervisor Execution Protection. (when set fault occurs when low DPL executes high DPL code)
+		uint32_t SMAP     : 1; //!< Supervisor Access Protection. (when set fault occurs when low DPL accesses high DPL data)
+		uint32_t          : 10;
 	};
 	uint32_t raw;
 };

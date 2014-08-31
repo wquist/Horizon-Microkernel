@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <horizon/types.h>
 #include <stdint.h>
 
 #define SCHEDULER_FREQ 100
@@ -28,8 +29,11 @@
 
 void scheduler_start();
 
-void scheduler_add(uint16_t tid);
-void scheduler_remove(uint16_t tid);
+void scheduler_add(tid_t tid);
+void scheduler_remove(tid_t tid);
 
 void scheduler_next();
-uint16_t scheduler_curr();
+void scheduler_lock();
+void scheduler_unlock();
+
+tid_t scheduler_curr();

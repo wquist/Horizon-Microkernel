@@ -108,7 +108,7 @@ uint16_t startp_load(const module_t* mod)
 
 		// Then map any remaining with new memory.
 		ssize_t rem_size = sect->reserve - sect->size;
-		if (rem_size > 0)
+		if (rem_size)
 			virtual_alloc(pid, virt + sect->size, rem_size);
 	}
 

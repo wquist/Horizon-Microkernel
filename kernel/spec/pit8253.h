@@ -79,7 +79,7 @@ union pit_command
 	//! A setup command.
 	struct __packed
 	{
-		bool    count_mode  : 1; //!< PIT_CNTMODE.
+		uint8_t count_mode  : 1; //!< PIT_CNTMODE.
 		uint8_t output_mode : 3; //!< PIT_OUTMODE.
 		uint8_t access_mode : 2; //!< PIT_ACCESS.
 		uint8_t channel     : 2; //!< TIMERX the command is targeting.
@@ -87,13 +87,13 @@ union pit_command
 	//! A status command.
 	struct __packed
 	{
-		bool             : 1; //!< Should be 0.
-		bool readback_t0 : 1; //!< Get TIMER0 status.
-		bool readback_t1 : 1; //!< TIMER1.
-		bool readback_t2 : 1; //!< TIMER2.
-		bool no_status   : 1; //!< Do not retrieve the status from data reg.
-		bool no_count    : 1; //!< Do not read the latch count.
-		uint8_t always_1 : 2; //!< Each bit should be set to 1.
+		uint8_t             : 1; //!< Should be 0.
+		uint8_t readback_t0 : 1; //!< Get TIMER0 status.
+		uint8_t readback_t1 : 1; //!< TIMER1.
+		uint8_t readback_t2 : 1; //!< TIMER2.
+		uint8_t no_status   : 1; //!< Do not retrieve the status from data reg.
+		uint8_t no_count    : 1; //!< Do not read the latch count.
+		uint8_t always_1    : 2; //!< Each bit should be set to 1.
 	};
 	uint8_t raw;
 };
@@ -104,13 +104,13 @@ union pit_status
 {
 	struct __packed
 	{
-		bool    count_mode   : 1;
+		uint8_t count_mode   : 1;
 		uint8_t output_mode  : 3;
 		uint8_t access_mode  : 2;
 		//! Set when a value is reloaded and not the current count.
-		bool    loaded       : 1;
+		uint8_t loaded       : 1;
 		//! Reflects the state of the specified timer output pin.
-		bool    output_state : 1;
+		uint8_t output_state : 1;
 	};
 	uint8_t raw;
 };
@@ -122,14 +122,14 @@ union pit_control
 	// FIXME: Properly document these bits.
 	struct __packed
 	{
-		bool gate_ch2      : 1;
-		bool speaker       : 1;
-		bool check_parity  : 1;
-		bool check_io      : 1;
-		bool out_ch1       : 1;
-		bool out_ch2       : 1;
-		bool parity_result : 1;
-		bool io_result     : 1;
+		uint8_t gate_ch2      : 1;
+		uint8_t speaker       : 1;
+		uint8_t check_parity  : 1;
+		uint8_t check_io      : 1;
+		uint8_t out_ch1       : 1;
+		uint8_t out_ch2       : 1;
+		uint8_t parity_result : 1;
+		uint8_t io_result     : 1;
 	};
 	uint8_t raw;
 };

@@ -21,22 +21,32 @@
 
 #pragma once
 
+#include <horizon/msg.h>
+#include <horizon/types.h>
 #include <stdint.h>
+#include <stdbool.h>
+
+enum message_flags
+{
+	MESSAGE_FLAG_PAYLOAD = (1 << 0),
+};
 
 typedef struct message message_t;
 struct __packed message //!< This should always be 16 bytes.
 {
-	uint16_t sender;
-	uint8_t  flags;
+	tid_t sender;
+	uint8_t flags;
 
 	//! Maintain a linked list for the queue.
 	/*! Current queue max is 128 so 256 should be plenty. */
 	uint8_t next;
 
-	uint32_t code, arg;
-	uint32_t data;
+	msgarg_t code, arg;
+	msgarg_t data;
 };
 
-// FIXME: Maybe replace these with the library message type.
-void message_send(uint16_t dest, message_t* msg);
-void message_recv(uint16_t src,  message_t* msg);
+void message_send(tid_t from, tid_t to, struct msg* info, bool head);
+uint8_t message_recv(tid_t src, struct msg* dest);
+uint8_t message_peek(tid_t src, msgsrc_t* from);
+
+bool message_find(tid_t src, ipcdst_t search);

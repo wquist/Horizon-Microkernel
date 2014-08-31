@@ -22,6 +22,7 @@
 #include <util/addr.h>
 #include <debug/log.h>
 #include <debug/error.h>
+#include <horizon/priv.h>
 #include <memory.h>
 
 static process_t* blocks = NULL;
@@ -44,7 +45,6 @@ void process_init()
 	// Reserve some special PIDs (self, kernel, any).
 	bmstack_set(&block_map, 0);
 	bmstack_set(&block_map, 1);
-	bmstack_set(&block_map, PROCESS_MAX-1);
 
 	bmstack_link(&block_map, PROCESS_MAX);
 	dtrace("Initialized process bitmap. (%iKB)", BMSTACK_SIZE(PROCESS_MAX)/1024);
@@ -54,7 +54,7 @@ void process_init()
 
 //! Create a new process with the given parent and default entry point.
 /*! The parent determines the new process's privilege. */
-uint16_t process_new(uint16_t ppid, uintptr_t entry)
+pid_t process_new(pid_t ppid, uintptr_t entry)
 {
 	size_t index = bmstack_find_and_set(&block_map);
 	dassert(index != -1); //< No PID available.
@@ -69,17 +69,17 @@ uint16_t process_new(uint16_t ppid, uintptr_t entry)
 	process_t* parent = process_get(ppid);
 	process->pid    = index;
 	process->parent = (parent) ? ppid : 0;
-	process->priv   = (parent) ? parent->priv : 0; //< FIXME: higher privelege = lower number?
+	process->priv   = (parent) ? parent->priv : PRIV_DRIVER;
 
 	process->entry = entry;
 	process->addr_space = paging_pas_create();
 
 	dtrace("Created process with PID %i.", index);
-	return index;
+	return (pid_t)index;
 }
 
 //! Destroy a process, along with its address space.
-void process_kill(uint16_t pid)
+void process_kill(pid_t pid)
 {
 	process_t* target = process_get(pid);
 	dassert(target);
@@ -88,18 +88,25 @@ void process_kill(uint16_t pid)
 	bmstack_clear(&block_map, pid);
 	paging_pas_destroy(target->addr_space);
 
-	// FIXME: Kill any alive threads?
+	// FIXME: Add bitmap function to find first set bit.
+	for (size_t i = 0; i != PROCESS_THREAD_MAX; ++i)
+	{
+		if (bitmap_test(target->threads.bitmap, i))
+			thread_kill(target->threads.slots[i]);
+	}
 
 	dtrace("Destroyed process with PID %i.", pid);
 }
 
 //! Get the PCB for the given PID.
-process_t* process_get(uint16_t pid)
+process_t* process_get(pid_t pid)
 {
-	dassert(pid < PROCESS_MAX);
+	// Check for invalid processes.
+	if (pid >= PROCESS_MAX)
+		return NULL;
 
 	// Check for reserved PIDs.
-	if (pid == 0 || pid == 1 || pid == PROCESS_MAX-1)
+	if (pid == 0 || pid == 1)
 		return NULL;
 
 	if (!bmstack_test(&block_map, pid))

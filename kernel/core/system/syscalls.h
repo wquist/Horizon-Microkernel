@@ -22,8 +22,67 @@
 #pragma once
 
 #include <arch.h>
+#include <horizon/types.h>
+#include <horizon/shm.h>
+#include <horizon/msg.h>
+#include <stddef.h>
+#include <stdint.h>
+
+void syscall_spawn();
+void syscall_launch(pid_t pid, uintptr_t entry);
+void syscall_dispatch(uintptr_t entry, uintptr_t stack);
+void syscall_halt(tid_t tid);
+void syscall_kill(pid_t pid);
+
+void syscall_yield();
+void syscall_wait(ipcdst_t sender);
+
+void syscall_vmap(uintptr_t dest, size_t size);
+void syscall_pmap(uintptr_t dest, uintptr_t src, size_t size);
+void syscall_unmap(uintptr_t addr, size_t size);
+
+void syscall_grant(struct shm* info, uintptr_t dest);
+void syscall_share(struct shm* info, size_t flags);
+void syscall_accept(shmid_t sid, uintptr_t dest);
+
+void syscall_send(struct msg* src);
+void syscall_recv(struct msg* dest);
+void syscall_peek();
+void syscall_drop(struct msg* info);
+
+void syscall_svcown(size_t svc);
+void syscall_svcid(size_t svc);
+
+void syscall_sysio(size_t action, size_t arg, uintptr_t data);
 
 SYSCALL_TABLE = 
 {
+	{ syscall_spawn,    0 },
+	{ syscall_launch,   2 },
+	{ syscall_dispatch, 2 },
+	{ syscall_halt,     1 },
+	{ syscall_kill,     1 },
+
+	{ syscall_yield,    0 },
+	{ syscall_wait,     1 },
+
+	{ syscall_vmap,     2 },
+	{ syscall_pmap,     3 },
+	{ syscall_unmap,    2 },
+
+	{ syscall_grant,    2 },
+	{ syscall_share,    2 },
+	{ syscall_accept,   2 },
+
+	{ syscall_send,     1 },
+	{ syscall_recv,     1 },
+	{ syscall_peek,     0 },
+	{ syscall_drop,     1 },
+
+	{ syscall_svcown,   1 },
+	{ syscall_svcid,    1 },
+
+	{ syscall_sysio,    3 },
+
 	0
 };

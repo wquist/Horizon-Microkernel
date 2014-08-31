@@ -20,6 +20,7 @@
 #include "process.h"
 #include <memory/region.h>
 #include <memory/virtual.h>
+#include <multitask/scheduler.h>
 #include <util/bmstack.h>
 #include <util/addr.h>
 #include <debug/log.h>
@@ -42,8 +43,9 @@ void thread_init()
 	bmstack_init(&block_map, (void*)map_start);
 	virtual_alloc(0, map_start, BMSTACK_SIZE(THREAD_MAX));
 
-	// Only TID 0 is reserved.
+	// Mark reserved TIDs.
 	bmstack_set(&block_map, 0);
+	bmstack_set(&block_map, 1);
 
 	bmstack_link(&block_map, THREAD_MAX);
 	dtrace("Initialized thread bitmap. (%iKB)", BMSTACK_SIZE(THREAD_MAX)/1024);
@@ -51,7 +53,7 @@ void thread_init()
 
 //! Allocate a new thread for the given process.
 /*! If entry is passed as 0, the process's entry point is used. */
-uint16_t thread_new(uint16_t pid, uintptr_t entry)
+tid_t thread_new(pid_t pid, uintptr_t entry)
 {
 	process_t* owner = process_get(pid);
 	dassert(owner); //< The process must be alive.
@@ -72,7 +74,7 @@ uint16_t thread_new(uint16_t pid, uintptr_t entry)
 	task_init(&(thread->task));
 	thread->task.entry = (entry) ? entry : owner->entry;
 
-	// Add the thread to the process's slots and update the bitmap.
+	// Add the thread to a process thread slot and update the bitmap.
 	/* FIXME: Should the thread add itself or the process add the thread? */
 	size_t slot = bitmap_find_and_set(owner->threads.bitmap, PROCESS_THREAD_MAX);
 	owner->threads.slots[slot] = index;
@@ -82,16 +84,20 @@ uint16_t thread_new(uint16_t pid, uintptr_t entry)
 	thread->sched.state = THREAD_STATE_NEW; //< A thread is new until it is scheduled.
 
 	dtrace("Created thread with TID %i, owned by PID %i.", index, pid);
-	return index;
+	return (tid_t)index;
 }
 
 //! Destroy a thread and remove it from the owner process.
-void thread_kill(uint16_t tid)
+void thread_kill(tid_t tid)
 {
 	thread_t* target = thread_get(tid);
 	dassert(target);
 
-	// FIXME: Destory any IPC data (messages, etc).
+	// FIXME: Thread should not deal with scheduler...
+	if (target->sched.state == THREAD_STATE_ACTIVE)
+		scheduler_remove(tid);
+
+	// FIXME: Destory any IPC data (messages, etc)?
 
 	process_t* owner = process_get(target->owner);
 	bitmap_clear(owner->threads.bitmap, target->lid);
@@ -102,12 +108,14 @@ void thread_kill(uint16_t tid)
 }
 
 //! Get the actual TCB structure for a given thread.
-thread_t* thread_get(uint16_t tid)
+thread_t* thread_get(tid_t tid)
 {
-	dassert(tid < THREAD_MAX);
+	// Check for invalid threads.
+	if (tid >= THREAD_MAX)
+		return NULL;
 
 	// Check for reserved TIDs.
-	if (tid == 0)
+	if (tid == 0 || tid == 1)
 		return NULL;
 
 	if (!bmstack_test(&block_map, tid))

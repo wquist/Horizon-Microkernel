@@ -24,7 +24,7 @@
 extern const syscall_t syscall_table[];
 static size_t table_size = 0;
 
-static void dispatch_call(uint8_t isr, int8_t irq);
+static void dispatch_call(isr_t isr, irq_t irq);
 
 //! Initialize the syscall interrupt handler.
 void syscall_init()
@@ -41,7 +41,7 @@ void syscall_init()
 }
 
 // Call the requested syscall from syscall_table.
-void dispatch_call(uint8_t isr, int8_t irq)
+void dispatch_call(isr_t isr, irq_t irq)
 {
 	int_frame_t* frame = int_callback_frame_get();
 

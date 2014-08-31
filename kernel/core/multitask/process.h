@@ -24,6 +24,8 @@
 #include <arch.h>
 #include <ipc/message.h>
 #include <util/bitmap.h>
+#include <horizon/types.h>
+#include <horizon/shm.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -42,14 +44,17 @@ typedef enum thread_state THREAD_STATE;
 enum thread_state
 {
 	THREAD_STATE_NEW,
-	THREAD_STATE_ACTIVE
+	THREAD_STATE_ACTIVE,
+	THREAD_STATE_SENDING,
+	THREAD_STATE_WAITING,
+	THREAD_STATE_OLD,
 };
 
 //! A process control block (PCB).
 typedef struct process process_t;
 struct process
 {
-	uint16_t pid, parent;
+	pid_t pid, parent;
 	size_t priv;
 
 	uintptr_t entry;
@@ -67,17 +72,27 @@ struct process
 typedef struct thread thread_t;
 struct thread
 {
-	uint16_t tid, lid;
-	uint16_t owner;
+	tid_t tid, lid;
+	pid_t owner;
 
 	task_info_t task;
 
 	struct
 	{
-		struct { uint16_t prev, next; } queue;
+		struct { tid_t prev, next; } queue;
 		uint8_t timeslice;
 		THREAD_STATE state;
 	} sched;
+
+	struct
+	{
+		ipcdst_t wait_for;
+
+		uintptr_t payload_addr;
+		size_t payload_size;
+
+		struct shm shm_offer;
+	} call_data;
 
 	struct
 	{
@@ -91,11 +106,11 @@ struct thread
 void process_init();
 void thread_init(); //!< Called internally.
 
-uint16_t process_new(uint16_t ppid, uintptr_t entry);
-void process_kill(uint16_t pid);
+pid_t process_new(pid_t ppid, uintptr_t entry);
+void process_kill(pid_t pid);
 
-uint16_t thread_new(uint16_t pid, uintptr_t entry);
-void thread_kill(uint16_t tid);
+tid_t thread_new(pid_t pid, uintptr_t entry);
+void thread_kill(tid_t tid);
 
-process_t* process_get(uint16_t pid);
-thread_t* thread_get(uint16_t tid);
+process_t* process_get(pid_t pid);
+thread_t* thread_get(tid_t tid);
