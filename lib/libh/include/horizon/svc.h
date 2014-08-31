@@ -8,7 +8,9 @@ enum
 	SVC_TERM = SVC_IMAX,
 	SVC_KYBD,
 	SVC_PGER,
-	SVC_VFS
+	SVC_VFS,
+
+	SVCMAX
 };
 
 #endif
