@@ -18,8 +18,8 @@
 #include <system/syscalls.h>
 #include <arch.h>
 
-void syscall_syscmd(size_t action, size_t arg, uintptr_t data)
+void syscall_sysio(size_t action, size_t arg, uintptr_t data)
 {
-	int res = arch_syscmd(action, arg, data);
+	int res = arch_sysio(action, arg, data);
 	syscall_return_set(res);
 }

@@ -31,7 +31,7 @@
 void syscall_spawn();
 void syscall_launch(pid_t pid, uintptr_t entry);
 void syscall_dispatch(uintptr_t entry, uintptr_t stack);
-void syscall_detach(tid_t tid);
+void syscall_halt(tid_t tid);
 void syscall_kill(pid_t pid);
 
 void syscall_yield();
@@ -53,14 +53,14 @@ void syscall_drop(struct msg* info);
 void syscall_svcown(size_t svc);
 void syscall_svcid(size_t svc);
 
-void syscall_syscmd(size_t action, size_t arg, uintptr_t data);
+void syscall_sysio(size_t action, size_t arg, uintptr_t data);
 
 SYSCALL_TABLE = 
 {
 	{ syscall_spawn,    0 },
 	{ syscall_launch,   2 },
 	{ syscall_dispatch, 2 },
-	{ syscall_detach,   1 },
+	{ syscall_halt,     1 },
 	{ syscall_kill,     1 },
 
 	{ syscall_yield,    0 },
@@ -82,7 +82,7 @@ SYSCALL_TABLE =
 	{ syscall_svcown,   1 },
 	{ syscall_svcid,    1 },
 
-	{ syscall_syscmd,   3 },
+	{ syscall_sysio,    3 },
 
 	0
 };

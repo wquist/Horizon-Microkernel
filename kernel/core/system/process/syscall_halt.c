@@ -22,7 +22,7 @@
 #include <horizon/ipc.h>
 #include <horizon/errno.h>
 
-void syscall_detach(tid_t tid)
+void syscall_halt(tid_t tid)
 {
 	if (tid == IDST_ANY)
 		return syscall_return_set(-e_badparam);

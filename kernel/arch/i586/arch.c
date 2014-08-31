@@ -57,7 +57,7 @@ void arch_timer_init(size_t freq, int_callback_t handle)
 	pit_timer_set(PIT_TIMER0, freq, PIT_OUTMODE_SQRWAVE);
 }
 
-int arch_syscmd(size_t action, size_t arg, uintptr_t data)
+int arch_sysio(size_t action, size_t arg, uintptr_t data)
 {
 	switch (action)
 	{
