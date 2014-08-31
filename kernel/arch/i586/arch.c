@@ -53,3 +53,8 @@ void arch_timer_init(size_t freq, int_callback_t handle)
 	pic_irq_enable(PIT_IRQ);
 	pit_timer_set(PIT_TIMER0, freq, PIT_OUTMODE_SQRWAVE);
 }
+
+bool arch_syscmd(size_t action, size_t arg, uintptr_t data)
+{
+	//
+}
