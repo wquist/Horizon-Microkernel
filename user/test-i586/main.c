@@ -7,7 +7,7 @@
 
 int dispatch(void* entry, void* stack) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (2), "b" (entry), "c" (stack)); return ret; }
 
-int wait(msgdst_t wait_for) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (6), "b" (wait_for)); return ret; }
+int wait(ipcchan_t wait_for) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (6), "b" (wait_for)); return ret; }
 
 int vmap(void* dest, size_t size) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (7), "b" (dest), "c" (size)); return ret; }
 int pmap(void* dest, void* phys, size_t size) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (8), "b" (dest), "c" (phys), "d" (size)); return ret; }
@@ -41,6 +41,8 @@ void main()
 	m.payload.size = 4;
 
 	recv(&m);
+	print("Received.");
+
 	if (extra == 5)
 		print("Read payload.");
 
@@ -61,7 +63,7 @@ void async()
 
 	print("Sending.");
 	send(&m);
-	print("Received.");
+	print("Sent.");
 
 	for (;;);
 }
