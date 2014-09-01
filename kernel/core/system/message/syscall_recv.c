@@ -23,6 +23,7 @@
 #include <multitask/scheduler.h>
 #include <util/addr.h>
 #include <util/compare.h>
+#include <horizon/ipc.h>
 #include <horizon/msg.h>
 #include <horizon/errno.h>
 #include <memory.h>
@@ -36,10 +37,10 @@ void syscall_recv(struct msg* dest)
 	if (caller->messages.count == 0)
 		return syscall_return_set(-e_notavail);
 
-	msgsrc_t from;
+	ipcchan_t from;
 	// Peek the message first in case there is a problem with payload.
 	uint8_t flags = message_peek(caller->tid, &from);
-	thread_t* sender = thread_get(MSRC_TID(from));
+	thread_t* sender = thread_get(ICHANID(from));
 
 	uintptr_t recv_size = 0;
 	if (sender && (flags & MESSAGE_FLAG_PAYLOAD))

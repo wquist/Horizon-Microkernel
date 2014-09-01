@@ -20,6 +20,7 @@
 #include <ipc/message.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <horizon/ipc.h>
 #include <horizon/errno.h>
 
 void syscall_drop(struct msg* info)
@@ -29,7 +30,7 @@ void syscall_drop(struct msg* info)
 		return syscall_return_set(-e_notavail);
 
 	uint8_t flags = message_recv(caller->tid, info);
-	thread_t* sender = thread_get(MSRC_TID(info->from));
+	thread_t* sender = thread_get(ICHANID(info->from.channel));
 
 	// If the sender was waiting, it must be woken.
 	if (sender && (flags & MESSAGE_FLAG_PAYLOAD))

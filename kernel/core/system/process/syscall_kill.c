@@ -24,9 +24,6 @@
 
 void syscall_kill(pid_t pid)
 {
-	if (pid == IDST_KERNEL || pid == IDST_ANY)
-		return syscall_return_set(-e_badparam);
-
 	thread_t* caller = thread_get(scheduler_curr());
 	if (pid == 0) //< FIXME: Macro.
 		pid = caller->owner;

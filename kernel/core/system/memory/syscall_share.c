@@ -40,7 +40,7 @@ void syscall_share(struct shm* info, size_t flags)
 
 	// The target must exist, unless it is any process.
 	/* FIXME: Allow IDST_ANY as a valid option? */
-	if (!process_get(info->to) && info->to != IDST_ANY)
+	if (!process_get(info->to) && info->to != ICHAN_ANY)
 		return syscall_return_set(-e_notavail);
 
 	// The memory must be mapped in the source.

@@ -92,7 +92,7 @@ struct thread
 
 	struct
 	{
-		ipcdst_t wait_for;
+		ipcchan_t wait_for;
 
 		uintptr_t payload_addr;
 		size_t payload_size;

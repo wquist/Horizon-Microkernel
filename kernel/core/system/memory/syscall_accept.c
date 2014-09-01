@@ -39,7 +39,7 @@ void syscall_accept(shmid_t sid, uintptr_t dest)
 
 	// Make sure the caller is allowed to accept.
 	struct shm* info = &(info_from->call_data.shm_offer);
-	if (!ipc_dest_compare(caller->tid, info->to))
+	if (!ipc_tid_compare(caller->tid, info->to))
 		return syscall_return_set(-e_badpriv);
 
 	// The destination space must be unmapped.
@@ -51,7 +51,7 @@ void syscall_accept(shmid_t sid, uintptr_t dest)
 	virtual_share(owner->pid, map_from->pid, dest, src, info->size, info->prot);
 
 	// Unset the shm offer so the source knows it was accepted.
-	if (info->to != IDST_ANY)
+	if (info->to != ICHAN_ANY)
 		info->to = 0;
 
 	syscall_return_set(-e_success);

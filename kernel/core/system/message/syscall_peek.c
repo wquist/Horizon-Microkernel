@@ -20,6 +20,7 @@
 #include <ipc/message.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <horizon/ipc.h>
 #include <horizon/msg.h>
 #include <horizon/errno.h>
 
@@ -29,9 +30,9 @@ void syscall_peek()
 	if (caller->messages.count == 0)
 		return syscall_return_set(-e_notavail);
 
-	msgsrc_t from;
+	ipcchan_t from;
 	uint8_t flags = message_peek(caller->tid, &from);
-	thread_t* sender = thread_get(MSRC_TID(from));
+	thread_t* sender = thread_get(ICHANID(from));
 
 	if (!sender || !(flags & MESSAGE_FLAG_PAYLOAD))
 		return syscall_return_set(0);

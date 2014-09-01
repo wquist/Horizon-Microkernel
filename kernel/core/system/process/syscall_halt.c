@@ -24,9 +24,6 @@
 
 void syscall_halt(tid_t tid)
 {
-	if (tid == IDST_ANY)
-		return syscall_return_set(-e_badparam);
-
 	thread_t* caller = thread_get(scheduler_curr());
 	if (tid == 0) //< FIXME: Make macro.
 		tid = caller->tid;

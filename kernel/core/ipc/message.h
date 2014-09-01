@@ -31,22 +31,24 @@ enum message_flags
 	MESSAGE_FLAG_PAYLOAD = (1 << 0),
 };
 
+// FIXME: Kind of an odd size and wasted space.
 typedef struct message message_t;
-struct __packed message //!< This should always be 16 bytes.
+struct __packed message
 {
-	tid_t sender;
-	uint8_t flags;
+	ipcchan_t channel;
+	ipcchan_t sender; //< FIXME: Need new type here. Not a channel.
 
 	//! Maintain a linked list for the queue.
 	/*! Current queue max is 128 so 256 should be plenty. */
 	uint8_t next;
+	uint8_t flags;
+	uint16_t _reserved; //< Needed to space to dword multiple.
 
 	msgarg_t code, arg;
-	msgarg_t data;
 };
 
-void message_send(tid_t from, tid_t to, struct msg* info, bool head);
+void message_send(ipcchan_t from, tid_t to, struct msg* info, bool head);
 uint8_t message_recv(tid_t src, struct msg* dest);
-uint8_t message_peek(tid_t src, msgsrc_t* from);
+uint8_t message_peek(tid_t src, ipcchan_t* from);
 
-bool message_find(tid_t src, ipcdst_t search);
+bool message_find(tid_t src, ipcchan_t search);

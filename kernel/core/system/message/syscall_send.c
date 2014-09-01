@@ -31,13 +31,17 @@ void syscall_send(struct msg* src)
 		return syscall_return_set(-e_badparam);
 
 	thread_t* caller = thread_get(scheduler_curr());
-	thread_t* dest   = thread_get(ipc_dest_get(src->to));
+	thread_t* dest   = thread_get(ipc_tid_get(src->to));
 
 	// The destination must be alive and have room in queue.
 	if (!dest)
 		return syscall_return_set(-e_notavail);
 	if (dest->messages.count >= THREAD_MESSAGE_MAX)
 		return syscall_return_set(-e_notavail);
+
+	// Set the success return value now.
+	/* The thread may be removed from queue next. */
+	syscall_return_set(process_get(dest->owner)->version);
 
 	// Extra information means the sender blocks.
 	if (src->payload.buf)
@@ -64,7 +68,7 @@ void syscall_send(struct msg* src)
 	// Try to wake up the thread if needed.
 	bool woken = false;
 	if (dest->sched.state == THREAD_STATE_WAITING)
-		woken = ipc_dest_compare(dest->call_data.wait_for, caller->tid);
+		woken = ipc_tid_compare(dest->call_data.wait_for, caller->tid);
 
 	// Here, 'woken' determines if msg is placed at head or tail of queue.
 	message_send(caller->tid, dest->tid, src, woken);
@@ -74,6 +78,4 @@ void syscall_send(struct msg* src)
 	// Remember to unlock the scheduler if needed.
 	if (!scheduler_curr())
 		scheduler_unlock();
-	else
-		syscall_return_set(-e_success);
 }

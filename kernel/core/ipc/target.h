@@ -21,9 +21,12 @@
 
 #pragma once
 
+#include <ipc/message.h>
 #include <horizon/types.h>
 #include <stdint.h>
 #include <stdbool.h>
 
-tid_t ipc_dest_get(ipcdst_t dest);
-bool ipc_dest_compare(ipcdst_t dest, uint16_t caller);
+tid_t ipc_tid_get(ipcchan_t chan);
+
+bool ipc_tid_compare(ipcchan_t chan, tid_t caller);
+bool ipc_message_compare(ipcchan_t chan, message_t* msg);

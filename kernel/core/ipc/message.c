@@ -26,7 +26,7 @@
 
 //! Send a message from with the given info to a TID.
 /*! 'head' determines if the message is pushed to the front or back of the queue. */
-void message_send(tid_t from, tid_t to, struct msg* info, bool head)
+void message_send(ipcchan_t from, tid_t to, struct msg* info, bool head)
 {
 	dassert(info);
 
@@ -39,11 +39,20 @@ void message_send(tid_t from, tid_t to, struct msg* info, bool head)
 	dassert(slot != -1);
 
 	message_t* target = &(thread->messages.slots[slot]);
-	target->sender = from;
+	memset(target, 0, sizeof(message_t));
+
+	thread_t* sender = thread_get(from);
+	if (sender) //< Needed in case the sender is the kernel (0).
+	{
+		process_t* owner = process_get(sender->owner);
+		dassert(owner);
+
+		target->channel = ((ipcchan_t)(sender->version) << 16) | from;
+		target->sender  = ((ipcchan_t)(owner->version)  << 16) | owner->pid;
+	}
 
 	target->code = info->code;
 	target->arg  = info->arg;
-	target->data = info->data;
 
 	if (info->payload.buf)
 		target->flags |= MESSAGE_FLAG_PAYLOAD;
@@ -90,15 +99,11 @@ uint8_t message_recv(tid_t src, struct msg* dest)
 
 	if (dest)
 	{
-		thread_t* sender = thread_get(head->sender);
-		if (sender)
-			dest->from = (sender->owner << 16) | (sender->tid);
-		else
-			dest->from = sender->tid;
+		dest->from.channel = head->channel;
+		dest->from.sender  = head->sender;
 
 		dest->code = head->code;
 		dest->arg  = head->arg;
-		dest->data = head->data;
 	}
 
 	// Update the head and the tail.
@@ -112,7 +117,7 @@ uint8_t message_recv(tid_t src, struct msg* dest)
 
 //! Get the message sender and flags from a queue head.
 /*! FIXME: Consolidate with message_recv? */
-uint8_t message_peek(tid_t src, msgsrc_t* from)
+uint8_t message_peek(tid_t src, ipcchan_t* from)
 {
 	dassert(from);
 
@@ -122,17 +127,12 @@ uint8_t message_peek(tid_t src, msgsrc_t* from)
 
 	message_t* head = &(thread->messages.slots[thread->messages.head]);
 
-	thread_t* sender = thread_get(head->sender);
-	if (sender)
-		*from = (sender->owner << 16) | (sender->tid);
-	else
-		*from = sender->tid;
-
+	*from = head->channel;
 	return head->flags;
 }
 
 //! Search for a message from the given sender and put it at the queue head.
-bool message_find(tid_t src, ipcdst_t search)
+bool message_find(tid_t src, ipcchan_t search)
 {
 	thread_t* thread = thread_get(src);
 	dassert(thread);
@@ -146,7 +146,7 @@ bool message_find(tid_t src, ipcdst_t search)
 	while (curr != -1)
 	{
 		message_t* msg = &(thread->messages.slots[curr]);
-		if (ipc_dest_compare(search, msg->sender))
+		if (ipc_message_compare(search, msg))
 		{
 			if (prev != -1) //< The message is in the middle or at the end.
 				thread->messages.slots[prev].next = msg->next;
