@@ -41,14 +41,15 @@ void syscall_wait(ipcchan_t sender)
 			return syscall_return_set(-e_notavail);
 	}
 
+	// The return code cannot be set once removed.
+	syscall_return_set(-e_success);
+
 	// The caller is going to be removed.
 	scheduler_lock();
 	scheduler_remove(caller->tid);
+
 	// Put the thread into the generic waiting state.
 	caller->sched.state = THREAD_STATE_WAITING;
-
-	// FIXME: Do not set the success code early.
-	syscall_return_set(-e_success);
 	caller->call_data.wait_for = wait_for;
 
 	// Do not return since the thread is gone now.
