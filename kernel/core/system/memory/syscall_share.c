@@ -34,10 +34,6 @@ void syscall_share(struct shm* info)
 	thread_t* caller = thread_get(scheduler_curr());
 	process_t* owner = process_get(caller->owner);
 
-	// First check if there is already shm being shared.
-	if (!(caller->call_data.shm_offer.to))
-		return syscall_return_set(-e_notavail);
-
 	// The target must exist, unless it is any process.
 	/* FIXME: Allow IDST_ANY as a valid option? */
 	if (!process_get(info->to) && info->to != ICHAN_ANY)
