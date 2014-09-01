@@ -12,8 +12,8 @@ int wait(ipcchan_t wait_for) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (6)
 int vmap(void* dest, size_t size) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (7), "b" (dest), "c" (size)); return ret; }
 int pmap(void* dest, void* phys, size_t size) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (8), "b" (dest), "c" (phys), "d" (size)); return ret; }
 
-int send(struct msg* msg) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (10), "b" (msg)); return ret; }
-int recv(struct msg* msg) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (11), "b" (msg)); return ret; }
+int send(struct msg* msg) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (13), "b" (msg)); return ret; }
+int recv(struct msg* msg) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (14), "b" (msg)); return ret; }
 
 uint16_t* const video_mem = (void*)0xA0000000;
 size_t cursor = 0;
