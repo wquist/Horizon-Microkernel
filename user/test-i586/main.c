@@ -1,6 +1,6 @@
 // main.c
 
-#include <horizon/proc.h>
+#include <horizon/ipc.h>
 #include <horizon/msg.h>
 #include <stdint.h>
 #include <memory.h>
@@ -31,7 +31,7 @@ void main()
 
 	print("Hello.");
 
-	wait(TID_ANY);
+	wait(ICHAN_ANY);
 	print("Awoken.");
 
 	uint32_t extra = 0;
@@ -54,7 +54,7 @@ void async()
 	uint32_t extra = 5;
 
 	struct msg m = {{0}};
-	m.to   = MDSTFMT(2, MTOTID);
+	m.to   = ICHAN_THREAD(2);
 	m.code = 1;
 	m.payload.buf  = &extra;
 	m.payload.size = 4;
