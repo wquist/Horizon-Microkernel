@@ -19,7 +19,7 @@
 #include <multitask/process.h>
 #include <horizon/ipc.h>
 
-#define CHAN_VER(x) ((uint16_t)(((x) & 0xFFFF) >> 16))
+#define CHAN_VER(x) ((uint16_t)(((x) & 0xFFFF0000) >> 16))
 #define CHAN_VER_PID 0
 #define CHAN_VER_TID 1
 
@@ -27,7 +27,7 @@
 tid_t ipc_tid_get(ipcchan_t chan)
 {
 	uint16_t uid = ICHANID(chan);
-	if (uid == ICHAN_ANY || uid == ICHAN_KERNEL)
+	if (chan == ICHAN_ANY || chan == ICHAN_KERNEL)
 		return uid;
 
 	uint16_t ver = CHAN_VER(chan);
@@ -61,14 +61,14 @@ tid_t ipc_tid_get(ipcchan_t chan)
 //! Compare an IPC channel with a thread ID to see if they are equal.
 bool ipc_tid_compare(ipcchan_t chan, tid_t caller)
 {
-	uint16_t uid = ICHANID(chan);
-	if (uid == ICHAN_ANY)
+	if (chan == ICHAN_ANY)
 		return true;
-
-	if (uid == ICHAN_KERNEL)
+	if (chan == ICHAN_KERNEL)
 		return (caller == ICHAN_KERNEL);
 
+	uint16_t uid = ICHANID(chan);
 	uint16_t ver = CHAN_VER(chan);
+
 	switch (ver)
 	{
 		case CHAN_VER_PID:
@@ -99,14 +99,14 @@ bool ipc_tid_compare(ipcchan_t chan, tid_t caller)
 //! Compare an IPC channel with a message structure.
 bool ipc_message_compare(ipcchan_t chan, message_t* msg)
 {
-	uint16_t uid = ICHANID(chan);
-	if (uid == ICHAN_ANY)
+	if (chan == ICHAN_ANY)
 		return true;
-
-	if (uid == ICHAN_KERNEL)
+	if (chan == ICHAN_KERNEL)
 		return (msg->channel == ICHAN_KERNEL);
 
+	uint16_t uid = ICHANID(chan);
 	uint16_t ver = CHAN_VER(chan);
+
 	switch (ver)
 	{
 		case CHAN_VER_PID:
