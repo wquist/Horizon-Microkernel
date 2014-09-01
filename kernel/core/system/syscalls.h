@@ -42,7 +42,7 @@ void syscall_pmap(uintptr_t dest, uintptr_t src, size_t size);
 void syscall_unmap(uintptr_t addr, size_t size);
 
 void syscall_grant(struct shm* info, uintptr_t dest);
-void syscall_share(struct shm* info, size_t flags);
+void syscall_share(struct shm* info);
 void syscall_accept(shmid_t sid, uintptr_t dest);
 
 void syscall_send(struct msg* src);
@@ -71,7 +71,7 @@ SYSCALL_TABLE =
 	{ syscall_unmap,    2 },
 
 	{ syscall_grant,    2 },
-	{ syscall_share,    2 },
+	{ syscall_share,    1 },
 	{ syscall_accept,   2 },
 
 	{ syscall_send,     1 },

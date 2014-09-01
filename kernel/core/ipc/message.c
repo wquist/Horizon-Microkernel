@@ -48,7 +48,8 @@ void message_send(ipcchan_t from, tid_t to, struct msg* info, bool head)
 		dassert(owner);
 
 		target->channel = ((ipcchan_t)(sender->version) << 16) | from;
-		target->sender  = ((ipcchan_t)(owner->version)  << 16) | owner->pid;
+		target->sender  = owner->pid;
+		target->source  = owner->version;
 	}
 
 	target->code = info->code;
@@ -100,7 +101,7 @@ uint8_t message_recv(tid_t src, struct msg* dest)
 	if (dest)
 	{
 		dest->from.channel = head->channel;
-		dest->from.sender  = head->sender;
+		dest->from.sender  = head->source;
 
 		dest->code = head->code;
 		dest->arg  = head->arg;

@@ -110,7 +110,7 @@ bool ipc_message_compare(ipcchan_t chan, message_t* msg)
 	switch (ver)
 	{
 		case CHAN_VER_PID:
-			return (uid == (msg->sender & 0xFFFF));
+			return (uid == msg->sender);
 		case CHAN_VER_TID:
 			return (uid == (msg->channel & 0xFFFF));
 		default:

@@ -26,7 +26,7 @@
 #include <memory.h>
 
 // FIXME: Move the shm PCB info management into its own class.
-void syscall_share(struct shm* info, size_t flags)
+void syscall_share(struct shm* info)
 {
 	if (!info)
 		return syscall_return_set(-e_badparam);
@@ -35,7 +35,7 @@ void syscall_share(struct shm* info, size_t flags)
 	process_t* owner = process_get(caller->owner);
 
 	// First check if there is already shm being shared.
-	if (!((caller->call_data.shm_offer.to) || (flags & SOPT_FORCE)))
+	if (!(caller->call_data.shm_offer.to))
 		return syscall_return_set(-e_notavail);
 
 	// The target must exist, unless it is any process.

@@ -36,7 +36,9 @@ typedef struct message message_t;
 struct __packed message
 {
 	ipcchan_t channel;
-	ipcchan_t sender; //< FIXME: Need new type here. Not a channel.
+
+	pid_t sender;
+	ipcsrc_t source;
 
 	//! Maintain a linked list for the queue.
 	/*! Current queue max is 128 so 256 should be plenty. */
