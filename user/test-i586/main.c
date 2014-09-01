@@ -46,6 +46,16 @@ void main()
 	if (extra == 5)
 		print("Read payload.");
 
+	print("Sending reply.");
+	struct msg rep = {{0}};
+	rep.to = m.from.channel;
+
+	int res = send(&rep);
+	if (res < 0)
+		print("An error occurred.");
+	else
+		print("Reply sent.");
+
 	for (;;);
 }
 
@@ -64,6 +74,12 @@ void async()
 	print("Sending.");
 	send(&m);
 	print("Sent.");
+
+	print("Waiting for reply.");
+	wait(ICHAN_ANY);
+
+	recv(&m);
+	print("Received.");
 
 	for (;;);
 }
