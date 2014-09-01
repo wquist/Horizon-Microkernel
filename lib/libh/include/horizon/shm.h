@@ -10,7 +10,7 @@
 
 struct shm
 {
-	pid_t to;
+	ipcchan_t to;
 
 	void*  addr;
 	size_t size;
