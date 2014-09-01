@@ -9,7 +9,10 @@ typedef uint16_t tid_t;
 typedef uint8_t priv_t;
 
 typedef uint32_t ipcchan_t;
+typedef uint16_t ipcsrc_t;
+
 typedef uint32_t msgarg_t;
+
 typedef uint32_t shmid_t;
 
 #endif
