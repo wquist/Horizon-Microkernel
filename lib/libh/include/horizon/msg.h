@@ -12,7 +12,7 @@ struct msg
 		struct
 		{
 			ipcchan_t channel;
-			ipcsrc_t  sender;
+			ipcsrc_t  source;
 		} from;
 	};
 
