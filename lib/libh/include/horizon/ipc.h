@@ -3,10 +3,12 @@
 
 #include <horizon/types.h>
 
-#define IDST_KERNEL (1)
-#define IDST_ANY    (0xFFFF)
+#define ICHAN_KERNEL (1)
+#define ICHAN_ANY    (0xFFFF)
 
-#define IDST_PROC(uid)   ((ipcdst_t)(uid) | ((ipcdst_t)(0) << 16))
-#define IDST_THREAD(uid) ((ipcdst_t)(uid) | ((ipcdst_t)(1) << 16))
+#define ICHAN_PROC(uid)   ((ipcchan_t)(uid) | ((ipcchan_t)(0) << 16))
+#define ICHAN_THREAD(uid) ((ipcchan_t)(uid) | ((ipcchan_t)(1) << 16))
+
+#define ICHANID(chan) (chan & 0xFFFF)
 
 #endif
