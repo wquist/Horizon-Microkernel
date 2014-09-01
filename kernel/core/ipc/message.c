@@ -57,7 +57,7 @@ void message_send(ipcchan_t from, tid_t to, struct msg* info, bool head)
 	if (info->payload.buf)
 		target->flags |= MESSAGE_FLAG_PAYLOAD;
 
-	target->next = -1; //< Mark the end of the linked list.
+	target->next = 0xFF; //< Mark the end of the linked list.
 	if (thread->messages.count != 0)
 	{
 		if (head) //< Put this message at the front of the list.
@@ -108,7 +108,7 @@ uint8_t message_recv(tid_t src, struct msg* dest)
 
 	// Update the head and the tail.
 	if (thread->messages.tail == thread->messages.head)
-		thread->messages.tail = -1;
+		thread->messages.tail = 0xFF;
 	thread->messages.head = head->next; //< 'next' could be msg or -1.
 
 	--(thread->messages.count);
@@ -141,14 +141,14 @@ bool message_find(tid_t src, ipcchan_t search)
 	if (thread->messages.count == 0)
 		return false;
 	
-	uint8_t prev = -1;
+	uint8_t prev = 0xFF;
 	uint8_t curr = thread->messages.head;
-	while (curr != -1)
+	while (curr != 0xFF)
 	{
 		message_t* msg = &(thread->messages.slots[curr]);
 		if (ipc_message_compare(search, msg))
 		{
-			if (prev != -1) //< The message is in the middle or at the end.
+			if (prev != 0xFF) //< The message is in the middle or at the end.
 				thread->messages.slots[prev].next = msg->next;
 			else // The message was the head.
 				thread->messages.head = msg->next;
@@ -160,7 +160,7 @@ bool message_find(tid_t src, ipcchan_t search)
 			// FIXME: Do not just replace the msg at head.
 			msg->next = thread->messages.head;
 			thread->messages.head = curr;
-			if (thread->messages.tail == -1)
+			if (thread->messages.tail == 0xFF)
 				thread->messages.tail = curr;
 
 			return true;
