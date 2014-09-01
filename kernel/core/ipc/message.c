@@ -101,7 +101,7 @@ uint8_t message_recv(tid_t src, struct msg* dest)
 	if (dest)
 	{
 		dest->from.channel = head->channel;
-		dest->from.sender  = head->source;
+		dest->from.source  = head->source;
 
 		dest->code = head->code;
 		dest->arg  = head->arg;

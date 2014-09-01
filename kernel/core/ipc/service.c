@@ -20,7 +20,7 @@
 #include <horizon/svc.h>
 #include <debug/error.h>
 
-static uint32_t service_ids[SVCMAX] = {0};
+static ipcchan_t service_ids[SVCMAX] = {0};
 
 //! Associate a TID with a service number.
 /*! Possibly set up the thread to receive kernel message for INTs. */
@@ -32,26 +32,26 @@ void service_register(size_t svc, tid_t tid)
 	thread_t* thread = thread_get(tid);
 	dassert(thread);
 
-	service_ids[svc] = (thread->owner << 16) | tid;
+	service_ids[svc] = ((ipcchan_t)(thread->version) << 16) | tid;
 
 	// FIXME: Register interrupt if needed.
 }
 
 //! Get the TID associated with a service number.
 /*! Also checks if the TID is still valid, and clears it otherwise. */
-tid_t service_get(size_t svc)
+ipcchan_t service_get(size_t svc)
 {
 	dassert(svc < SVCMAX);
 
 	uint16_t tid = service_ids[svc] & 0xFFFF;
-	uint16_t pid = service_ids[svc] >> 16;
+	uint16_t ver = service_ids[svc] >> 16;
 
+	// Make sure the service is still valid.
 	thread_t* thread = thread_get(tid);
-	if (!thread || thread->owner != pid)
-	{
-		service_ids[svc] = 0;
-		return 0;
-	}
+	if (thread && thread->version == ver)
+		return service_ids[svc];
 
-	return tid;
+	// The service was not valid; reset it.
+	service_ids[svc] = 0;
+	return 0;
 }

@@ -19,7 +19,7 @@
 #include <multitask/process.h>
 #include <horizon/ipc.h>
 
-#define CHAN_VER(x) ((uint16_t)(((x) & 0xFFFF0000) >> 16))
+#define CHAN_VER(x) ((uint16_t)((x) >> 16))
 #define CHAN_VER_PID 0
 #define CHAN_VER_TID 1
 

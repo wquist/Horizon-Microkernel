@@ -25,4 +25,4 @@
 #include <horizon/types.h>
 
 void  service_register(size_t svc, tid_t tid);
-tid_t service_get(size_t svc);
+ipcchan_t service_get(size_t svc);
