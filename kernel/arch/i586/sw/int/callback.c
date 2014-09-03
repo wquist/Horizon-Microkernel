@@ -38,8 +38,10 @@ void int_callback_common(int_frame_t* frame);
 void int_callback_set(isr_t isr, bool eoi, int_callback_t handle)
 {
 	int_callback_t* target;
-	if (eoi) target = &(callback_pairs[isr].eoi_handle);
-	else     target = &(callback_pairs[isr].handle);
+	if (eoi)
+		target = &(callback_pairs[isr].eoi_handle);
+	else
+		target = &(callback_pairs[isr].handle);
 
 	if (*target && handle)
 		dtrace("Warning: ISR%i already had the specified callback.", isr);
