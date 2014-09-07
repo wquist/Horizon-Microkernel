@@ -16,48 +16,31 @@
  */
 
 /*! \file core/multitask/process.h
- *  \date July 2014
+ *  \date September 2014
  */
 
 #pragma once
 
 #include <arch.h>
-#include <ipc/message.h>
+#include <multitask/thread.h>
 #include <util/bitmap.h>
 #include <horizon/types.h>
-#include <horizon/shm.h>
 #include <stddef.h>
 #include <stdint.h>
 
-#define PROCESS_MAX (1<<15)
-#define PROCESS_BLOCK_SIZE 4096
-//! The number of threads an individual PID can own.
-/*! A bitmap with this many bits is stored in the PCB. */
-#define PROCESS_THREAD_MAX 1024
+//! System-wide limits for processes and threads.
+/*! Ideally, the maxes together should be representable in 16-bits. */
+#define PROCESS_MAX 1024
+#define PROCESS_THREAD_MAX 64
 
-#define THREAD_MAX (1<<15)
-#define THREAD_BLOCK_SIZE 4096
-//! The number of messages a TID can queue.
-#define THREAD_MESSAGE_MAX 128
-
-typedef enum thread_state THREAD_STATE;
-enum thread_state
-{
-	THREAD_STATE_NEW,
-	THREAD_STATE_ACTIVE,
-	THREAD_STATE_SENDING,
-	THREAD_STATE_WAITING,
-	THREAD_STATE_OLD,
-};
-
-//! A process control block (PCB).
+//! A process control block.
 typedef struct process process_t;
 struct process
 {
-	pid_t pid;
-	uint16_t version;
+	pid_t   pid;
+	uint8_t version;
+	pid_t   parent;
 
-	pid_t parent;
 	size_t priv;
 
 	uintptr_t entry;
@@ -65,58 +48,20 @@ struct process
 
 	struct
 	{
-		size_t count;
-		uint16_t slots[PROCESS_THREAD_MAX];
+		size_t  count;
+		uint8_t versions[PROCESS_THREAD_MAX];
+
+		tid_t    slots[PROCES_THREAD_MAX];
 		bitmap_t bitmap[BITMAP_LENGTH(PROCESS_THREAD_MAX)];
 	} threads;
-};
 
-//! A thread control block (TCB).
-typedef struct thread thread_t;
-struct thread
-{
-	tid_t tid;
-	uint16_t version;
-
-	tid_t lid;
-	pid_t owner;
-
-	task_info_t task;
-
-	struct
-	{
-		struct { tid_t prev, next; } queue;
-		uint8_t timeslice;
-		THREAD_STATE state;
-	} sched;
-
-	struct
-	{
-		ipcchan_t wait_for;
-
-		uintptr_t payload_addr;
-		size_t payload_size;
-
-		struct shm shm_offer;
-	} call_data;
-
-	struct
-	{
-		uint8_t head, tail;
-		size_t count;
-		message_t slots[THREAD_MESSAGE_MAX];
-		bitmap_t bitmap[BITMAP_LENGTH(THREAD_MESSAGE_MAX)];
-	} messages;
+	// Message queue.
 };
 
 void process_init();
-void thread_init(); //!< Called internally.
 
 pid_t process_new(pid_t ppid, uintptr_t entry);
-void process_kill(pid_t pid);
-
-tid_t thread_new(pid_t pid, uintptr_t entry);
-void thread_kill(tid_t tid);
+tid_t process_thread_alloc(pid_t pid);
+void  process_kill(pid_t pid);
 
 process_t* process_get(pid_t pid);
-thread_t* thread_get(tid_t tid);

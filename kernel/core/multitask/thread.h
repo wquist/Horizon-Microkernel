@@ -15,30 +15,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <system/syscalls.h>
+/*! \file core/multitask/thread.h
+ *  \date September 2014
+ */
+
+#pragma once
+
 #include <arch.h>
-#include <multitask/process.h>
-#include <multitask/scheduler.h>
-#include <ipc/service.h>
-#include <horizon/priv.h>
-#include <horizon/svc.h>
-#include <horizon/errno.h>
+#include <horizon/types.h>
+#include <stddef.h>
+#include <stdint.h>
 
-void syscall_svcown(size_t svc)
+typedef struct thread thread_t;
+struct thread
 {
-	// FIXME: Needs that constant from libh.
-	if (svc >= SVCMAX)
-		return syscall_return_set(-e_badparam);
-	if (service_get(svc) != 0)
-		return syscall_return_set(-e_notavail);
+	tid_t   tid;
+	uint8_t version;
+	pid_t   owner;
 
-	thread_t* caller = thread_get(scheduler_curr());
-	process_t* owner = process_get(caller->owner);
+	task_info_t task;
 
-	// The process must be at least a server to be a service.
-	if (owner->priv < PRIV_SERVER)
-		return syscall_return_set(-e_badpriv);
+	// Scheduler info.
 
-	service_register(svc, caller->tid);
-	syscall_return_set(-e_success);
-}
+	// System call info.
+};
+
+tid_t thread_new(pid_t pid, uintptr_t entry);
+void  thread_kill(pid_t pid, tid_t tid);
+
+thread_t* thread_get(pid_t pid, tid_t tid);
