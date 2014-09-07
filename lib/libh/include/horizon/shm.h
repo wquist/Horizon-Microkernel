@@ -8,7 +8,7 @@
 
 struct shm
 {
-	ipcchan_t to;
+	ipcport_t to;
 
 	void*  addr;
 	size_t size;
