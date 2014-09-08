@@ -35,9 +35,21 @@ struct thread
 
 	task_info_t task;
 
-	// Scheduler info.
+	struct
+	{
+		size_t count;
+		uint16_t head, tail;
+	} msg_info;
 
-	// System call info.
+	struct
+	{
+		//
+	} sched_info;
+
+	struct
+	{
+		//
+	} syscall_info;
 };
 
 tid_t thread_new(pid_t pid, uintptr_t entry);

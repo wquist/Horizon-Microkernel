@@ -31,7 +31,8 @@
 //! System-wide limits for processes and threads.
 /*! Ideally, the maxes together should be representable in 16-bits. */
 #define PROCESS_MAX 1024
-#define PROCESS_THREAD_MAX 64
+#define PROCESS_THREAD_MAX  64
+#define PROCESS_MESSAGE_MAX 1024
 
 //! A process control block.
 typedef struct process process_t;
@@ -48,20 +49,25 @@ struct process
 
 	struct
 	{
-		size_t  count;
-		uint8_t versions[PROCESS_THREAD_MAX];
-
-		tid_t    slots[PROCES_THREAD_MAX];
+		size_t   count;
 		bitmap_t bitmap[BITMAP_LENGTH(PROCESS_THREAD_MAX)];
-	} threads;
 
-	// Message queue.
+		uint8_t versions[PROCESS_THREAD_MAX];
+	} thread_info;
+
+	struct
+	{
+		size_t   count;
+		bitmap_t bitmap[BITMAP_LENGTH(PROCESS_MESSAGE_MAX)];
+	} msg_info;
+
+	message_t* messages;
+	thread_t*  threads;
 };
 
 void process_init();
 
 pid_t process_new(pid_t ppid, uintptr_t entry);
-tid_t process_thread_alloc(pid_t pid);
 void  process_kill(pid_t pid);
 
 process_t* process_get(pid_t pid);

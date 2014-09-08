@@ -28,8 +28,8 @@
 typedef struct message message_t;
 struct message
 {
-	// FIXME: Make port type.
-	uint32_t from;
+	ipcport_t from;
+	msgdata_t code, arg;
 
 	struct __packed
 	{
@@ -40,14 +40,11 @@ struct message
 		// FIXME: Something useful for reserved.
 		uint32_t _reserved    : 15;
 	};
-
-	// FIXME: Make message data type.
-	uint32_t code, arg;
 };
 
 // FIXME: Too many parameters need to be passed...
-void message_send(pid_t pid, tid_t tid, uint32_t from, struct msg* info, bool head);
+void message_send(pid_t pid, tid_t tid, ipcport_t from, struct msg* info, bool head);
 bool message_recv(pid_t pid, tid_t tid, struct msg* dest);
-bool message_peek(pid_t pid, tid_t tid, uint32_t* from);
+bool message_peek(pid_t pid, tid_t tid, ipcport_t* from);
 
-bool message_find(pid_t pid, tid_t tid, uint32_t search);
+bool message_find(pid_t pid, tid_t tid, ipcport_t search);
