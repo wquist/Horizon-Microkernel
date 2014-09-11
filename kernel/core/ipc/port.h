@@ -15,37 +15,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file core/ipc/message.h
+/*! \file core/ipc/port.h
  *  \date September 2014
  */
 
 #pragma once
 
 #include <horizon/types.h>
-#include <horizon/msg.h>
-#include <stdint.h>
 #include <stdbool.h>
 
-typedef struct message message_t;
-struct message
-{
-	ipcport_t from;
-	msgdata_t code, arg;
+//! The IPC port data type can represent multiple target destinations:
+/*! Global values:     ANY (0) or KERNEL (1).
+ *  A local thread:    the TID.
+ *  A specific PID:    (the PID) << 6
+ *  An exact receiver: TVN << 8 | PVN << 8 | (the PID) << 6 | (the TID)
+ */
 
-	struct __packed
-	{
-		// Point to the next message in queue.
-		uint32_t next         : 10;
-		// The payload information is stored in the thread.
-		uint32_t payload_flag : 1;
-		// FIXME: Something useful for reserved.
-		uint32_t _reserved    : 21;
-	};
-};
-
-// FIXME: Too many parameters need to be passed...
-void message_enqueue(thread_uid_t uid, ipcport_t from, struct msg* info, bool head);
-bool message_dequeue(thread_uid_t uid, struct msg* dest);
-bool message_peek(thread_uid_t uid, ipcport_t* from);
-
-bool message_find(thread_uid_t uid, ipcport_t search);
+bool ipc_port_get(ipcport_t port, thread_uid_t* uid);
+bool ipc_port_compare(ipcport_t port, thread_uid_t uid);

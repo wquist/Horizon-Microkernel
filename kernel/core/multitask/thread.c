@@ -22,9 +22,10 @@
 #include <util/bitmap.h>
 #include <debug/log.h>
 #include <debug/error.h>
+#include <memory.h>
 
 //! Create a new thread in the given process.
-tid_t thread_new(pid_t pid, uintptr_t entry)
+thread_uid_t thread_new(pid_t pid, uintptr_t entry)
 {
 	process_t* owner = process_get(pid);
 	dassert(owner);
@@ -49,32 +50,32 @@ tid_t thread_new(pid_t pid, uintptr_t entry)
 	thread->task.entry = (entry) ? entry : owner->entry;
 
 	dtrace("Created thread with TID %i, owned by PID %i.", index, pid);
-	return index;
+	return { .pid = pid, .tid = index };
 }
 
 //! Destroy a thread in a given process.
 /*! Does not free the thread memory; all PCB memory is freed with process_kill. */
-void  thread_kill(pid_t pid, tid_t tid)
+void thread_kill(thread_uid_t uid)
 {
-	process_t* owner = process_get(pid);
+	process_t* owner = process_get(uid.pid);
 	dassert(owner);
 	dassert(bitmap_test(owner->thread_info.bitmap, tid));
 
-	bitmap_clear(owner->thread_info.bitmap, tid);
+	bitmap_clear(owner->thread_info.bitmap, uid.tid);
 	owner->thread_info.count -= 1;
 
-	dtrace("Destroyed thread with TID %i in PID %i.", tid, pid);
+	dtrace("Destroyed thread with TID %i in PID %i.", uid.tid, uid.pid);
 }
 
 //! Get the specificed thread for a given process.
-thread_t* thread_get(pid_t pid, tid_t tid)
+thread_t* thread_get(thread_uid_t uid)
 {
-	if (tid >= PROCESS_THREAD_MAX)
+	if (uid.tid >= PROCESS_THREAD_MAX)
 		return NULL;
 
-	process_t* owner = process_get(pid);
+	process_t* owner = process_get(uid.pid);
 	dassert(owner);
 
-	thread_t* thread = &(owner->threads[tid]);
-	return (bitmap_test(owner->thread_info.bitmap, tid)) ? thread : NULL;
+	thread_t* thread = &(owner->threads[uid.tid]);
+	return (bitmap_test(owner->thread_info.bitmap, uid.tid)) ? thread : NULL;
 }

@@ -66,11 +66,11 @@ void __noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 	// Load available modules as processes.
 	for (size_t i = 0; i != module_count_get(); ++i)
 	{
-		uint16_t pid = startp_load(module_get(i));
+		pid_t pid = startp_load(module_get(i));
 		if (!pid)
 			continue;
 
-		uint16_t tid = thread_new(pid, 0);
+		thread_uid_t tid = thread_new(pid, 0);
 		scheduler_add(tid);
 	}
 
@@ -82,14 +82,14 @@ void __noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 }
 
 // Load a startup process and return its PID.
-uint16_t startp_load(const module_t* mod)
+pid_t startp_load(const module_t* mod)
 {
 	if (!elf_module_validate(mod))
 		return 0;
 
 	elf_binary_t binary = elf_module_parse(mod);
 
-	uint16_t pid = process_new(0, binary.entry);
+	pid_t pid = process_new(0, binary.entry);
 	for (size_t i = 0; i != ELF_SECTION_MAX; ++i)
 	{
 		elf_section_t* sect = &(binary.sections[i]);

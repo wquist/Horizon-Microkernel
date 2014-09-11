@@ -24,6 +24,7 @@
 #include <debug/log.h>
 #include <debug/error.h>
 #include <horizon/ipc.h>
+#include <memory.h>
 
 typedef struct block_data block_data_t;
 struct block_data
@@ -49,8 +50,8 @@ void process_init()
 	bmstack_init(&block_map, (void*)map_start);
 	virtual_alloc(0, map_start, BMSTACK_SIZE(PROCESS_MAX));
 
-	// Reserve the special PIDs (self and kernel).
-	bmstack_set(&block_map, 0); //< FIXME: Make libh constant.
+	// Reserve the special PIDs.
+	bmstack_set(&block_map, IPORT_ANY);
 	bmstack_set(&block_map, IPORT_KERNEL);
 
 	bmstack_link(&block_map, PROCESS_MAX);
@@ -119,8 +120,7 @@ process_t* process_get(pid_t pid)
 		return NULL;
 
 	// Check for the reserved PIDs.
-	/* FIXME: Need constant for 0 in libh. */
-	if (pid == 0 || pid == IPORT_KERNEL)
+	if (pid == IPORT_ANY || pid == IPORT_KERNEL)
 		return NULL;
 
 	process_t* proc = (process_t*)index_to_addr((uintptr_t)blocks, sizeof(block_data_t), pid);

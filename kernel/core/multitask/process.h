@@ -50,16 +50,16 @@ struct process
 	struct
 	{
 		size_t   count;
-		bitmap_t bitmap[BITMAP_LENGTH(PROCESS_THREAD_MAX)];
-
-		uint8_t versions[PROCESS_THREAD_MAX];
-	} thread_info;
+		bitmap_t bitmap[BITMAP_LENGTH(PROCESS_MESSAGE_MAX)];
+	} msg_info;
 
 	struct
 	{
 		size_t   count;
-		bitmap_t bitmap[BITMAP_LENGTH(PROCESS_MESSAGE_MAX)];
-	} msg_info;
+		bitmap_t bitmap[BITMAP_LENGTH(PROCESS_THREAD_MAX)];
+
+		uint8_t versions[PROCESS_THREAD_MAX];
+	} thread_info;
 
 	message_t* messages;
 	thread_t*  threads;

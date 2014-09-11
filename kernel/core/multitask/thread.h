@@ -43,7 +43,12 @@ struct thread
 
 	struct
 	{
-		//
+		size_t timeslice;
+		struct
+		{
+			pid_t pid;
+			tid_t tid;
+		} next, prev;
 	} sched_info;
 
 	struct
@@ -52,7 +57,14 @@ struct thread
 	} syscall_info;
 };
 
-tid_t thread_new(pid_t pid, uintptr_t entry);
-void  thread_kill(pid_t pid, tid_t tid);
+typedef struct thread_uid thread_uid_t;
+struct thread_uid
+{
+	pid_t pid;
+	tid_t tid;
+};
 
-thread_t* thread_get(pid_t pid, tid_t tid);
+thread_uid_t thread_new(pid_t pid, uintptr_t entry);
+void  thread_kill(thread_uid_t uid);
+
+thread_t* thread_get(thread_uid_t uid);
