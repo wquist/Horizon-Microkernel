@@ -70,8 +70,8 @@ void __noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 		if (!pid)
 			continue;
 
-		thread_uid_t tid = thread_new(pid, 0);
-		scheduler_add(tid);
+		thread_uid_t uid = thread_new(pid, 0);
+		scheduler_add(uid);
 	}
 
 	// Begin the first usermode thread.

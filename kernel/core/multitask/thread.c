@@ -50,7 +50,7 @@ thread_uid_t thread_new(pid_t pid, uintptr_t entry)
 	thread->task.entry = (entry) ? entry : owner->entry;
 
 	dtrace("Created thread with TID %i, owned by PID %i.", index, pid);
-	return { .pid = pid, .tid = index };
+	return (thread_uid_t){ .pid = pid, .tid = index };
 }
 
 //! Destroy a thread in a given process.
@@ -59,7 +59,7 @@ void thread_kill(thread_uid_t uid)
 {
 	process_t* owner = process_get(uid.pid);
 	dassert(owner);
-	dassert(bitmap_test(owner->thread_info.bitmap, tid));
+	dassert(bitmap_test(owner->thread_info.bitmap, uid.tid));
 
 	bitmap_clear(owner->thread_info.bitmap, uid.tid);
 	owner->thread_info.count -= 1;

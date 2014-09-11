@@ -35,7 +35,7 @@ void syscall_halt(tid_t tid);
 void syscall_kill(pid_t pid);
 
 void syscall_yield();
-void syscall_wait(ipcchan_t sender);
+void syscall_wait(ipcport_t sender);
 
 void syscall_vmap(uintptr_t dest, size_t size);
 void syscall_pmap(uintptr_t dest, uintptr_t src, size_t size);

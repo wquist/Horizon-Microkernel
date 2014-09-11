@@ -23,6 +23,7 @@
 
 #include <arch.h>
 #include <multitask/thread.h>
+#include <ipc/message.h>
 #include <util/bitmap.h>
 #include <horizon/types.h>
 #include <stddef.h>

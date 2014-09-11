@@ -17,6 +17,7 @@
 
 #include "port.h"
 #include <multitask/process.h>
+#include <horizon/ipc.h>
 
 typedef union port_fmt port_fmt_t;
 union port_fmt
@@ -70,7 +71,8 @@ bool ipc_port_get(ipcport_t port, thread_uid_t* uid)
 	if (!process)
 		return false;
 
-	thread_t* thread = thread_get({ .pid = fmt.pid, .uid = fmt.uid });
+	thread_uid_t target_uid = { .pid = fmt.pid, .tid = fmt.tid };
+	thread_t* thread = thread_get(target_uid);
 	if (!thread)
 		return false;
 

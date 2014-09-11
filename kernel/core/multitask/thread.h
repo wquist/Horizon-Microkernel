@@ -26,6 +26,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
+typedef struct thread_uid thread_uid_t;
+struct thread_uid
+{
+	pid_t pid;
+	tid_t tid;
+};
+
 typedef struct thread thread_t;
 struct thread
 {
@@ -44,24 +51,13 @@ struct thread
 	struct
 	{
 		size_t timeslice;
-		struct
-		{
-			pid_t pid;
-			tid_t tid;
-		} next, prev;
+		thread_uid_t next, prev;
 	} sched_info;
 
 	struct
 	{
 		//
 	} syscall_info;
-};
-
-typedef struct thread_uid thread_uid_t;
-struct thread_uid
-{
-	pid_t pid;
-	tid_t tid;
 };
 
 thread_uid_t thread_new(pid_t pid, uintptr_t entry);

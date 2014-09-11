@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <multitask/thread.h>
 #include <horizon/types.h>
 #include <horizon/msg.h>
 #include <stdint.h>
@@ -44,8 +45,8 @@ struct message
 };
 
 // FIXME: Too many parameters need to be passed...
-void message_enqueue(thread_uid_t uid, ipcport_t from, struct msg* info, bool head);
-bool message_dequeue(thread_uid_t uid, struct msg* dest);
-bool message_peek(thread_uid_t uid, ipcport_t* from);
+void message_add(thread_uid_t uid, ipcport_t from, struct msg* info, bool head);
+bool message_remove(thread_uid_t uid, struct msg* dest);
+bool message_peek(thread_uid_t, ipcport_t* from);
 
-bool message_find(thread_uid_t uid, ipcport_t search);
+bool message_find(thread_uid_t, ipcport_t search);

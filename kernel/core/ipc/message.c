@@ -17,17 +17,18 @@
 
 #include "message.h"
 #include <multitask/process.h>
+#include <ipc/port.h>
 #include <util/bitmap.h>
 #include <debug/error.h>
 #include <memory.h>
 #include <stdbool.h>
 
 // Represents the end of a linked list.
-#define NULL_INDEX PROCESS_MESSAGE_MAX
+#define NULL_INDEX (PROCESS_MESSAGE_MAX-1)
 
 //! Place the given message into the target processes message queue.
 /*! The message is placed at the front of the queue if 'head' is 'true'. */
-void message_enqueue(thread_uid_t uid, ipcport_t from, struct msg* info, bool head)
+void message_add(thread_uid_t uid, ipcport_t from, struct msg* info, bool head)
 {
 	dassert(info);
 
@@ -57,7 +58,7 @@ void message_enqueue(thread_uid_t uid, ipcport_t from, struct msg* info, bool he
 		if (thread->msg_info.head == NULL_INDEX)
 			thread->msg_info.tail = index;
 
-		target->next = thread->msg.head;
+		target->next = thread->msg_info.head;
 		thread->msg_info.head = index;
 	}
 	else //< Or append it.
@@ -78,7 +79,7 @@ void message_enqueue(thread_uid_t uid, ipcport_t from, struct msg* info, bool he
 
 //! Get the message at the head of the queue and remove it.
 /*! Returns true if the message was associated with a payload. */
-bool message_dequeue(thread_uid_t uid, struct msg* dest)
+bool message_remove(thread_uid_t uid, struct msg* dest)
 {
 	process_t* owner = process_get(uid.pid);
 	dassert(owner);

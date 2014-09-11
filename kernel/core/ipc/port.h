@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <multitask/thread.h>
 #include <horizon/types.h>
 #include <stdbool.h>
 

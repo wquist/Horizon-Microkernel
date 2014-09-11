@@ -65,11 +65,11 @@ pid_t process_new(pid_t ppid, uintptr_t entry)
 	dassert(index != -1); //< No PID available.
 
 	// Get the address of the entire PCB.
-	uintptr_t block = index_to_addr((uintptr_t)blocks, sizeof(block_data), index);
-	block_data_t data  = (block_data_t*)block;
+	uintptr_t block = index_to_addr((uintptr_t)blocks, sizeof(block_data_t), index);
+	block_data_t* data = (block_data_t*)block;
 
 	// Only map in the 'process' portion.
-	process_t* process = &(block->process);
+	process_t* process = &(data->process);
 	virtual_alloc(0, (uintptr_t)process, sizeof(process_t));
 	memset(process, 0, sizeof(process_t));
 
@@ -89,8 +89,8 @@ pid_t process_new(pid_t ppid, uintptr_t entry)
 	process->addr_space = paging_pas_create();
 
 	// Set up pointers to the other information in the PCB.
-	process->messages = &(data->messages);
-	process->threads  = &(data->threads);
+	process->messages = data->messages;
+	process->threads  = data->threads;
 
 	dtrace("Created process with PID %i.", index);
 	return index;
