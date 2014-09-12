@@ -102,6 +102,16 @@ void process_kill(pid_t pid)
 	process_t* target = process_get(pid);
 	dassert(target);
 
+	// FIXME: Add bitmap function to find first set bit.
+	for (size_t i = 0; i != PROCESS_THREAD_MAX; ++i)
+	{
+		if (bitmap_test(target->thread_info.bitmap, i))
+		{
+			thread_uid_t uid = { .pid = pid, .tid = i };
+			thread_kill(uid);
+		}
+	}
+
 	// Set the PCB as free and release any allocated objects.
 	bmstack_clear(&block_map, pid);
 	paging_pas_destroy(target->addr_space);

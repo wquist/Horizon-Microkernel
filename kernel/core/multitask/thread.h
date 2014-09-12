@@ -26,11 +26,25 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef struct thread_uid thread_uid_t;
-struct thread_uid
+typedef enum thread_state THREAD_STATE;
+enum thread_state
 {
-	pid_t pid;
-	tid_t tid;
+	THREAD_STATE_NEW,
+	THREAD_STATE_ACTIVE,
+	THREAD_STATE_SENDING,
+	THREAD_STATE_WAITING,
+	THREAD_STATE_OLD
+};
+
+typedef union thread_uid thread_uid_t;
+union thread_uid
+{
+	struct __packed
+	{
+		uint16_t pid : 10;
+		uint16_t tid : 6;
+	};
+	uint16_t raw;
 };
 
 typedef struct thread thread_t;
@@ -40,6 +54,7 @@ struct thread
 	uint8_t version;
 	pid_t   owner;
 
+	THREAD_STATE state;
 	task_info_t task;
 
 	struct

@@ -46,6 +46,8 @@ thread_uid_t thread_new(pid_t pid, uintptr_t entry)
 	thread->version = owner->thread_info.versions[index];
 	thread->owner   = pid;
 
+	thread->state = THREAD_STATE_NEW;
+
 	task_init(&(thread->task));
 	thread->task.entry = (entry) ? entry : owner->entry;
 
@@ -57,6 +59,10 @@ thread_uid_t thread_new(pid_t pid, uintptr_t entry)
 /*! Does not free the thread memory; all PCB memory is freed with process_kill. */
 void thread_kill(thread_uid_t uid)
 {
+	thread_t* target = thread_get(uid);
+	dassert(target);
+	dassert(target->state != THREAD_STATE_ACTIVE);
+
 	process_t* owner = process_get(uid.pid);
 	dassert(owner);
 	dassert(bitmap_test(owner->thread_info.bitmap, uid.tid));
