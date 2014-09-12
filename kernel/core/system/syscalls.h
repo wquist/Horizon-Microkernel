@@ -31,7 +31,7 @@
 void syscall_spawn();
 void syscall_launch(pid_t pid, uintptr_t entry);
 void syscall_dispatch(uintptr_t entry, uintptr_t stack);
-void syscall_halt(tid_t tid);
+void syscall_release(tid_t tid);
 void syscall_kill(pid_t pid);
 
 void syscall_yield();
@@ -60,7 +60,7 @@ SYSCALL_TABLE =
 	{ syscall_spawn,    0 },
 	{ syscall_launch,   2 },
 	{ syscall_dispatch, 2 },
-	{ syscall_halt,     1 },
+	{ syscall_release,  1 },
 	{ syscall_kill,     1 },
 
 	{ syscall_yield,    0 },
