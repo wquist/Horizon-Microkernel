@@ -71,7 +71,7 @@ struct thread
 
 	struct
 	{
-		//
+		thread_uid_t wait_for;
 	} syscall_info;
 };
 

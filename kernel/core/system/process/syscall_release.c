@@ -19,28 +19,33 @@
 #include <arch.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <horizon/priv.h>
+#include <horizon/proc.h>
 #include <horizon/errno.h>
 
-void syscall_launch(pid_t pid, uintptr_t entry)
+void syscall_release(tid_t tid)
 {
-	process_t* owner = process_get(scheduler_curr().pid);
+	thread_uid_t caller_uid = scheduler_curr();
+	if (tid == TID_SELF)
+		tid = caller_uid.tid;
 
-	process_t* target = process_get(pid);
+	// Cannot release the main thread (use kill instead).
+	if (tid == 0)
+		return syscall_return_set(EINVALID);
+
+	thread_uid_t target_uid = { .pid = caller_uid.pid, .tid = tid };
+	thread_t* target = thread_get(target_uid);
 	if (!target)
 		return syscall_return_set(ENOTAVAIL);
 
-	// The target process must not have any threads running.
-	if (target->thread_info.count > 0)
-		return syscall_return_set(EINVALID);
-	// The process can only be launched by its parent or a server/driver.
-	if (!(target->pid == owner->pid || owner->priv > PRIV_NONE))
-		return syscall_return_set(EPRIV);
+	// The scheduler must be locked to remove the running thread.
+	if (target_uid.tid == caller_uid.tid)
+		scheduler_lock();
 
-	// The main thread will start at 'entry'.
-	target->entry = entry;
-	thread_uid_t uid = thread_new(pid, 0);
+	thread_kill(caller_uid);
 
-	scheduler_add(uid);
-	syscall_return_set(ENONE);
+	// Check if the scheduler is locked; the running thread is dead then.
+	if (!(scheduler_curr().pid))
+		scheduler_unlock();
+	else
+		syscall_return_set(ENONE);
 }

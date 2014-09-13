@@ -16,31 +16,36 @@
  */
 
 #include <system/syscalls.h>
-#include <arch.h>
+#include <memory/virtual.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <util/addr.h>
 #include <horizon/priv.h>
 #include <horizon/errno.h>
 
-void syscall_launch(pid_t pid, uintptr_t entry)
+void syscall_pmap(uintptr_t dest, uintptr_t src, size_t size)
 {
+	// FIXME: Make sure phys is not part of kernel memory?
+	if (dest + size > KERNEL_VIRT_BASE)
+		return syscall_return_set(EADDR);
+	if (!size)
+		return syscall_return_set(ESIZE);
+
+	if (addr_align(dest, ARCH_PGSIZE) != dest)
+		return syscall_return_set(EALIGN);
+	if (addr_align(src, ARCH_PGSIZE) != src)
+		return syscall_return_set(EALIGN);
+	if (size % ARCH_PGSIZE != 0)
+		return syscall_return_set(ESIZE);
+
+	// Only drivers can map physical memory.
 	process_t* owner = process_get(scheduler_curr().pid);
-
-	process_t* target = process_get(pid);
-	if (!target)
-		return syscall_return_set(ENOTAVAIL);
-
-	// The target process must not have any threads running.
-	if (target->thread_info.count > 0)
-		return syscall_return_set(EINVALID);
-	// The process can only be launched by its parent or a server/driver.
-	if (!(target->pid == owner->pid || owner->priv > PRIV_NONE))
+	if (owner->priv != PRIV_DRIVER)
 		return syscall_return_set(EPRIV);
 
-	// The main thread will start at 'entry'.
-	target->entry = entry;
-	thread_uid_t uid = thread_new(pid, 0);
+	if (virtual_is_mapped(owner->pid, dest, size) != 0)
+		return syscall_return_set(ENOTAVAIL);
 
-	scheduler_add(uid);
-	syscall_return_set(ENONE);
+	virtual_map(owner->pid, dest, (void*)src, size);
+	syscall_return_set(dest);
 }

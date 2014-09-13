@@ -33,7 +33,8 @@ union port_fmt
 };
 
 //! Get the process and thread ID represented by the given port.
-/*! - For global values, PID = value, TID = 0.
+/*! - For special values, PID = 1, TID = value.
+ *  - For global values, PID = value, TID = 0.
  *  - For a local TID, PID = 0, TID = value.
  *  - For anything else, both PID and TID are set to actual values.
  *  Only returns true if valid and both process and thread exist.
@@ -43,8 +44,8 @@ bool ipc_port_get(ipcport_t port, thread_uid_t* uid)
 	// First check for global values.
 	if (port == IPORT_ANY || port == IPORT_KERNEL)
 	{
-		uid->pid = port;
-		uid->tid = 0;
+		uid->pid = 1;
+		uid->tid = port;
 		return true;
 	}
 
@@ -91,7 +92,7 @@ bool ipc_port_compare(ipcport_t port, thread_uid_t uid)
 	if (port == IPORT_ANY)
 		return true;
 	if (port == IPORT_KERNEL)
-		return (uid.pid == IPORT_KERNEL);
+		return (uid.pid == 1 && uid.tid == IPORT_KERNEL);
 
 	port_fmt_t fmt = { .raw = port };
 	if (!(fmt.pvn) && !(fmt.tvn))

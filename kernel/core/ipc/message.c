@@ -24,7 +24,7 @@
 #include <stdbool.h>
 
 // Represents the end of a linked list.
-#define NULL_INDEX (PROCESS_MESSAGE_MAX-1)
+#define NULL_INDEX (PROCESS_MESSAGE_MAX)
 
 //! Place the given message into the target processes message queue.
 /*! The message is placed at the front of the queue if 'head' is 'true'. */

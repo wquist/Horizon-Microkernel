@@ -16,31 +16,9 @@
  */
 
 #include <system/syscalls.h>
-#include <arch.h>
-#include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <horizon/priv.h>
-#include <horizon/errno.h>
 
-void syscall_launch(pid_t pid, uintptr_t entry)
+void syscall_yield()
 {
-	process_t* owner = process_get(scheduler_curr().pid);
-
-	process_t* target = process_get(pid);
-	if (!target)
-		return syscall_return_set(ENOTAVAIL);
-
-	// The target process must not have any threads running.
-	if (target->thread_info.count > 0)
-		return syscall_return_set(EINVALID);
-	// The process can only be launched by its parent or a server/driver.
-	if (!(target->pid == owner->pid || owner->priv > PRIV_NONE))
-		return syscall_return_set(EPRIV);
-
-	// The main thread will start at 'entry'.
-	target->entry = entry;
-	thread_uid_t uid = thread_new(pid, 0);
-
-	scheduler_add(uid);
-	syscall_return_set(ENONE);
+	scheduler_next();
 }

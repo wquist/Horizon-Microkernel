@@ -156,15 +156,8 @@ void virtual_share(pid_t dest, pid_t src, uintptr_t to, uintptr_t from, size_t s
 	paging_pas_t* pas_src  = psrc->addr_space;
 
 	PAGING_FLAGS flags = PAGING_FLAG_USER;
-	switch (mode)
-	{
-		case SPROT_READ: 
-			break;
-		case SPROT_WRITE:
-			flags |= PAGING_FLAG_WRITE;
-			break;
-		default: dpanic("Invalid virtual_share mode.");
-	}
+	if (mode & SPORT_WRITE)
+		flags |= PAGING_FLAG_WRITE;
 
 	uintptr_t curr   = addr_align(from, ARCH_PGSIZE);
 	uintptr_t target = addr_align(to, ARCH_PGSIZE);
