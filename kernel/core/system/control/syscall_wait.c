@@ -62,7 +62,7 @@ void syscall_wait(ipcport_t sender)
 
 	thread_t* caller = thread_get(caller_uid);
 	caller->state = THREAD_STATE_WAITING;
-	caller->syscall_info.wait_for = target_uid;
+	caller->syscall_info.wait_for = ipc_port_format(target_uid);
 
 	// Will automatically switch to the next thread in queue.
 	scheduler_unlock();

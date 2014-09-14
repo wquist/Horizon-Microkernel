@@ -72,8 +72,12 @@ struct thread
 
 	struct
 	{
-		thread_uid_t wait_for;
+		ipcport_t wait_for;
+
 		struct shm shm_offer;
+
+		uintptr_t payload_addr;
+		uintptr_t payload_size;
 	} syscall_info;
 };
 

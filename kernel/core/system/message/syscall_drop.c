@@ -21,42 +21,33 @@
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
 #include <ipc/port.h>
-#include <util/addr.h>
+#include <ipc/message.h>
 #include <horizon/ipc.h>
-#include <horizon/shm.h>
+#include <horizon/msg.h>
 #include <horizon/errno.h>
 
-void syscall_accept(shmid_t sid, uintptr_t dest, size_t size)
+void syscall_drop(struct msg* info)
 {
-	if (!size)
-		return syscall_return_set(ESIZE);
+	thread_uid_t caller_uid = scheduler_curr();
 
-	// IPC port == SHM ID for now.
-	thread_uid_t target_uid;
-	if (!ipc_port_get(sid, &target_uid))
-		return syscall_return_set(EINVALID);
+	// 'info' can be NULL to be ignored, otherwise it must be valid memory.
+	int mapped = virtual_is_mapped(caller_uid.pid, (uintptr_t)info, sizeof(struct msg));
+	if (info && mapped != 1)
+		return syscall_return_set(EPARAM);
 
-	thread_t* target = thread_get(target_uid);
-	if (!target)
+	thread_t* caller = thread_get(caller_uid);
+	if (!(caller->msg_info.count))
 		return syscall_return_set(ENOTAVAIL);
 
-	struct shm* info = &(target->syscall_info.shm_offer);
+	// Copy the message info now (contains the sender value needed next).
+	bool has_payload = message_remove(caller_uid, info);
 
-	// Make sure the caller is allowed to accept.
-	thread_uid_t caller_uid = scheduler_curr();
-	if (!ipc_port_compare(info->to, caller_uid))
-		return syscall_return_set(EPRIV);
+	thread_uid_t sender_uid;
+	bool valid = ipc_port_get(info->from, &sender_uid);
 
-	if (addr_align(dest, ARCH_PGSIZE) != dest)
-		return syscall_return_set(EALIGN);
-	if (size % ARCH_PGSIZE != 0)
-		return syscall_return_set(ESIZE);
+	// If the sender is alive, it needs to be reawoken after blocking for a payload.
+	if (valid && has_payload)
+		scheduler_add(sender_uid);
 
-	if (virtual_is_mapped(caller_uid.pid, dest, size) != 0)
-		return syscall_return_set(EADDR);
-
-	uintptr_t src = (uintptr_t)(info->addr);
-	virtual_share(caller_uid.pid, target_uid.pid, dest, src, info->size, info->prot);
-
-	syscall_return_set(info->size);
+	syscall_return_set(ENONE);
 }

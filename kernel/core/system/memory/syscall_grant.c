@@ -16,6 +16,7 @@
  */
 
 #include <system/syscalls.h>
+#include <arch.h>
 #include <memory/virtual.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
