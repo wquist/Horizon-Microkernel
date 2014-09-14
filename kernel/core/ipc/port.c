@@ -60,6 +60,8 @@ ipcport_t ipc_port_format(thread_uid_t uid)
  */
 bool ipc_port_get(ipcport_t port, thread_uid_t* uid)
 {
+	dassert(uid);
+
 	// First check for global values.
 	if (port == IPORT_ANY || port == IPORT_KERNEL)
 	{
