@@ -24,12 +24,12 @@
 #include <horizon/ipc.h>
 #include <horizon/shm.h>
 #include <horizon/errno.h>
+#include <memory.h>
 
-void syscall_grant(struct shm* info, uintptr_t dest)
+void syscall_share(struct shm* info)
 {
 	thread_uid_t caller_uid = scheduler_curr();
 
-	// Make sure the parameters are valid.
 	if (virtual_is_mapped(caller_uid.pid, (uintptr_t)info, sizeof(struct shm)) != 1)
 		return syscall_return_set(EPARAM);
 	if (!(info->size))
@@ -39,34 +39,24 @@ void syscall_grant(struct shm* info, uintptr_t dest)
 	if (!ipc_port_get(info->to, &target_uid))
 		return syscall_return_set(EINVALID);
 
+	// If a specific dest is given, the process must exist.
 	process_t* target = process_get(target_uid.pid);
-	if (!target)
+	if (!(target || (target_uid.pid == 1 && target_uid.tid == IPORT_ANY)))
 		return syscall_return_set(ENOTAVAIL);
-
-	// Only the parent PID or a higher priv can grant memory.
-	process_t* owner = process_get(caller_uid.pid);
-	if (!((owner->priv > target->priv) || (target->parent == owner->pid)))
-		return syscall_return_set(EPRIV);
 
 	uintptr_t src = (uintptr_t)(info->addr);
 
-	// Make sure the address ranges are aligned.
+	// The memory must exist in the source.
 	if (addr_align(src, ARCH_PGSIZE) != src)
 		return syscall_return_set(EALIGN);
-	if (addr_align(dest, ARCH_PGSIZE) != dest)
-		return syscall_return_set(EALIGN);
-	if (info->size % ARCH_PGSIZE != 0)
+	if (src % ARCH_PGSIZE != 0)
 		return syscall_return_set(ESIZE);
 
-	// The space must exist in the caller, and be free in the target.
-	if (virtual_is_mapped(owner->pid, src, info->size) != 1)
-		return syscall_return_set(EADDR);
-	if (virtual_is_mapped(target->pid, dest, info->size) != 0)
-		return syscall_return_set(ENORES);
+	// Store the SHM in the TCB of the caller.
+	thread_t* caller = thread_get(caller_uid);
+	memcpy(&(caller->syscall_info.shm_offer), info, sizeof(struct shm));
 
-	// FIXME: Single function so there is not an extra retain/release?
-	virtual_share(target->pid, owner->pid, dest, src, info->size, info->prot);
-	virtual_unmap(owner->pid, src, info->size);
-
-	syscall_return_set(ENONE);
+	// The SHMID is equivalent to an IPC port?
+	shmid_t sid = ipc_port_format(caller_uid);
+	syscall_return_set(sid);
 }

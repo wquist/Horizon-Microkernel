@@ -17,6 +17,7 @@
 
 #include "port.h"
 #include <multitask/process.h>
+#include <debug/error.h>
 #include <horizon/ipc.h>
 
 typedef union port_fmt port_fmt_t;
@@ -31,6 +32,24 @@ union port_fmt
 	};
 	uint32_t raw;
 };
+
+//! Create a formatted port form the given process/thread identifier.
+ipcport_t ipc_port_format(thread_uid_t uid)
+{
+	process_t* process = process_get(uid.pid);
+	dassert(process);
+
+	thread_t* thread = thread_get(uid);
+	dassert(thread);
+
+	port_fmt_t port = {0};
+	port.tid = thread->tid;
+	port.pid = process->pid;
+	port.pvn = process->version;
+	port.tvn = thread->version;
+
+	return port.raw;
+}
 
 //! Get the process and thread ID represented by the given port.
 /*! - For special values, PID = 1, TID = value.

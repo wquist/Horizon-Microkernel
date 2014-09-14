@@ -156,7 +156,7 @@ void virtual_share(pid_t dest, pid_t src, uintptr_t to, uintptr_t from, size_t s
 	paging_pas_t* pas_src  = psrc->addr_space;
 
 	PAGING_FLAGS flags = PAGING_FLAG_USER;
-	if (mode & SPORT_WRITE)
+	if (mode & SPROT_WRITE)
 		flags |= PAGING_FLAG_WRITE;
 
 	uintptr_t curr   = addr_align(from, ARCH_PGSIZE);

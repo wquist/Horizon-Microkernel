@@ -28,6 +28,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+//! FIXME: Some syscall return values may inferfere with error codes.
+/*! Have a return register and an error register to avoid conflicts? */
+
 void syscall_spawn();
 void syscall_launch(pid_t pid, uintptr_t entry);
 void syscall_dispatch(uintptr_t entry, uintptr_t stack);
@@ -43,7 +46,7 @@ void syscall_unmap(uintptr_t addr, size_t size);
 
 void syscall_grant(struct shm* info, uintptr_t dest);
 void syscall_share(struct shm* info);
-void syscall_accept(shmid_t sid, uintptr_t dest);
+void syscall_accept(shmid_t sid, uintptr_t dest, size_t size);
 
 void syscall_send(struct msg* src);
 void syscall_recv(struct msg* dest);
@@ -72,7 +75,7 @@ SYSCALL_TABLE =
 
 	{ syscall_grant,    2 },
 	{ syscall_share,    1 },
-	{ syscall_accept,   2 },
+	{ syscall_accept,   3 },
 
 	{ syscall_send,     1 },
 	{ syscall_recv,     1 },

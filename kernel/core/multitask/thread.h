@@ -23,6 +23,7 @@
 
 #include <arch.h>
 #include <horizon/types.h>
+#include <horizon/shm.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -72,6 +73,7 @@ struct thread
 	struct
 	{
 		thread_uid_t wait_for;
+		struct shm shm_offer;
 	} syscall_info;
 };
 

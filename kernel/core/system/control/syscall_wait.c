@@ -34,7 +34,7 @@ void syscall_wait(ipcport_t sender)
 	// Find what thread the caller is waiting for.
 	thread_uid_t target_uid;
 	if (!ipc_port_get(sender, &target_uid))
-		return syscall_return_set(EPARAM);
+		return syscall_return_set(EINVALID);
 
 	// Make sure whatever is being waited on actually exists.
 	if (target_uid.pid == 0)
