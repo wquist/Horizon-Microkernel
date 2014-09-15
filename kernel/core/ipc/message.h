@@ -16,41 +16,38 @@
  */
 
 /*! \file core/ipc/message.h
- *  \date July 2014
+ *  \date September 2014
  */
 
 #pragma once
 
-#include <horizon/msg.h>
+#include <multitask/thread.h>
 #include <horizon/types.h>
+#include <horizon/msg.h>
 #include <stdint.h>
 #include <stdbool.h>
 
-enum message_flags
-{
-	MESSAGE_FLAG_PAYLOAD = (1 << 0),
-};
-
-// FIXME: Kind of an odd size and wasted space.
 typedef struct message message_t;
-struct __packed message
+struct message
 {
-	ipcchan_t channel;
+	ipcport_t from;
+	msgdata_t code, arg;
 
-	pid_t sender;
-	ipcsrc_t source;
-
-	//! Maintain a linked list for the queue.
-	/*! Current queue max is 128 so 256 should be plenty. */
-	uint8_t next;
-	uint8_t flags;
-	uint16_t _reserved; //< Needed to space to dword multiple.
-
-	msgarg_t code, arg;
+	struct __packed
+	{
+		// Point to the next message in queue.
+		/* 1 extra bit for storing null index as MESSAGE_MAX. */
+		uint32_t next         : 11;
+		// The payload information is stored in the thread.
+		uint32_t payload_flag : 1;
+		// FIXME: Something useful for reserved.
+		uint32_t _reserved    : 20;
+	};
 };
 
-void message_send(ipcchan_t from, tid_t to, struct msg* info, bool head);
-uint8_t message_recv(tid_t src, struct msg* dest);
-uint8_t message_peek(tid_t src, ipcchan_t* from);
+// FIXME: Too many parameters need to be passed...
+void message_add(thread_uid_t uid, ipcport_t from, struct msg* info, bool head);
+bool message_remove(thread_uid_t uid, struct msg* dest);
+bool message_peek(thread_uid_t, ipcport_t* from);
 
-bool message_find(tid_t src, ipcchan_t search);
+bool message_find(thread_uid_t, ipcport_t search);

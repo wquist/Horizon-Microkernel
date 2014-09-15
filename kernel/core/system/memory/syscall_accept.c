@@ -20,39 +20,44 @@
 #include <memory/virtual.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <ipc/target.h>
+#include <ipc/port.h>
+#include <util/addr.h>
 #include <horizon/ipc.h>
+#include <horizon/shm.h>
 #include <horizon/errno.h>
 
-void syscall_accept(shmid_t sid, uintptr_t dest)
+void syscall_accept(shmid_t sid, uintptr_t dest, size_t size)
 {
-	thread_t* caller = thread_get(scheduler_curr());
-	process_t* owner = process_get(caller->owner);
+	if (!size)
+		return syscall_return_set(ESIZE);
 
-	// The shmid is only the TID for now.
-	tid_t from_tid = sid & 0xFFFF;
-	thread_t* info_from = thread_get(from_tid);
-	if (!info_from)
-		return syscall_return_set(-e_notavail);
+	thread_uid_t caller_uid = scheduler_curr();
 
-	process_t* map_from = process_get(info_from->owner);
+	// IPC port == SHM ID for now.
+	thread_uid_t target_uid;
+	if (!ipc_port_get(sid, caller_uid.pid, &target_uid))
+		return syscall_return_set(EINVALID);
+
+	thread_t* target = thread_get(target_uid);
+	if (!target)
+		return syscall_return_set(ENOTAVAIL);
+
+	struct shm* info = &(target->syscall_info.shm_offer);
 
 	// Make sure the caller is allowed to accept.
-	struct shm* info = &(info_from->call_data.shm_offer);
-	if (!ipc_tid_compare(caller->tid, info->to))
-		return syscall_return_set(-e_badpriv);
+	if (!ipc_port_compare(info->to, caller_uid))
+		return syscall_return_set(EPRIV);
 
-	// The destination space must be unmapped.
-	if (virtual_is_mapped(owner->pid, dest, info->size))
-		return syscall_return_set(-e_badaddr);
+	if (addr_align(dest, ARCH_PGSIZE) != dest)
+		return syscall_return_set(EALIGN);
+	if (size % ARCH_PGSIZE != 0)
+		return syscall_return_set(ESIZE);
 
-	// The protection was already checked in share, so just map.
+	if (virtual_is_mapped(caller_uid.pid, dest, size) != 0)
+		return syscall_return_set(EADDR);
+
 	uintptr_t src = (uintptr_t)(info->addr);
-	virtual_share(owner->pid, map_from->pid, dest, src, info->size, info->prot);
+	virtual_share(caller_uid.pid, target_uid.pid, dest, src, info->size, info->prot);
 
-	// Unset the shm offer so the source knows it was accepted.
-	if (info->to != ICHAN_ANY)
-		info->to = 0;
-
-	syscall_return_set(-e_success);
+	syscall_return_set(info->size);
 }

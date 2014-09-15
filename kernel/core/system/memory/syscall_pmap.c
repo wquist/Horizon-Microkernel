@@ -25,29 +25,26 @@
 
 void syscall_pmap(uintptr_t dest, uintptr_t src, size_t size)
 {
-	// FIXME: Check if phys is in kernel space or allocated memory?
+	// FIXME: Make sure phys is not part of kernel memory?
 	if (dest + size > KERNEL_VIRT_BASE)
-		return syscall_return_set(-e_badaddr);
+		return syscall_return_set(EADDR);
 	if (!size)
-		return syscall_return_set(-e_badsize);
+		return syscall_return_set(ESIZE);
 
-	// FIXME: pmem OK to force alignment?
 	if (addr_align(dest, ARCH_PGSIZE) != dest)
-		return syscall_return_set(-e_badalign);
+		return syscall_return_set(EALIGN);
 	if (addr_align(src, ARCH_PGSIZE) != src)
-		return syscall_return_set(-e_badalign);
+		return syscall_return_set(EALIGN);
 	if (size % ARCH_PGSIZE != 0)
-		return syscall_return_set(-e_badsize);
+		return syscall_return_set(ESIZE);
 
 	// Only drivers can map physical memory.
-	thread_t* caller = thread_get(scheduler_curr());
-	process_t* owner = process_get(caller->owner);
+	process_t* owner = process_get(scheduler_curr().pid);
 	if (owner->priv != PRIV_DRIVER)
-		return syscall_return_set(-e_badpriv);
+		return syscall_return_set(EPRIV);
 
-	// Dest address space must be empty.
 	if (virtual_is_mapped(owner->pid, dest, size) != 0)
-		return syscall_return_set(-e_notavail);
+		return syscall_return_set(ENOTAVAIL);
 
 	virtual_map(owner->pid, dest, (void*)src, size);
 	syscall_return_set(dest);

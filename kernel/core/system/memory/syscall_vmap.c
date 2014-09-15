@@ -26,25 +26,24 @@
 void syscall_vmap(uintptr_t dest, size_t size)
 {
 	if (dest + size > KERNEL_VIRT_BASE)
-		return syscall_return_set(-e_badaddr);
+		return syscall_return_set(EADDR);
 	if (!size)
-		return syscall_return_set(-e_badsize);
+		return syscall_return_set(ESIZE);
 
-	// FIXME: How can the alignment prereq be removed?
+	// Addresses must be aligned to page boundaries.
 	if (addr_align(dest, ARCH_PGSIZE) != dest)
-		return syscall_return_set(-e_badalign);
+		return syscall_return_set(EALIGN);
 	if (size % ARCH_PGSIZE != 0)
-		return syscall_return_set(-e_badsize);
+		return syscall_return_set(ESIZE);
 
-	thread_t* caller = thread_get(scheduler_curr());
-	process_t* owner = process_get(caller->owner);
-	// FIXME: Only drivers and servers can call directly?
+	// Only servers or higher can directly map memory.
+	process_t* owner = process_get(scheduler_curr().pid);
 	if (owner->priv < PRIV_SERVER)
-		return syscall_return_set(-e_badpriv);
+		return syscall_return_set(EPRIV);
 
-	// Cannot overlap with already-mapped memory.
+	// Make sure there are no overlaps with existing memory.
 	if (virtual_is_mapped(owner->pid, dest, size) != 0)
-		return syscall_return_set(-e_notavail);
+		return syscall_return_set(ENOTAVAIL);
 
 	virtual_alloc(owner->pid, dest, size);
 	syscall_return_set(dest);

@@ -16,13 +16,14 @@
  */
 
 /*! \file core/ipc/service.h
- *  \date June 2014
+ *  \date September 2014
  */
 
 #pragma once
 
-#include <stddef.h>
+#include <multitask/thread.h>
 #include <horizon/types.h>
+#include <stddef.h>
 
-void  service_register(size_t svc, tid_t tid);
-ipcchan_t service_get(size_t svc);
+void service_register(size_t svc, thread_uid_t uid);
+ipcport_t service_get(size_t svc);

@@ -16,24 +16,25 @@
  */
 
 /*! \file core/multitask/scheduler.h
- *  \date July 2014
+ *  \date September 2014
  */
 
 #pragma once
 
+#include <multitask/thread.h>
 #include <horizon/types.h>
-#include <stdint.h>
 
 #define SCHEDULER_FREQ 100
 #define SCHEDULER_TIMESLICE 5
 
 void scheduler_start();
 
-void scheduler_add(tid_t tid);
-void scheduler_remove(tid_t tid);
+void scheduler_add(thread_uid_t uid);
+void scheduler_remove(thread_uid_t uid);
+void scheduler_purge(pid_t pid);
 
 void scheduler_next();
 void scheduler_lock();
 void scheduler_unlock();
 
-tid_t scheduler_curr();
+thread_uid_t scheduler_curr();

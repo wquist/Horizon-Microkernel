@@ -19,39 +19,51 @@
 #include <arch.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <ipc/target.h>
 #include <ipc/message.h>
-#include <horizon/ipc.h>
+#include <ipc/port.h>
 #include <horizon/errno.h>
 
-void syscall_wait(ipcchan_t sender)
+void syscall_wait(ipcport_t sender)
 {
-	// The desired message may already by in queue.
-	thread_t* caller = thread_get(scheduler_curr());
-	if (message_find(caller->tid, sender))
-		return syscall_return_set(-e_success); //< Now use 'recv' to get it.
+	thread_uid_t caller_uid = scheduler_curr();
 
-	// The dest thread must exist.
-	tid_t wait_for = ipc_tid_get(sender);
-	thread_t* target = thread_get(wait_for);
-	if (!target)
+	// The desired message may already be in queue.
+	if (message_find(caller_uid, sender))
+		return syscall_return_set(ENONE); //< Use 'revc' to get it.
+
+	// Find what thread the caller is waiting for.
+	thread_uid_t target_uid;
+	if (!ipc_port_get(sender, caller_uid.pid, &target_uid))
+		return syscall_return_set(EINVALID);
+
+	// Make sure whatever is being waited on actually exists.
+	if (target_uid.pid == 0)
 	{
-		// The target may be any thread or the kernel.
-		if (wait_for != ICHAN_ANY && wait_for != ICHAN_KERNEL)
-			return syscall_return_set(-e_notavail);
+		// This is referencing a local thread.
+		target_uid.pid = caller_uid.pid;
+
+		thread_t* target = thread_get(target_uid);
+		if (!target)
+			return syscall_return_set(ENOTAVAIL);
+	}
+	else if (target_uid.pid > 1)
+	{
+		// This is referencing a global process or specific thread.
+		thread_t* target = thread_get(target_uid);
+		if (!target)
+			return syscall_return_set(ENOTAVAIL);
 	}
 
-	// The return code cannot be set once removed.
-	syscall_return_set(-e_success);
+	// Set the return code now; not available once thread is removed.
+	syscall_return_set(ENONE);
 
-	// The caller is going to be removed.
 	scheduler_lock();
-	scheduler_remove(caller->tid);
+	scheduler_remove(caller_uid);
 
-	// Put the thread into the generic waiting state.
-	caller->sched.state = THREAD_STATE_WAITING;
-	caller->call_data.wait_for = wait_for;
+	thread_t* caller = thread_get(caller_uid);
+	caller->state = THREAD_STATE_WAITING;
+	caller->syscall_info.wait_for = sender;
 
-	// Do not return since the thread is gone now.
+	// Will automatically switch to the next thread in queue.
 	scheduler_unlock();
 }

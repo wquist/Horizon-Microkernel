@@ -20,46 +20,44 @@
 #include <memory/virtual.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <ipc/target.h>
+#include <ipc/port.h>
+#include <util/addr.h>
 #include <horizon/ipc.h>
+#include <horizon/shm.h>
 #include <horizon/errno.h>
 #include <memory.h>
 
-// FIXME: Move the shm PCB info management into its own class.
 void syscall_share(struct shm* info)
 {
-	if (!info)
-		return syscall_return_set(-e_badparam);
+	thread_uid_t caller_uid = scheduler_curr();
 
-	thread_t* caller = thread_get(scheduler_curr());
-	process_t* owner = process_get(caller->owner);
-
-	// The target must exist, unless it is any process.
-	/* FIXME: Allow IDST_ANY as a valid option? */
-	if (!process_get(info->to) && info->to != ICHAN_ANY)
-		return syscall_return_set(-e_notavail);
-
-	// The memory must be mapped in the source.
-	uintptr_t src = (uintptr_t)(info->addr);
+	if (virtual_is_mapped(caller_uid.pid, (uintptr_t)info, sizeof(struct shm)) != 1)
+		return syscall_return_set(EPARAM);
 	if (!(info->size))
-		return syscall_return_set(-e_badparam);
-	if (virtual_is_mapped(owner->pid, src, info->size) != 1)
-		return syscall_return_set(-e_badaddr);
+		return syscall_return_set(ESIZE);
 
-	// Make sure the protection is valid.
-	switch (info->prot)
-	{
-		case SPROT_READ:
-		case SPROT_WRITE:
-			break;
-		default:
-			return syscall_return_set(-e_badparam);
-	}
+	thread_uid_t target_uid;
+	if (!ipc_port_get(info->to, caller_uid.pid, &target_uid))
+		return syscall_return_set(EINVALID);
 
-	// Store the shm info in the TCB of the caller.
-	memcpy(&(caller->call_data.shm_offer), info, sizeof(struct shm));
+	// If a specific dest is given, the process must exist.
+	process_t* target = process_get(target_uid.pid);
+	if (!(target || (target_uid.pid == 1 && target_uid.tid == IPORT_ANY)))
+		return syscall_return_set(ENOTAVAIL);
 
-	// The shmid is just a TID for now.
-	shmid_t sid = caller->tid;
+	uintptr_t src = (uintptr_t)(info->addr);
+
+	// The memory must exist in the source.
+	if (addr_align(src, ARCH_PGSIZE) != src)
+		return syscall_return_set(EALIGN);
+	if (src % ARCH_PGSIZE != 0)
+		return syscall_return_set(ESIZE);
+
+	// Store the SHM in the TCB of the caller.
+	thread_t* caller = thread_get(caller_uid);
+	memcpy(&(caller->syscall_info.shm_offer), info, sizeof(struct shm));
+
+	// The SHMID is equivalent to an IPC port?
+	shmid_t sid = ipc_port_format(caller_uid);
 	syscall_return_set(sid);
 }

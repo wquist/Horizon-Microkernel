@@ -17,7 +17,6 @@
 
 #include <system/syscalls.h>
 #include <arch.h>
-#include <multitask/process.h>
 #include <ipc/service.h>
 #include <horizon/svc.h>
 #include <horizon/errno.h>
@@ -25,11 +24,11 @@
 void syscall_svcid(size_t svc)
 {
 	if (svc >= SVCMAX)
-		return syscall_return_set(-e_badparam);
+		return syscall_return_set(EPARAM);
 
-	tid_t tid = service_get(svc);
-	if (!tid)
-		return syscall_return_set(-e_notavail);
+	ipcport_t port = service_get(svc);
+	if (!port)
+		return syscall_return_set(ENOTAVAIL);
 
-	syscall_return_set(tid);
+	syscall_return_set(port);
 }

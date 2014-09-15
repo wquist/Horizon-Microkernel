@@ -65,20 +65,20 @@ int arch_sysio(size_t action, size_t arg, uintptr_t data)
 		{
 			// Make sure the values are within valid bounds.
 			if (arg > USHORT_MAX)
-				return -e_badparam;
+				return EPARAM;
 
 			return inb((uint16_t)arg);
 		}
 		case IO_OUTB:
 		{
 			if (arg > USHORT_MAX)
-				return -e_badparam;
+				return EPARAM;
 			if (data > UCHAR_MAX)
-				return -e_badparam;
+				return EPARAM;
 
 			outb((uint16_t)arg, (uint8_t)data);
-			return -e_success;
+			return ENONE;
 		}
-		default: return -e_badparam;
+		default: return EPARAM;
 	}
 }

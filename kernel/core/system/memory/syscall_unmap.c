@@ -26,25 +26,25 @@
 void syscall_unmap(uintptr_t addr, size_t size)
 {
 	if (addr + size > KERNEL_VIRT_BASE)
-		return syscall_return_set(-e_badaddr);
+		return syscall_return_set(EADDR);
 	if (!size)
-		return syscall_return_set(-e_badsize);
+		return syscall_return_set(ESIZE);
 
 	if (addr_align(addr, ARCH_PGSIZE) != addr)
-		return syscall_return_set(-e_badalign);
+		return syscall_return_set(EALIGN);
 	if (size % ARCH_PGSIZE != 0)
-		return syscall_return_set(-e_badsize);
+		return syscall_return_set(ESIZE);
 
-	thread_t* caller = thread_get(scheduler_curr());
-	process_t* owner = process_get(caller->owner);
-	// FIXME: no priv cannot map, so it cannot unmap either...
+	// Only processes that can map can unmap.
+	process_t* owner = process_get(scheduler_curr().pid);
 	if (owner->priv < PRIV_SERVER)
-		return syscall_return_set(-e_badpriv);
+		return syscall_return_set(EPRIV);
 
-	// Target address space must be allocated to unmap.
+	// The entire target region must be mapped in.
+	/* Works with a mix of vmap and pmap memory. */
 	if (virtual_is_mapped(owner->pid, addr, size) != 1)
-		return syscall_return_set(-e_notavail);
+		return syscall_return_set(ENOTAVAIL);
 
-	virtual_alloc(owner->pid, addr, size);
-	syscall_return_set(addr);
+	virtual_unmap(owner->pid, addr, size);
+	syscall_return_set(ENONE);
 }

@@ -20,48 +20,54 @@
 #include <memory/virtual.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <ipc/target.h>
+#include <ipc/port.h>
+#include <util/addr.h>
 #include <horizon/ipc.h>
+#include <horizon/shm.h>
 #include <horizon/errno.h>
 
 void syscall_grant(struct shm* info, uintptr_t dest)
 {
-	if (!info)
-		return syscall_return_set(-e_badparam);
+	thread_uid_t caller_uid = scheduler_curr();
 
-	thread_t* caller = thread_get(scheduler_curr());
-	process_t* owner = process_get(caller->owner);
+	// Make sure the parameters are valid.
+	if (virtual_is_mapped(caller_uid.pid, (uintptr_t)info, sizeof(struct shm)) != 1)
+		return syscall_return_set(EPARAM);
+	if (!(info->size))
+		return syscall_return_set(ESIZE);
 
-	// The target has to exist.
-	process_t* target = process_get(info->to);
+	thread_uid_t target_uid;
+	if (!ipc_port_get(info->to, caller_uid.pid, &target_uid))
+		return syscall_return_set(EINVALID);
+
+	process_t* target = process_get(target_uid.pid);
 	if (!target)
-		return syscall_return_set(-e_notavail);
+		return syscall_return_set(ENOTAVAIL);
 
-	// Can only map if higher priv or the parent of the target process.
+	// Only the parent PID or a higher priv can grant memory.
+	process_t* owner = process_get(caller_uid.pid);
 	if (!((owner->priv > target->priv) || (target->parent == owner->pid)))
-		return syscall_return_set(-e_badpriv);
+		return syscall_return_set(EPRIV);
+
+	uintptr_t src = (uintptr_t)(info->addr);
+
+	// Make sure the address ranges are aligned.
+	if (addr_align(src, ARCH_PGSIZE) != src)
+		return syscall_return_set(EALIGN);
+	if (addr_align(dest, ARCH_PGSIZE) != dest)
+		return syscall_return_set(EALIGN);
+	if (info->size % ARCH_PGSIZE != 0)
+		return syscall_return_set(ESIZE);
 
 	// The space must exist in the caller, and be free in the target.
-	uintptr_t src = (uintptr_t)(info->addr);
-	if (!info->size)
-		return syscall_return_set(-e_badsize);
 	if (virtual_is_mapped(owner->pid, src, info->size) != 1)
-		return syscall_return_set(-e_badaddr);
+		return syscall_return_set(EADDR);
 	if (virtual_is_mapped(target->pid, dest, info->size) != 0)
-		return syscall_return_set(-e_notavail);
+		return syscall_return_set(ENORES);
 
-	// Make sure the protection field is valid.
-	switch (info->prot)
-	{
-		case SPROT_READ:
-		case SPROT_WRITE:
-			// FIXME: Single function so there is not an extra retain-release?
-			virtual_share(target->pid, owner->pid, dest, src, info->size, info->prot);
-			virtual_unmap(owner->pid, src, info->size);
-			break;
-		default:
-			return syscall_return_set(-e_badparam);
-	}
+	// FIXME: Single function so there is not an extra retain/release?
+	virtual_share(target->pid, owner->pid, dest, src, info->size, info->prot);
+	virtual_unmap(owner->pid, src, info->size);
 
-	syscall_return_set(-e_success);
+	syscall_return_set(ENONE);
 }

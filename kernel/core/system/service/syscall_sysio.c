@@ -20,6 +20,7 @@
 
 void syscall_sysio(size_t action, size_t arg, uintptr_t data)
 {
+	// arch_sysio handles error checking.
 	int res = arch_sysio(action, arg, data);
 	syscall_return_set(res);
 }

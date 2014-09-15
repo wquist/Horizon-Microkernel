@@ -17,26 +17,34 @@
 
 #include <system/syscalls.h>
 #include <arch.h>
-#include <ipc/message.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <ipc/port.h>
+#include <ipc/message.h>
 #include <horizon/ipc.h>
 #include <horizon/msg.h>
 #include <horizon/errno.h>
 
 void syscall_peek()
 {
-	thread_t* caller = thread_get(scheduler_curr());
-	if (caller->messages.count == 0)
-		return syscall_return_set(-e_notavail);
+	thread_uid_t caller_uid = scheduler_curr();
 
-	ipcchan_t from;
-	uint8_t flags = message_peek(caller->tid, &from);
-	thread_t* sender = thread_get(ICHANID(from));
+	thread_t* caller = thread_get(caller_uid);
+	if (!(caller->msg_info.count))
+		return syscall_return_set(ENOTAVAIL);
 
-	if (!sender || !(flags & MESSAGE_FLAG_PAYLOAD))
+	ipcport_t port;
+	bool has_payload = message_peek(caller_uid, &port);
+
+	thread_uid_t sender_uid;
+	bool valid = ipc_port_get(port, caller_uid.pid, &sender_uid);
+
+	// The payload can no longer be received if the sender is gone.
+	if (!(valid && has_payload))
 		return syscall_return_set(0);
 
-	size_t size = sender->call_data.payload_size;
+	thread_t* sender = thread_get(sender_uid);
+
+	size_t size = sender->syscall_info.payload_size;
 	syscall_return_set(size);
 }

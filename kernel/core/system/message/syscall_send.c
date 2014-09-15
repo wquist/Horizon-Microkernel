@@ -20,62 +20,72 @@
 #include <memory/virtual.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <ipc/target.h>
+#include <ipc/port.h>
 #include <ipc/message.h>
+#include <horizon/ipc.h>
 #include <horizon/msg.h>
 #include <horizon/errno.h>
 
 void syscall_send(struct msg* src)
 {
-	if (!src)
-		return syscall_return_set(-e_badparam);
+	thread_uid_t caller_uid = scheduler_curr();
 
-	thread_t* caller = thread_get(scheduler_curr());
-	thread_t* dest   = thread_get(ipc_tid_get(src->to));
+	if (virtual_is_mapped(caller_uid.pid, (uintptr_t)src, sizeof(struct msg)) != 1)
+		return syscall_return_set(EPARAM);
+	if (ipc_port_compare(src->to, caller_uid))
+		return syscall_return_set(EPARAM);
 
-	// The destination must be alive and have room in queue.
-	if (!dest)
-		return syscall_return_set(-e_notavail);
-	if (dest->messages.count >= THREAD_MESSAGE_MAX)
-		return syscall_return_set(-e_notavail);
+	thread_uid_t target_uid;
+	if (!ipc_port_get(src->to, caller_uid.pid, &target_uid))
+		return syscall_return_set(EINVALID);
 
-	// Set the success return value now.
-	/* The thread may be removed from queue next. */
-	syscall_return_set(process_get(dest->owner)->version);
+	thread_t* target = thread_get(target_uid);
+	if (!target)
+		return syscall_return_set(ENOTAVAIL);
 
-	// Extra information means the sender blocks.
+	process_t* target_proc = process_get(target_uid.pid);
+	if (target_proc->msg_info.count >= PROCESS_MESSAGE_MAX)
+		return syscall_return_set(ENORES);
+
+	// Set the return value now.
+	/* With a payload, the caller may be removed from queue. */
+	syscall_return_set(ENONE);
+
+	// A payload requires the sender to block.
 	if (src->payload.buf)
 	{
 		uintptr_t addr = (uintptr_t)(src->payload.buf);
 		size_t size = src->payload.size;
 
-		// The entire space must be mapped.
 		if (!size)
-			return syscall_return_set(-e_badsize);
-		if (virtual_is_mapped(caller->owner, addr, size) != 1)
-			return syscall_return_set(-e_badaddr);
+			return syscall_return_set(ESIZE);
+		if (virtual_is_mapped(caller_uid.pid, addr, size) != 1)
+			return syscall_return_set(EADDR);
 
-		// The running thread will be removed from queue.
+		// The running thread will be removed.
 		scheduler_lock();
-		scheduler_remove(caller->tid);
-		// Put the sender into a 'wait-for-send' state.
-		caller->sched.state = THREAD_STATE_SENDING;
+		scheduler_remove(caller_uid);
 
-		caller->call_data.payload_addr = addr;
-		caller->call_data.payload_size = size;
+		thread_t* caller = thread_get(caller_uid);
+		caller->state = THREAD_STATE_SENDING;
+
+		caller->syscall_info.payload_addr = addr;
+		caller->syscall_info.payload_size = size;
 	}
 
-	// Try to wake up the thread if needed.
+	// Try to wake up the receiver if necessary.
 	bool woken = false;
-	if (dest->sched.state == THREAD_STATE_WAITING)
-		woken = ipc_tid_compare(dest->call_data.wait_for, caller->tid);
+	if (target->state == THREAD_STATE_WAITING)
+		woken = ipc_port_compare(target->syscall_info.wait_for, target_uid);
 
-	// Here, 'woken' determines if msg is placed at head or tail of queue.
-	message_send(caller->tid, dest->tid, src, woken);
+	ipcport_t port = ipc_port_format(caller_uid);
+
+	// Here, 'woken' determines if msg is placed at the head (next in queue) or tail.
+	message_add(target_uid, port, src, woken);
 	if (woken)
-		scheduler_add(dest->tid);
+		scheduler_add(target_uid);
 
-	// Remember to unlock the scheduler if needed.
-	if (!scheduler_curr())
+	// Remember to unlock the scheduler if needed (return code was set above).
+	if (!(scheduler_curr().pid))
 		scheduler_unlock();
 }

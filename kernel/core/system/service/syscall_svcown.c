@@ -26,19 +26,18 @@
 
 void syscall_svcown(size_t svc)
 {
-	// FIXME: Needs that constant from libh.
 	if (svc >= SVCMAX)
-		return syscall_return_set(-e_badparam);
+		return syscall_return_set(EPARAM);
 	if (service_get(svc) != 0)
-		return syscall_return_set(-e_notavail);
+		return syscall_return_set(ENOTAVAIL);
 
-	thread_t* caller = thread_get(scheduler_curr());
-	process_t* owner = process_get(caller->owner);
+	thread_uid_t caller_uid = scheduler_curr();
 
-	// The process must be at least a server to be a service.
+	// Only servers and drivers can register as services.
+	process_t* owner = process_get(caller_uid.pid);
 	if (owner->priv < PRIV_SERVER)
-		return syscall_return_set(-e_badpriv);
+		return syscall_return_set(EPRIV);
 
-	service_register(svc, caller->tid);
-	syscall_return_set(-e_success);
+	service_register(svc, caller_uid);
+	syscall_return_set(ENONE);
 }

@@ -17,152 +17,149 @@
 
 #include "message.h"
 #include <multitask/process.h>
-#include <ipc/target.h>
+#include <ipc/port.h>
 #include <util/bitmap.h>
 #include <debug/error.h>
-#include <horizon/ipc.h>
-#include <stddef.h>
-#include <string.h>
+#include <memory.h>
+#include <stdbool.h>
 
-//! Send a message from with the given info to a TID.
-/*! 'head' determines if the message is pushed to the front or back of the queue. */
-void message_send(ipcchan_t from, tid_t to, struct msg* info, bool head)
+// Represents the end of a linked list.
+#define NULL_INDEX (PROCESS_MESSAGE_MAX)
+
+//! Place the given message into the target processes message queue.
+/*! The message is placed at the front of the queue if 'head' is 'true'. */
+void message_add(thread_uid_t uid, ipcport_t from, struct msg* info, bool head)
 {
 	dassert(info);
 
-	// Make sure the thread exists and has room in its queue.
-	thread_t* thread = thread_get(to);
-	dassert(thread);
-	dassert(thread->messages.count < THREAD_MESSAGE_MAX);
+	process_t* owner = process_get(uid.pid);
+	dassert(owner);
+	dassert(owner->msg_info.count <= PROCESS_MESSAGE_MAX);
 
-	uint8_t slot = bitmap_find_and_set(thread->messages.bitmap, THREAD_MESSAGE_MAX);
-	dassert(slot != -1);
+	size_t index = bitmap_find_and_set(owner->msg_info.bitmap, PROCESS_MESSAGE_MAX);
+	dassert(index != -1);
 
-	message_t* target = &(thread->messages.slots[slot]);
+	message_t* target = &(owner->messages[index]);
 	memset(target, 0, sizeof(message_t));
 
-	thread_t* sender = thread_get(from);
-	if (sender) //< Needed in case the sender is the kernel (0).
-	{
-		process_t* owner = process_get(sender->owner);
-		dassert(owner);
-
-		target->channel = ((ipcchan_t)(sender->version) << 16) | from;
-		target->sender  = owner->pid;
-		target->source  = owner->version;
-	}
-
+	target->from = from;
 	target->code = info->code;
 	target->arg  = info->arg;
+	target->payload_flag = (info->payload.size > 0);
 
-	if (info->payload.buf)
-		target->flags |= MESSAGE_FLAG_PAYLOAD;
+	// The head and tail of the queue are stored per-thread.
+	thread_t* thread = thread_get(uid);
+	dassert(thread);
 
-	target->next = 0xFF; //< Mark the end of the linked list.
-	if (thread->messages.count != 0)
+	// Update the linked list for the target thread.
+	if (head) //< Prepend the message.
 	{
-		if (head) //< Put this message at the front of the list.
-		{
-			target->next = thread->messages.head;
-			thread->messages.head = slot;
-		}
+		// The queue is currently empty for this TID.
+		if (!(thread->msg_info.count))
+			thread->msg_info.tail = index;
+
+		target->next = thread->msg_info.head;
+		thread->msg_info.head = index;
+	}
+	else //< Or append it.
+	{
+		if (!(thread->msg_info.count))
+			thread->msg_info.head = index;
 		else
-		{
-			// Tail is always valid when there are messages in the queue (count > 0).
-			message_t* last = &(thread->messages.slots[thread->messages.tail]);
+			owner->messages[thread->msg_info.tail].next = index;
 
-			last->next = slot;
-			thread->messages.tail = slot;
-		}
-	}
-	else
-	{
-		// The only message in queue is the head and tail.
-		thread->messages.head = slot;
-		thread->messages.tail = slot;
+		target->next = NULL_INDEX;
+		thread->msg_info.tail = index;
 	}
 
-	++(thread->messages.count);
+	owner->msg_info.count  += 1;
+	thread->msg_info.count += 1;
 }
 
-//! Copy message info to the given struct and remove it from the queue.
-/*! The destination message can be null; the msg will still be removed. */
-uint8_t message_recv(tid_t src, struct msg* dest)
+//! Get the message at the head of the queue and remove it.
+/*! Returns true if the message was associated with a payload. */
+bool message_remove(thread_uid_t uid, struct msg* dest)
 {
-	// A message must be in queue for recv to work.
-	thread_t* thread = thread_get(src);
+	process_t* owner = process_get(uid.pid);
+	dassert(owner);
+
+	// A message must be queued for the given thread.
+	thread_t* thread = thread_get(uid);
 	dassert(thread);
-	dassert(thread->messages.count);
+	dassert(thread->msg_info.count);
 
-	// Head is also valid under the same conditions as tail.
-	message_t* head = &(thread->messages.slots[thread->messages.head]);
-	bitmap_clear(thread->messages.bitmap, thread->messages.head);
+	// Since a message exists, the head is definitely not NULL_INDEX.
+	message_t* source = &(owner->messages[thread->msg_info.head]);
+	bitmap_clear(owner->msg_info.bitmap, thread->msg_info.head);
 
+	// Actually getting the message is optional.
 	if (dest)
 	{
-		dest->from.channel = head->channel;
-		dest->from.source  = head->source;
-
-		dest->code = head->code;
-		dest->arg  = head->arg;
+		dest->from = source->from;
+		dest->code = source->code;
+		dest->arg  = source->arg;
 	}
 
-	// Update the head and the tail.
-	if (thread->messages.tail == thread->messages.head)
-		thread->messages.tail = 0xFF;
-	thread->messages.head = head->next; //< 'next' could be msg or -1.
+	// Update the linked list.
+	thread->msg_info.head = source->next;
+	if (thread->msg_info.head == NULL_INDEX) //< Message was the last in queue.
+		thread->msg_info.tail = NULL_INDEX;
 
-	--(thread->messages.count);
-	return head->flags;
+	owner->msg_info.count  -= 1;
+	thread->msg_info.count -= 1;
+
+	return source->payload_flag;
 }
 
-//! Get the message sender and flags from a queue head.
-/*! FIXME: Consolidate with message_recv? */
-uint8_t message_peek(tid_t src, ipcchan_t* from)
+//! Get the sender and payload info of the head message without dequeue-ing it.
+bool message_peek(thread_uid_t uid, ipcport_t* from)
 {
-	dassert(from);
+	process_t* owner = process_get(uid.pid);
+	dassert(owner);
 
-	thread_t* thread = thread_get(src);
+	thread_t* thread = thread_get(uid);
 	dassert(thread);
-	dassert(thread->messages.count);
+	dassert(thread->msg_info.count);
 
-	message_t* head = &(thread->messages.slots[thread->messages.head]);
+	message_t* source = &(owner->messages[thread->msg_info.head]);
 
-	*from = head->channel;
-	return head->flags;
+	*from = source->from;
+	return source->payload_flag;
 }
 
-//! Search for a message from the given sender and put it at the queue head.
-bool message_find(tid_t src, ipcchan_t search)
+//! Search for a message to bring to the head of the queue.
+/*! Returns 'true' if a message was moved to the front. */
+bool message_find(thread_uid_t uid, ipcport_t search)
 {
-	thread_t* thread = thread_get(src);
+	process_t* owner = process_get(uid.pid);
+	dassert(owner);
+
+	thread_t* thread = thread_get(uid);
 	dassert(thread);
 
-	// Bail out early if there is nothing to search.
-	if (thread->messages.count == 0)
+	// If there are no messages, the head is invalid - leave early.
+	if (!(thread->msg_info.count))
 		return false;
-	
-	uint8_t prev = 0xFF;
-	uint8_t curr = thread->messages.head;
-	while (curr != 0xFF)
+
+	uint16_t prev = NULL_INDEX;
+	uint16_t curr = thread->msg_info.head;
+	while (curr != NULL_INDEX)
 	{
-		message_t* msg = &(thread->messages.slots[curr]);
-		if (ipc_message_compare(search, msg))
+		message_t* msg = &(owner->messages[curr]);
+		if (ipc_port_compare(search, uid))
 		{
-			if (prev != 0xFF) //< The message is in the middle or at the end.
-				thread->messages.slots[prev].next = msg->next;
-			else // The message was the head.
-				thread->messages.head = msg->next;
+			if (prev == NULL_INDEX) //< This message is already the head.
+				return true;
 
-			// Was the message also the tail?
-			if (thread->messages.tail == curr)
-				thread->messages.tail = prev;
+			// Remove the message from its position in the list.
+			/* At this point, at least 2 messages are in queue. */
+			owner->messages[prev].next = msg->next;
+			if (thread->msg_info.tail == curr)
+				thread->msg_info.tail = prev;
 
-			// FIXME: Do not just replace the msg at head.
-			msg->next = thread->messages.head;
-			thread->messages.head = curr;
-			if (thread->messages.tail == 0xFF)
-				thread->messages.tail = curr;
+			// Replace the message at the head.
+			msg->next = thread->msg_info.head;
+			thread->msg_info.head = curr;
 
 			return true;
 		}

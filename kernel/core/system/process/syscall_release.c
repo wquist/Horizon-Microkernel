@@ -19,37 +19,33 @@
 #include <arch.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <horizon/ipc.h>
+#include <horizon/proc.h>
 #include <horizon/errno.h>
 
-void syscall_halt(tid_t tid)
+void syscall_release(tid_t tid)
 {
-	thread_t* caller = thread_get(scheduler_curr());
-	if (tid == 0) //< FIXME: Make macro.
-		tid = caller->tid;
+	thread_uid_t caller_uid = scheduler_curr();
+	if (tid == TID_SELF)
+		tid = caller_uid.tid;
 
-	thread_t* target = thread_get(tid);
+	// Cannot release the main thread (use kill instead).
+	if (tid == 0)
+		return syscall_return_set(EINVALID);
+
+	thread_uid_t target_uid = { .pid = caller_uid.pid, .tid = tid };
+	thread_t* target = thread_get(target_uid);
 	if (!target)
-		return syscall_return_set(-e_notavail);
+		return syscall_return_set(ENOTAVAIL);
 
-	// Can only kill threads with <= priv level.
-	process_t* owner = process_get(target->owner);
-	if (owner->priv > process_get(caller->owner)->priv)
-		return syscall_return_set(-e_badpriv);
-
-	// Lock the scheduler to remove the current thread.
-	if (tid == caller->tid)
+	// The scheduler must be locked to remove the running thread.
+	if (target_uid.tid == caller_uid.tid)
 		scheduler_lock();
 
-	// The main thread? Process killed.
-	if (target->lid == 0)
-		process_kill(owner->pid);
-	else
-		thread_kill(tid);
+	thread_kill(caller_uid);
 
-	// Is the scheduler locked?
-	if (!scheduler_curr())
+	// Check if the scheduler is locked; the running thread is dead then.
+	if (!(scheduler_curr().pid))
 		scheduler_unlock();
 	else
-		syscall_return_set(-e_success);
+		syscall_return_set(ENONE);
 }

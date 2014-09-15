@@ -15,117 +15,74 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// FIXME: Pretty much exactly the same as process allocating, etc.
-
 #include "process.h"
-#include <memory/region.h>
 #include <memory/virtual.h>
-#include <multitask/scheduler.h>
-#include <util/bmstack.h>
+#include <util/compare.h>
 #include <util/addr.h>
+#include <util/bitmap.h>
 #include <debug/log.h>
 #include <debug/error.h>
 #include <memory.h>
 
-static thread_t* blocks = NULL;
-static bmstack_t block_map = {0};
-
-static uint16_t version_next = 0;
-
-//! Initialize the thread bitmap.
-void thread_init()
-{
-	dassert(sizeof(thread_t) <= THREAD_BLOCK_SIZE);
-
-	// Reserve space for the TCBs.
-	blocks = (thread_t*)region_reserve(THREAD_MAX * THREAD_BLOCK_SIZE);
-
-	// Map in memory for the bitmap.
-	uintptr_t map_start = region_reserve(BMSTACK_SIZE(THREAD_MAX));
-	bmstack_init(&block_map, (void*)map_start);
-	virtual_alloc(0, map_start, BMSTACK_SIZE(THREAD_MAX));
-
-	// Mark reserved TIDs.
-	bmstack_set(&block_map, 0);
-	bmstack_set(&block_map, 1);
-
-	bmstack_link(&block_map, THREAD_MAX);
-	dtrace("Initialized thread bitmap. (%iKB)", BMSTACK_SIZE(THREAD_MAX)/1024);
-}
-
-//! Allocate a new thread for the given process.
-/*! If entry is passed as 0, the process's entry point is used. */
-tid_t thread_new(pid_t pid, uintptr_t entry)
+//! Create a new thread in the given process.
+thread_uid_t thread_new(pid_t pid, uintptr_t entry)
 {
 	process_t* owner = process_get(pid);
-	dassert(owner); //< The process must be alive.
-	dassert(owner->threads.count < PROCESS_THREAD_MAX); // Is there space?
+	dassert(owner);
 
-	size_t index = bmstack_find_and_set(&block_map);
-	dassert(index != -1); //< No more TCBs available.
+	size_t index = bitmap_find_and_set(owner->thread_info.bitmap, PROCESS_THREAD_MAX);
+	dassert(index != -1); // A free thread slot must exist.
 
-	uintptr_t block = index_to_addr((uintptr_t)blocks, THREAD_BLOCK_SIZE, index);
-	virtual_alloc(0, block, THREAD_BLOCK_SIZE); //< Make sure the TCB is mapped.
+	thread_t* thread = &(owner->threads[index]);
+	// This specific thread may not be mapped in yet.
+	virtual_alloc(0, (uintptr_t)thread, sizeof(thread_t));
+	memset(thread, 0, sizeof(thread_t));
 
-	thread_t* thread = (thread_t*)block;
-	memset(thread, 0, THREAD_BLOCK_SIZE);
-
-	++version_next;
-	if (version_next < 2)
-		version_next = 2;
+	// Update the version number for this thread (0 is reserved).
+	owner->thread_info.versions[index] = max(1, owner->thread_info.versions[index] + 1);
+	owner->thread_info.count += 1;
 
 	thread->tid     = index;
-	thread->version = version_next;
+	thread->version = owner->thread_info.versions[index];
+	thread->owner   = pid;
 
-	thread->owner = pid;
+	thread->state = THREAD_STATE_NEW;
 
 	task_init(&(thread->task));
 	thread->task.entry = (entry) ? entry : owner->entry;
 
-	// Add the thread to a process thread slot and update the bitmap.
-	/* FIXME: Should the thread add itself or the process add the thread? */
-	size_t slot = bitmap_find_and_set(owner->threads.bitmap, PROCESS_THREAD_MAX);
-	owner->threads.slots[slot] = index;
-	++(owner->threads.count);
-
-	thread->lid = slot;
-	thread->sched.state = THREAD_STATE_NEW; //< A thread is new until it is scheduled.
-
 	dtrace("Created thread with TID %i, owned by PID %i.", index, pid);
-	return (tid_t)index;
+	return (thread_uid_t){ .pid = pid, .tid = index };
 }
 
-//! Destroy a thread and remove it from the owner process.
-void thread_kill(tid_t tid)
+//! Destroy a thread in a given process.
+/*! Does not free the thread memory; all PCB memory is freed with process_kill. */
+void thread_kill(thread_uid_t uid)
 {
-	thread_t* target = thread_get(tid);
+	thread_t* target = thread_get(uid);
 	dassert(target);
+	dassert(target->state != THREAD_STATE_ACTIVE);
 
-	// FIXME: Thread should not deal with scheduler...
-	if (target->sched.state == THREAD_STATE_ACTIVE)
-		scheduler_remove(tid);
+	process_t* owner = process_get(uid.pid);
+	dassert(owner);
+	dassert(bitmap_test(owner->thread_info.bitmap, uid.tid));
 
-	process_t* owner = process_get(target->owner);
-	bitmap_clear(owner->threads.bitmap, target->lid);
-	--(owner->threads.count);
+	bitmap_clear(owner->thread_info.bitmap, uid.tid);
+	owner->thread_info.count -= 1;
 
-	bmstack_clear(&block_map, tid);
-	dtrace("Destroyed thread with TID %i, owned by PID %i.", tid, owner->pid);
+	dtrace("Destroyed thread with TID %i in PID %i.", uid.tid, uid.pid);
 }
 
-//! Get the actual TCB structure for a given thread.
-thread_t* thread_get(tid_t tid)
+//! Get the specificed thread for a given process.
+thread_t* thread_get(thread_uid_t uid)
 {
-	// Check for invalid threads.
-	if (tid >= THREAD_MAX)
+	if (uid.tid >= PROCESS_THREAD_MAX)
 		return NULL;
 
-	// Check for reserved TIDs.
-	if (tid == 0 || tid == 1)
+	process_t* owner = process_get(uid.pid);
+	if (!owner)
 		return NULL;
 
-	if (!bmstack_test(&block_map, tid))
-		return NULL;
-	else
-		return (thread_t*)index_to_addr((uintptr_t)blocks, THREAD_BLOCK_SIZE, tid);
+	thread_t* thread = &(owner->threads[uid.tid]);
+	return (bitmap_test(owner->thread_info.bitmap, uid.tid)) ? thread : NULL;
 }

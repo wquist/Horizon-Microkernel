@@ -18,9 +18,10 @@
 #include <system/syscalls.h>
 #include <arch.h>
 #include <memory/virtual.h>
-#include <ipc/message.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <ipc/port.h>
+#include <ipc/message.h>
 #include <util/addr.h>
 #include <util/compare.h>
 #include <horizon/ipc.h>
@@ -30,43 +31,48 @@
 
 void syscall_recv(struct msg* dest)
 {
-	if (!dest)
-		return syscall_return_set(-e_badparam);
+	thread_uid_t caller_uid = scheduler_curr();
 
-	thread_t* caller = thread_get(scheduler_curr());
-	if (caller->messages.count == 0)
-		return syscall_return_set(-e_notavail);
+	if (virtual_is_mapped(caller_uid.pid, (uintptr_t)dest, sizeof(struct msg)) != 1)
+		return syscall_return_set(EPARAM);
 
-	ipcchan_t from;
-	// Peek the message first in case there is a problem with payload.
-	uint8_t flags = message_peek(caller->tid, &from);
-	thread_t* sender = thread_get(ICHANID(from));
+	thread_t* caller = thread_get(caller_uid);
+	if (!(caller->msg_info.count))
+		return syscall_return_set(ENOTAVAIL);
 
-	uintptr_t recv_size = 0;
-	if (sender && (flags & MESSAGE_FLAG_PAYLOAD))
+	// Peek the message first in case there are any issues.
+	/* The dest payload info has not been confirmed valid yet. */
+	ipcport_t port;
+	bool has_payload = message_peek(caller_uid, &port);
+
+	thread_uid_t sender_uid;
+	bool valid = ipc_port_get(port, caller_uid.pid, &sender_uid);
+
+	size_t recv_size = 0;
+	if (has_payload && valid)
 	{
-		uintptr_t addr_from = sender->call_data.payload_addr;
+		thread_t* sender = thread_get(sender_uid);
+
+		uintptr_t addr_from = sender->syscall_info.payload_addr;
 		uintptr_t addr_to   = (uintptr_t)(dest->payload.buf);
-		size_t size_from = sender->call_data.payload_size;
+		size_t size_from = sender->syscall_info.payload_size;
 		size_t size_to   = dest->payload.size;
 
-		if (!size_to)
-			return syscall_return_set(-e_badsize);
-		if (size_to < size_from)
-			return syscall_return_set(-e_badsize);
-		if (virtual_is_mapped(caller->owner, addr_to, size_from) != 1)
-			return syscall_return_set(-e_badaddr);
+		if (!size_to || size_to < size_from)
+			return syscall_return_set(ESIZE);
+		if (virtual_is_mapped(caller_uid.pid, addr_to, size_from) != 1)
+			return syscall_return_set(EADDR);
 
-		process_t* from = process_get(sender->owner);
+		process_t* sender_proc = process_get(sender->owner);
 
-		// Copy the payload to the current address space.
+		// Copy the payload into the current address space.
 		uintptr_t end = addr_to + size_from;
 		while (addr_to < end)
 		{
-			uintptr_t aligned = addr_align(addr_from, ARCH_PGSIZE);
-			void* phys = paging_mapping_get(from->addr_space, aligned);
+			uintptr_t addr_aligned = addr_align(addr_from, ARCH_PGSIZE);
+			void* phys = paging_mapping_get(sender_proc->addr_space, addr_aligned);
 
-			uintptr_t diff = addr_from - aligned;
+			uintptr_t diff = addr_from - addr_aligned;
 			void* data = paging_map_temp(phys) + diff;
 
 			size_t to_copy = min(ARCH_PGSIZE - diff, end - addr_to);
@@ -77,10 +83,10 @@ void syscall_recv(struct msg* dest)
 		}
 
 		recv_size = size_from;
-		scheduler_add(sender->tid);
+		scheduler_add(sender_uid);
 	}
 
-	// Everything is OK, so actually receive the message.
-	message_recv(caller->tid, dest);
+	// The payload does not exist or was valid - get the rest.
+	message_remove(caller_uid, dest);
 	syscall_return_set(recv_size);
 }

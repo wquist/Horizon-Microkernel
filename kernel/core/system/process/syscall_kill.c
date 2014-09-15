@@ -19,28 +19,32 @@
 #include <arch.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <horizon/ipc.h>
+#include <horizon/proc.h>
 #include <horizon/errno.h>
 
 void syscall_kill(pid_t pid)
 {
-	thread_t* caller = thread_get(scheduler_curr());
-	if (pid == 0) //< FIXME: Macro.
-		pid = caller->owner;
+	process_t* owner = process_get(scheduler_curr().pid);
+	if (pid == PID_SELF)
+		pid = owner->pid;
 
 	process_t* target = process_get(pid);
 	if (!target)
-		return syscall_return_set(-e_notavail);
-	if (target->priv > process_get(caller->owner)->priv)
-		return syscall_return_set(-e_badpriv);
+		return syscall_return_set(ENOTAVAIL);
 
-	if (pid == caller->owner)
+	// The caller must have an equal or greater priv than the target.
+	if (owner->priv < target->priv)
+		return syscall_return_set(EPRIV);
+
+	// The currently running thread may be contained in this process.
+	if (target->pid == owner->pid)
 		scheduler_lock();
 
-	process_kill(pid);
+	scheduler_purge(target->pid);
+	process_kill(target->pid);
 
-	if (!scheduler_curr())
+	if (!(scheduler_curr().pid))
 		scheduler_unlock();
 	else
-		syscall_return_set(-e_success);
+		syscall_return_set(ENONE);
 }

@@ -15,18 +15,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*! \file core/ipc/target.h
- *  \date August 2014
+/*! \file core/ipc/port.h
+ *  \date September 2014
  */
 
 #pragma once
 
-#include <ipc/message.h>
+#include <multitask/thread.h>
 #include <horizon/types.h>
-#include <stdint.h>
 #include <stdbool.h>
 
-tid_t ipc_tid_get(ipcchan_t chan);
+//! The IPC port data type can represent multiple target destinations:
+/*! Global values:     ANY (0) or KERNEL (1).
+ *  A local thread:    the TID.
+ *  A specific PID:    (the PID) << 6
+ *  An exact receiver: TVN << 8 | PVN << 8 | (the PID) << 6 | (the TID)
+ */
 
-bool ipc_tid_compare(ipcchan_t chan, tid_t caller);
-bool ipc_message_compare(ipcchan_t chan, message_t* msg);
+ipcport_t ipc_port_format(thread_uid_t uid);
+
+bool ipc_port_get(ipcport_t port, pid_t parent, thread_uid_t* uid);
+bool ipc_port_compare(ipcport_t port, thread_uid_t uid);

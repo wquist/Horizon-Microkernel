@@ -22,9 +22,9 @@
 
 void syscall_spawn()
 {
-	thread_t* caller = thread_get(scheduler_curr());
+	pid_t owner = scheduler_curr().pid;
 
 	// The new process is created as a child of the caller.
-	pid_t pid = process_new(caller->owner, 0);
+	pid_t pid = process_new(owner, 0);
 	syscall_return_set(pid);
 }

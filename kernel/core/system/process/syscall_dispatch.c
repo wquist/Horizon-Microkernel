@@ -19,15 +19,16 @@
 #include <arch.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <horizon/errno.h>
 
 void syscall_dispatch(uintptr_t entry, uintptr_t stack)
 {
-	thread_t* caller = thread_get(scheduler_curr());
+	pid_t owner = scheduler_curr().pid;
 
 	// Create a new thread under the caller process.
-	tid_t tid = thread_new(caller->owner, entry);
-	thread_get(tid)->task.stack = stack;
+	thread_uid_t uid = thread_new(owner, entry);
+	thread_get(uid)->task.stack = stack;
 
-	scheduler_add(tid);
-	syscall_return_set(tid);
+	scheduler_add(uid);
+	syscall_return_set(uid.tid);
 }
