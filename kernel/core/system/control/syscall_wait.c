@@ -33,7 +33,7 @@ void syscall_wait(ipcport_t sender)
 
 	// Find what thread the caller is waiting for.
 	thread_uid_t target_uid;
-	if (!ipc_port_get(sender, &target_uid))
+	if (!ipc_port_get(sender, caller_uid.pid, &target_uid))
 		return syscall_return_set(EINVALID);
 
 	// Make sure whatever is being waited on actually exists.
@@ -62,7 +62,7 @@ void syscall_wait(ipcport_t sender)
 
 	thread_t* caller = thread_get(caller_uid);
 	caller->state = THREAD_STATE_WAITING;
-	caller->syscall_info.wait_for = ipc_port_format(target_uid);
+	caller->syscall_info.wait_for = sender;
 
 	// Will automatically switch to the next thread in queue.
 	scheduler_unlock();

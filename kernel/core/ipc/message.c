@@ -55,7 +55,7 @@ void message_add(thread_uid_t uid, ipcport_t from, struct msg* info, bool head)
 	if (head) //< Prepend the message.
 	{
 		// The queue is currently empty for this TID.
-		if (thread->msg_info.head == NULL_INDEX)
+		if (!(thread->msg_info.count))
 			thread->msg_info.tail = index;
 
 		target->next = thread->msg_info.head;
@@ -63,8 +63,7 @@ void message_add(thread_uid_t uid, ipcport_t from, struct msg* info, bool head)
 	}
 	else //< Or append it.
 	{
-		// The tail == NULL_INDEX also means the queue is empty.
-		if (thread->msg_info.tail == NULL_INDEX)
+		if (!(thread->msg_info.count))
 			thread->msg_info.head = index;
 		else
 			owner->messages[thread->msg_info.tail].next = index;
@@ -137,6 +136,10 @@ bool message_find(thread_uid_t uid, ipcport_t search)
 
 	thread_t* thread = thread_get(uid);
 	dassert(thread);
+
+	// If there are no messages, the head is invalid - leave early.
+	if (!(thread->msg_info.count))
+		return false;
 
 	uint16_t prev = NULL_INDEX;
 	uint16_t curr = thread->msg_info.head;

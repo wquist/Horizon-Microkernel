@@ -43,7 +43,7 @@ void syscall_drop(struct msg* info)
 	bool has_payload = message_remove(caller_uid, info);
 
 	thread_uid_t sender_uid;
-	bool valid = ipc_port_get(info->from, &sender_uid);
+	bool valid = ipc_port_get(info->from, caller_uid.pid, &sender_uid);
 
 	// If the sender is alive, it needs to be reawoken after blocking for a payload.
 	if (valid && has_payload)

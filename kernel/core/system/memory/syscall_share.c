@@ -37,7 +37,7 @@ void syscall_share(struct shm* info)
 		return syscall_return_set(ESIZE);
 
 	thread_uid_t target_uid;
-	if (!ipc_port_get(info->to, &target_uid))
+	if (!ipc_port_get(info->to, caller_uid.pid, &target_uid))
 		return syscall_return_set(EINVALID);
 
 	// If a specific dest is given, the process must exist.

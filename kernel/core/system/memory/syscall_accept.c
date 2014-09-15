@@ -31,9 +31,11 @@ void syscall_accept(shmid_t sid, uintptr_t dest, size_t size)
 	if (!size)
 		return syscall_return_set(ESIZE);
 
+	thread_uid_t caller_uid = scheduler_curr();
+
 	// IPC port == SHM ID for now.
 	thread_uid_t target_uid;
-	if (!ipc_port_get(sid, &target_uid))
+	if (!ipc_port_get(sid, caller_uid.pid, &target_uid))
 		return syscall_return_set(EINVALID);
 
 	thread_t* target = thread_get(target_uid);
@@ -43,7 +45,6 @@ void syscall_accept(shmid_t sid, uintptr_t dest, size_t size)
 	struct shm* info = &(target->syscall_info.shm_offer);
 
 	// Make sure the caller is allowed to accept.
-	thread_uid_t caller_uid = scheduler_curr();
 	if (!ipc_port_compare(info->to, caller_uid))
 		return syscall_return_set(EPRIV);
 

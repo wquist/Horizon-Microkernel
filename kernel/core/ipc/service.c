@@ -47,7 +47,7 @@ ipcport_t service_get(size_t svc)
 	ipcport_t port = service_ids[svc];
 
 	thread_uid_t uid;
-	if (ipc_port_get(port, &uid))
+	if (ipc_port_get(port, 0, &uid))
 		return port;
 
 	// Remove the callback

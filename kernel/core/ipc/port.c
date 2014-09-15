@@ -58,7 +58,7 @@ ipcport_t ipc_port_format(thread_uid_t uid)
  *  - For anything else, both PID and TID are set to actual values.
  *  Only returns true if valid and both process and thread exist.
  */
-bool ipc_port_get(ipcport_t port, thread_uid_t* uid)
+bool ipc_port_get(ipcport_t port, pid_t parent, thread_uid_t* uid)
 {
 	dassert(uid);
 
@@ -77,7 +77,7 @@ bool ipc_port_get(ipcport_t port, thread_uid_t* uid)
 		// This is a local TID.
 		if (!(fmt.pid))
 		{
-			uid->pid = 0;
+			uid->pid = parent;
 			uid->tid = fmt.tid;
 			return true;
 		}

@@ -25,6 +25,7 @@
 #include <horizon/ipc.h>
 #include <horizon/msg.h>
 #include <horizon/errno.h>
+#include <debug/log.h>
 
 void syscall_send(struct msg* src)
 {
@@ -34,7 +35,7 @@ void syscall_send(struct msg* src)
 		return syscall_return_set(EPARAM);
 
 	thread_uid_t target_uid;
-	if (!ipc_port_get(src->to, &target_uid))
+	if (!ipc_port_get(src->to, caller_uid.pid, &target_uid))
 		return syscall_return_set(EINVALID);
 
 	thread_t* target = thread_get(target_uid);

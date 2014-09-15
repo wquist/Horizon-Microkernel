@@ -46,7 +46,7 @@ void syscall_recv(struct msg* dest)
 	bool has_payload = message_peek(caller_uid, &port);
 
 	thread_uid_t sender_uid;
-	bool valid = ipc_port_get(port, &sender_uid);
+	bool valid = ipc_port_get(port, caller_uid.pid, &sender_uid);
 
 	size_t recv_size = 0;
 	if (has_payload && valid)
