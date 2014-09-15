@@ -124,6 +124,9 @@ bool ipc_port_compare(ipcport_t port, thread_uid_t uid)
 		return (fmt.pid == uid.pid);
 	}
 
+	if (fmt.pid != uid.pid || fmt.tid != uid.tid)
+		return false;
+
 	process_t* process = process_get(uid.pid);
 	if (!process)
 		return false;
