@@ -52,8 +52,8 @@ void process_init()
 	virtual_alloc(0, map_start, BMSTACK_SIZE(PROCESS_MAX));
 
 	// Reserve the special PIDs.
-	bmstack_set(&block_map, IPORT_ANY);
-	bmstack_set(&block_map, IPORT_KERNEL);
+	bmstack_set(&block_map, 0);
+	bmstack_set(&block_map, 1);
 
 	bmstack_link(&block_map, PROCESS_MAX);
 	dtrace("Initialize process control blocks and bitmap. (%iKB)", BMSTACK_SIZE(PROCESS_MAX)/1024);
@@ -131,7 +131,7 @@ process_t* process_get(pid_t pid)
 		return NULL;
 
 	// Check for the reserved PIDs.
-	if (pid == IPORT_ANY || pid == IPORT_KERNEL)
+	if (pid < 2)
 		return NULL;
 
 	process_t* proc = (process_t*)index_to_addr((uintptr_t)blocks, sizeof(block_data_t), pid);
