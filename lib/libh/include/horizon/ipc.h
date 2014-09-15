@@ -3,8 +3,8 @@
 
 #include <horizon/types.h>
 
-#define IPORT_KERNEL (1)
-#define IPORT_ANY    (0)
+#define IPORT_KERNEL ((1 << 18) | 1)
+#define IPORT_ANY    ((0 << 18) | 1)
 
 #define IPORT_LOCAL(tid) ((tid) << 18)
 #define IPORT_GLOBL(pid) (pid)
