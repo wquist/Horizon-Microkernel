@@ -6,9 +6,9 @@
 #define IPORT_KERNEL (1)
 #define IPORT_ANY    (0)
 
-#define IPORT_LOCAL(tid) (tid)
-#define IPORT_GLOBL(pid) ((pid) << 6)
+#define IPORT_LOCAL(tid) ((tid) << 14)
+#define IPORT_GLOBL(pid) (pid)
 
-#define IPORTID(port) (((port) >> 6) & 0x3FFFF)
+#define IPORTID(port) ((port) & 0x3FFFF)
 
 #endif
