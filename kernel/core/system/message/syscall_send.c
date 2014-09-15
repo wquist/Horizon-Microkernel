@@ -25,7 +25,6 @@
 #include <horizon/ipc.h>
 #include <horizon/msg.h>
 #include <horizon/errno.h>
-#include <debug/log.h>
 
 void syscall_send(struct msg* src)
 {
