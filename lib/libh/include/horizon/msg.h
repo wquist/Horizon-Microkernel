@@ -8,15 +8,11 @@ struct msg
 {
 	union
 	{
-		ipcchan_t to;
-		struct
-		{
-			ipcchan_t channel;
-			ipcchan_t sender;
-		} from;
+		ipcport_t to;
+		ipcport_t from;
 	};
 
-	msgarg_t code, arg;
+	msgdata_t code, arg;
 
 	struct
 	{

@@ -7,7 +7,7 @@
 
 int dispatch(void* entry, void* stack) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (2), "b" (entry), "c" (stack)); return ret; }
 
-int wait(ipcchan_t wait_for) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (6), "b" (wait_for)); return ret; }
+int wait(ipcport_t wait_for) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (6), "b" (wait_for)); return ret; }
 
 int vmap(void* dest, size_t size) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (7), "b" (dest), "c" (size)); return ret; }
 int pmap(void* dest, void* phys, size_t size) { int ret; __asm("int $0x95" : "=a" (ret) : "a" (8), "b" (dest), "c" (phys), "d" (size)); return ret; }
@@ -31,7 +31,7 @@ void main()
 
 	print("Hello.");
 
-	wait(ICHAN_ANY);
+	wait(IPORT_ANY);
 	print("Awoken.");
 
 	uint32_t extra = 0;
@@ -48,7 +48,7 @@ void main()
 
 	print("Sending reply.");
 	struct msg rep = {{0}};
-	rep.to = m.from.channel;
+	rep.to = m.from;
 
 	int res = send(&rep);
 	if (res < 0)
@@ -66,7 +66,7 @@ void async()
 	uint32_t extra = 5;
 
 	struct msg m = {{0}};
-	m.to   = ICHAN_THREAD(2);
+	m.to   = IPORT_LOCAL(0);
 	m.code = 1;
 	m.payload.buf  = &extra;
 	m.payload.size = 4;
@@ -76,7 +76,7 @@ void async()
 	print("Sent.");
 
 	print("Waiting for reply.");
-	wait(ICHAN_ANY);
+	wait(IPORT_ANY);
 
 	recv(&m);
 	print("Received.");
