@@ -32,6 +32,8 @@ void syscall_send(struct msg* src)
 
 	if (virtual_is_mapped(caller_uid.pid, (uintptr_t)src, sizeof(struct msg)) != 1)
 		return syscall_return_set(EPARAM);
+	if (ipc_port_compare(src->to, caller_uid))
+		return syscall_return_set(EPARAM);
 
 	thread_uid_t target_uid;
 	if (!ipc_port_get(src->to, caller_uid.pid, &target_uid))
