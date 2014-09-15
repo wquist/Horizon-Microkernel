@@ -66,7 +66,7 @@ void async()
 	uint32_t extra = 5;
 
 	struct msg m = {{0}};
-	m.to   = IPORT_LOCAL(2);
+	m.to   = IPORT_LOCAL(1);
 	m.code = 1;
 	m.payload.buf  = &extra;
 	m.payload.size = 4;
