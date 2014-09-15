@@ -33,7 +33,7 @@ void syscall_recv(struct msg* dest)
 {
 	thread_uid_t caller_uid = scheduler_curr();
 
-	if (virtual_is_mapped(caller_uid.pid, (uintptr_t)dest, sizeof(struct msg) != 1))
+	if (virtual_is_mapped(caller_uid.pid, (uintptr_t)dest, sizeof(struct msg)) != 1)
 		return syscall_return_set(EPARAM);
 
 	thread_t* caller = thread_get(caller_uid);
