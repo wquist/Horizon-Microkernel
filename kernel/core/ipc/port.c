@@ -65,7 +65,7 @@ bool ipc_port_get(ipcport_t port, pid_t parent, thread_uid_t* uid)
 	// First check for global values.
 	if (port == IPORT_ANY || port == IPORT_KERNEL)
 	{
-		uid->pid = 1;
+		uid->pid = 0;
 		uid->tid = port;
 		return true;
 	}
@@ -75,7 +75,7 @@ bool ipc_port_get(ipcport_t port, pid_t parent, thread_uid_t* uid)
 	if (!(fmt.pvn) && !(fmt.tvn))
 	{
 		// This is a local TID.
-		if (!(fmt.pid))
+		if (fmt.pid == 1)
 		{
 			uid->pid = parent;
 			uid->tid = fmt.tid;
@@ -113,7 +113,7 @@ bool ipc_port_compare(ipcport_t port, thread_uid_t uid)
 	if (port == IPORT_ANY)
 		return true;
 	if (port == IPORT_KERNEL)
-		return (uid.pid == 1 && uid.tid == IPORT_KERNEL);
+		return (uid.pid == 0 && uid.tid == IPORT_KERNEL);
 
 	port_fmt_t fmt = { .raw = port };
 	if (!(fmt.pvn) && !(fmt.tvn))
