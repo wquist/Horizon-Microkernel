@@ -80,7 +80,8 @@ thread_t* thread_get(thread_uid_t uid)
 		return NULL;
 
 	process_t* owner = process_get(uid.pid);
-	dassert(owner);
+	if (!owner)
+		return NULL;
 
 	thread_t* thread = &(owner->threads[uid.tid]);
 	return (bitmap_test(owner->thread_info.bitmap, uid.tid)) ? thread : NULL;
