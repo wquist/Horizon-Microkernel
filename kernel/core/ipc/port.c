@@ -25,9 +25,9 @@ union port_fmt
 {
 	struct __packed
 	{
-		uint32_t tid : 6;
 		uint32_t pid : 10;
 		uint32_t pvn : 8;
+		uint32_t tid : 6;
 		uint32_t tvn : 8;
 	};
 	uint32_t raw;
@@ -43,9 +43,9 @@ ipcport_t ipc_port_format(thread_uid_t uid)
 	dassert(thread);
 
 	port_fmt_t port = {0};
-	port.tid = thread->tid;
 	port.pid = process->pid;
 	port.pvn = process->version;
+	port.tid = thread->tid;
 	port.tvn = thread->version;
 
 	return port.raw;
