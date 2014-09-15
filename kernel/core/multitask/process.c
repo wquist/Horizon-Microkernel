@@ -24,6 +24,7 @@
 #include <debug/log.h>
 #include <debug/error.h>
 #include <horizon/ipc.h>
+#include <horizon/priv.h>
 #include <memory.h>
 
 typedef struct block_data block_data_t;
@@ -83,7 +84,7 @@ pid_t process_new(pid_t ppid, uintptr_t entry)
 	// Get extra info from the parent, if valid.
 	process_t* parent = process_get(ppid);
 	process->parent = (parent) ? ppid : 0;
-	process->priv   = (parent) ? parent->priv : 0;
+	process->priv   = (parent) ? parent->priv : PRIV_DRIVER;
 
 	process->entry = entry;
 	process->addr_space = paging_pas_create();
