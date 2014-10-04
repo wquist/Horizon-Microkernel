@@ -76,7 +76,7 @@ void syscall_send(struct msg* src)
 	// Try to wake up the receiver if necessary.
 	bool woken = false;
 	if (target->state == THREAD_STATE_WAITING)
-		woken = ipc_port_compare(target->syscall_info.wait_for, target_uid);
+		woken = ipc_port_compare(target->syscall_info.wait_for, caller_uid);
 
 	ipcport_t port = ipc_port_format(caller_uid);
 

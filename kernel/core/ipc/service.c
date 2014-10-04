@@ -17,11 +17,18 @@
 
 #include "service.h"
 #include <arch.h>
+#include <multitask/process.h>
+#include <multitask/scheduler.h>
 #include <ipc/port.h>
+#include <ipc/message.h>
 #include <debug/error.h>
 #include <horizon/svc.h>
+#include <horizon/ipc.h>
+#include <horizon/msg.h>
 
 static ipcport_t service_ids[SVCMAX] = {0};
+
+static void irq_callback(isr_t, irq_t);
 
 //! Associate a thread UID with a service.
 /*! Possibly set up the thread to receive kernel messages. */
@@ -35,9 +42,11 @@ void service_register(size_t svc, thread_uid_t uid)
 
 	service_ids[svc] = ipc_port_format(uid);
 
-	// Set up a callback.
+	if (svc < SVC_IMAX)
+		int_callback_set(irq_to_isr(svc), false, irq_callback);
 }
 
+//! Get the IPC port of a thread that registered for the given service.
 ipcport_t service_get(size_t svc)
 {
 	dassert(svc < SVCMAX);
@@ -50,7 +59,43 @@ ipcport_t service_get(size_t svc)
 	if (ipc_port_get(port, 0, &uid))
 		return port;
 
-	// Remove the callback
+	if (svc < SVC_IMAX)
+		int_callback_set(irq_to_isr(svc), false, NULL);
 
 	return 0;
+}
+
+// Send a kernel message to the relevent thread upon an IRQ.
+void irq_callback(isr_t isr, irq_t irq)
+{
+	ipcport_t port = service_get(irq);
+	if (!port)
+		return;
+
+	// Port should always be valid here.
+	thread_uid_t target_uid;
+	ipc_port_get(port, 0, &target_uid);
+
+	// FIXME: Just kill the process/thread?
+	process_t* target_proc = process_get(target_uid.pid);
+	if (target_proc->msg_info.count >= PROCESS_MESSAGE_MAX)
+		dpanic("Service could not receive IRQ.");
+
+	// FIXME: Code should be some 'SVC_IRQ_OCCURRED' or similar.
+	/* Then data can contain the IRQ number. */
+	struct msg info = {0};
+	info.to = port;
+	info.code = irq;
+
+	// FIXME: Messaging code here is almost duplicate of syscall_send.
+	/* Create a new 'internal_msgsend' function for both? */
+	thread_t* target = thread_get(target_uid);
+
+	bool woken = false;
+	if (target->state == THREAD_STATE_WAITING)
+		woken = (target->syscall_info.wait_for == IPORT_KERNEL);
+
+	message_add(target_uid, IPORT_KERNEL, &info, woken);
+	if (woken)
+		scheduler_add(target_uid);
 }

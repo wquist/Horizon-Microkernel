@@ -45,7 +45,6 @@ struct message
 	};
 };
 
-// FIXME: Too many parameters need to be passed...
 void message_add(thread_uid_t uid, ipcport_t from, struct msg* info, bool head);
 bool message_remove(thread_uid_t uid, struct msg* dest);
 bool message_peek(thread_uid_t, ipcport_t* from);
