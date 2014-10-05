@@ -21,12 +21,13 @@
 #include <sw/int/frame.h>
 #include <sw/int/isr.h>
 #include <sw/int/irq.h>
+#include <system/exceptions.h>
 #include <debug/log.h>
 #include <debug/error.h>
 #include <stddef.h>
 
 void exception_callback(isr_t isr, irq_t irq);
-void exception_debug(isr_t isr, irq_t irq);
+void exception_info(isr_t isr, irq_t irq);
 
 //! Reserve the exception ISRs and add callbacks.
 void exception_init()
@@ -36,7 +37,7 @@ void exception_init()
 		isr_reserve(i);
 		int_callback_set(i, false, exception_callback);
 #if defined(_DEBUG)
-		int_callback_set(i, true, exception_debug);
+		int_callback_set(i, true, exception_info);
 #endif
 	}
 }
@@ -44,11 +45,56 @@ void exception_init()
 // Properly handle an exception.
 void exception_callback(isr_t isr, irq_t irq)
 {
-	//
+	switch (isr)
+	{
+		case EXCEPTION_DE:
+		case EXCEPTION_OF:
+		case EXCEPTION_BR:
+		case EXCEPTION_GP:
+			exception_userfault(isr);
+			break;
+
+		case EXCEPTION_PF:
+			exception_pagefault(isr);
+			break;
+
+		case EXCEPTION_DB:
+		case EXCEPTION_BP:
+			exception_debug(isr);
+			break;
+
+		case EXCEPTION_UD:
+			// FIXME: Try to emulate the instruction.
+			break;
+
+		case EXCEPTION_NM:
+		case EXCEPTION_MF:
+			// FIXME: Manage the FPU.
+			break;
+
+		case EXCEPTION_XM:
+			// FIXME: Manage SSE/AVX.
+			break;
+
+		case EXCEPTION_AC:
+			// FIXME: Profile when these happen.
+			break;
+
+		case EXCEPTION_NMI:
+		case EXCEPTION_DF:
+		case EXCEPTION_TS:
+		case EXCEPTION_NP:
+		case EXCEPTION_SS:
+		case EXCEPTION_DX:
+			dpanic("Fatal exception occurred!");
+
+		default:
+			dpanic("Reserved/invalid exception occurred!");
+	}
 }
 
 // Print detailed information when an exception occurs.
-void exception_debug(isr_t isr, irq_t irq)
+void exception_info(isr_t isr, irq_t irq)
 {
 	int_frame_t* frame = int_callback_frame_get();
 
@@ -134,10 +180,7 @@ void exception_debug(isr_t isr, irq_t irq)
 		}
 
 		default:
-		{
 			dpanic("Reserved/invalid exception occurred!");
-			break;
-		}
 	}
 
 #define REP_THRESHOLD 1
