@@ -9,8 +9,6 @@ typedef uint8_t  priv_t;
 
 typedef uint32_t ipcport_t;
 typedef uint32_t msgdata_t;
-
 typedef uint32_t shmid_t;
-typedef uint32_t svc_t;
 
 #endif
