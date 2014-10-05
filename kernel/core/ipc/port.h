@@ -26,10 +26,10 @@
 #include <stdbool.h>
 
 //! The IPC port data type can represent multiple target destinations:
-/*! Global values:     ANY (0) or KERNEL (1).
- *  A local thread:    the TID.
- *  A specific PID:    (the PID) << 6
- *  An exact receiver: TVN << 8 | PVN << 8 | (the PID) << 6 | (the TID)
+/*! Global values:     ANY (0) or KERNEL (1) << 18 | 1
+ *  A local thread:    TID << 18
+ *  A specific PID:    PID
+ *  An exact receiver: TVN << 24 | TID << 18 | PVN << 10 | PID
  */
 
 ipcport_t ipc_port_format(thread_uid_t uid);
