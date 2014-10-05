@@ -57,7 +57,7 @@ void syscall_share(struct shm* info)
 	thread_t* caller = thread_get(caller_uid);
 	memcpy(&(caller->syscall_info.shm_offer), info, sizeof(struct shm));
 
-	// The SHMID is equivalent to an IPC port?
-	shmid_t sid = ipc_port_format(caller_uid);
+	// The SHMID is equivalent to a thread UID?
+	shmid_t sid = caller_uid.raw;
 	syscall_return_set(sid);
 }

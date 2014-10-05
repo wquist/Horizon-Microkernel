@@ -33,10 +33,8 @@ void syscall_accept(shmid_t sid, uintptr_t dest, size_t size)
 
 	thread_uid_t caller_uid = scheduler_curr();
 
-	// IPC port == SHM ID for now.
-	thread_uid_t target_uid;
-	if (!ipc_port_get(sid, caller_uid.pid, &target_uid))
-		return syscall_return_set(EINVALID);
+	// Thread UID == SHM ID for now.
+	thread_uid_t target_uid = { .raw = sid };
 
 	thread_t* target = thread_get(target_uid);
 	if (!target)

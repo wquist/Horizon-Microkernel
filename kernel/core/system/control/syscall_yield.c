@@ -17,8 +17,10 @@
 
 #include <system/syscalls.h>
 #include <multitask/scheduler.h>
+#include <horizon/errno.h>
 
 void syscall_yield()
 {
+	syscall_return_set(ENONE);
 	scheduler_next();
 }

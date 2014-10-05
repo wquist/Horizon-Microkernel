@@ -21,14 +21,13 @@
 #include <horizon/svc.h>
 #include <horizon/errno.h>
 
+//! Instead of returning an error code, svcid will return 0.
+/*! 0 can be considered ENOTAVAIL in all cases. */
 void syscall_svcid(svc_t svc)
 {
 	if (svc >= SVCMAX)
-		return syscall_return_set(EPARAM);
+		return syscall_return_set(0);
 
 	ipcport_t port = service_get(svc);
-	if (!port)
-		return syscall_return_set(ENOTAVAIL);
-
 	syscall_return_set(port);
 }
