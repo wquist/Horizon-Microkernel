@@ -53,8 +53,8 @@ void syscall_recv(struct msg* dest);
 void syscall_peek();
 void syscall_drop(struct msg* info);
 
-void syscall_svcown(size_t svc);
-void syscall_svcid(size_t svc);
+void syscall_svcown(svc_t svc);
+void syscall_svcid(svc_t svc);
 
 void syscall_sysio(size_t action, size_t arg, uintptr_t data);
 

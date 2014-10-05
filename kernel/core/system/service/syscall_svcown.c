@@ -24,7 +24,7 @@
 #include <horizon/svc.h>
 #include <horizon/errno.h>
 
-void syscall_svcown(size_t svc)
+void syscall_svcown(svc_t svc)
 {
 	if (svc >= SVCMAX)
 		return syscall_return_set(EPARAM);
