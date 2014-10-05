@@ -25,6 +25,7 @@
 #include <horizon/types.h>
 #include <horizon/shm.h>
 #include <horizon/msg.h>
+#include <horizon/svc.h>
 #include <horizon/io.h>
 #include <stddef.h>
 #include <stdint.h>

@@ -19,7 +19,7 @@
  *  \date May 2014
  *
  *  /mainpage Horizon Microkernel
- *  /version  0.0.5-0
+ *  /version  0.0.9-0
  */
 
 #include <arch.h>
