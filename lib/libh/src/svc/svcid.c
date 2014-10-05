@@ -9,7 +9,7 @@ ipcport_t svcid(svc_t sid)
 	if (res == 0)
 	{
 		errno = ENOTAVAIL;
-		return -1;
+		return 0;
 	}
 
 	return (ipcport_t)res;
