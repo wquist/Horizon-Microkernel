@@ -18,7 +18,7 @@
 #include <system/syscalls.h>
 #include <arch.h>
 
-void syscall_sysio(size_t action, size_t arg, uintptr_t data)
+void syscall_sysio(sysop_t action, size_t arg, uintptr_t data)
 {
 	// arch_sysio handles error checking.
 	int res = arch_sysio(action, arg, data);

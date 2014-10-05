@@ -25,6 +25,7 @@
 #include <horizon/types.h>
 #include <horizon/shm.h>
 #include <horizon/msg.h>
+#include <horizon/io.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -56,7 +57,7 @@ void syscall_drop(struct msg* info);
 void syscall_svcown(svc_t svc);
 void syscall_svcid(svc_t svc);
 
-void syscall_sysio(size_t action, size_t arg, uintptr_t data);
+void syscall_sysio(sysop_t action, size_t arg, uintptr_t data);
 
 SYSCALL_TABLE = 
 {
