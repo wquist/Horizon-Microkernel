@@ -1,6 +1,7 @@
 #ifndef _SYS_PROC_H
 #define _SYS_PROC_H
 
+#include <horizon/proc.h>
 #include <horizon/types.h>
 #include <stdint.h>
 
