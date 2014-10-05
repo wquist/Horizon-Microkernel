@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 long grant(struct shm* info, uintptr_t dest);
-long share(struct shm* info);
-long accept(shmid_t sid, void* dest, size_t size);
+shmid_t share(struct shm* info);
+size_t accept(shmid_t sid, void* dest, size_t size);
 
 #endif

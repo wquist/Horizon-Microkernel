@@ -3,4 +3,6 @@
 
 #include <bits/io.h>
 
+typedef enum SYSOP sysop_t;
+
 #endif

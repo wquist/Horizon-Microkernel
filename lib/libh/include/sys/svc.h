@@ -4,6 +4,6 @@
 #include <horizon/types.h>
 
 long svcown(svc_t sid);
-long svcid(svc_t sid);
+ipcport_t svcid(svc_t sid);
 
 #endif

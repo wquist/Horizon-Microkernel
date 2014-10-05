@@ -4,8 +4,8 @@
 #include <horizon/msg.h>
 
 long send(struct msg* info);
-long recv(struct msg* info);
-long peek();
+size_t recv(struct msg* info);
+size_t peek();
 long drop(struct msg* info);
 
 #endif
