@@ -9,7 +9,7 @@ shmid_t share(struct shm* info)
 	if (__iserr(res))
 	{
 		errno = res;
-		return -1;
+		return 0;
 	}
 
 	return (shmid_t)res;
