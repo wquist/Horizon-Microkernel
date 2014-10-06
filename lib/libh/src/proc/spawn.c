@@ -9,7 +9,7 @@ pid_t spawn()
 	if (__iserr(res))
 	{
 		errno = res;
-		return -1;
+		return 0;
 	}
 
 	return (pid_t)res;
