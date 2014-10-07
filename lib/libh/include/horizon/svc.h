@@ -3,7 +3,8 @@
 
 #include <bits/svc.h>
 
-enum
+typedef enum SVC svc_t;
+enum SVC
 {
 	SVC_TERM = SVC_IMAX,
 	SVC_KYBD,
