@@ -35,13 +35,9 @@ void syscall_unmap(uintptr_t addr, size_t size)
 	if (size % ARCH_PGSIZE != 0)
 		return syscall_return_set(ESIZE);
 
-	// Only processes that can map can unmap.
-	process_t* owner = process_get(scheduler_curr().pid);
-	if (owner->priv < PRIV_SERVER)
-		return syscall_return_set(EPRIV);
-
 	// The entire target region must be mapped in.
 	/* Works with a mix of vmap and pmap memory. */
+	process_t* owner = process_get(scheduler_curr().pid);
 	if (virtual_is_mapped(owner->pid, addr, size) != 1)
 		return syscall_return_set(ENOTAVAIL);
 

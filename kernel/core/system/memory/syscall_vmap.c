@@ -36,12 +36,8 @@ void syscall_vmap(uintptr_t dest, size_t size)
 	if (size % ARCH_PGSIZE != 0)
 		return syscall_return_set(ESIZE);
 
-	// Only servers or higher can directly map memory.
-	process_t* owner = process_get(scheduler_curr().pid);
-	if (owner->priv < PRIV_SERVER)
-		return syscall_return_set(EPRIV);
-
 	// Make sure there are no overlaps with existing memory.
+	process_t* owner = process_get(scheduler_curr().pid);
 	if (virtual_is_mapped(owner->pid, dest, size) != 0)
 		return syscall_return_set(ENOTAVAIL);
 
