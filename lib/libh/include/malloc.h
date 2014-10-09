@@ -5,7 +5,7 @@
 
 #define MALLOC_ALIGNMENT (sizeof(size_t) * 2)
 
-void malloc_initialize(void* head);
+void malloc_initialize(void* base);
 
 void* malloc(size_t size);
 void* realloc(void* ptr, size_t size);
