@@ -8,29 +8,25 @@ void* malloc(size_t size)
 	size_t block_size = MALLOC_ALIGN(size + sizeof(struct malloc_header));
 
 	struct malloc_header* header = find_fit(block_size);
-	if (header)
-	{
-		size_t remaining = header->size - block_size;
-		if (remaining >= MALLOC_ALIGNMENT*2)
-		{
-			struct malloc_header* next = (struct malloc_header*)(header + block_size);
-			next->size = remaining - sizeof(struct malloc_header);
-
-			header->size = block_size;
-		}
-
-		header->size |= MALLOC_USED;
-	}
-	else
+	if (!header)
 	{
 		header = malloc_heap_expand(block_size);
 		if (!header)
 			return NULL;
-
-		header->size = block_size | MALLOC_USED;
 	}
 
-	return (void*)header + sizeof(struct malloc_header);
+	size_t remaining = header->size - block_size;
+	if (remaining >= MALLOC_ALIGNMENT*2)
+	{
+		char* next_ptr = (char*)header + block_size;
+		struct malloc_header* next = (struct malloc_header*)next_ptr;
+
+		next->size = remaining;
+		header->size = block_size;
+	}
+
+	header->size |= MALLOC_USED;
+	return (char*)header + sizeof(struct malloc_header);
 }
 
 void* find_fit(size_t size)
@@ -41,7 +37,8 @@ void* find_fit(size_t size)
 		if (header->size >= size && !(header->size & MALLOC_USED))
 			return header;
 
-		header = (void*)header + (header->size & ~MALLOC_USED);
+		char* header_ptr = (char*)header + (header->size & ~MALLOC_USED);
+		header = (struct malloc_header*)header_ptr;
 	}
 
 	return NULL;

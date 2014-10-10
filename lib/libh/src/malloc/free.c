@@ -3,10 +3,14 @@
 
 void free(void* ptr)
 {
-	struct malloc_header* header = ptr - sizeof(struct malloc_header);
+	char* header_ptr = (char*)ptr - sizeof(struct malloc_header);
+	struct malloc_header* header = (struct malloc_header*)header_ptr;
+	
 	header->size &= ~MALLOC_USED;
 
-	struct malloc_header* next = (void*)header + header->size;
+	char* next_ptr = (char*)header + header->size;
+	struct malloc_header* next = (struct malloc_header*)next_ptr;
+
 	if ((void*)next < malloc_heap_end() && !(next->size & MALLOC_USED))
 		header->size += next->size;
 }

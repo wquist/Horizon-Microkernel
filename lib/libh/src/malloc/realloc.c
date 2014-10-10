@@ -4,7 +4,8 @@
 
 void* realloc(void* ptr, size_t size)
 {
-	struct malloc_header* header = ptr - sizeof(struct malloc_header);
+	char* header_ptr = (char*)ptr - sizeof(struct malloc_header);
+	struct malloc_header* header = (struct malloc_header*)header_ptr;
 
 	size_t old_size = header->size & ~MALLOC_USED;
 	size_t new_size = MALLOC_ALIGN(size + sizeof(struct malloc_header));
