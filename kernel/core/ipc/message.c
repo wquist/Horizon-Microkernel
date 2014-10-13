@@ -41,7 +41,7 @@ void message_add(thread_uid_t uid, ipcport_t from, struct msg* info, bool head)
 
 	target->from = from;
 	target->code = info->code;
-	target->arg  = info->arg;
+	memcpy(target->args, info->args, sizeof(msgdata_t) * MESSAGE_ARGC);
 
 	target->flags.payload = (info->payload.size > 0);
 
@@ -95,7 +95,7 @@ bool message_remove(thread_uid_t uid, struct msg* dest)
 	{
 		dest->from = source->from;
 		dest->code = source->code;
-		dest->arg  = source->arg;
+		memcpy(dest->args, source->args, sizeof(msgdata_t) * MESSAGE_ARGC);
 	}
 
 	// Update the linked list.
