@@ -27,14 +27,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MESSAGE_ARGC 3
-
 typedef struct message message_t;
 struct message
 {
 	ipcport_t from;
 	msgdata_t code;
-	msgdata_t args[MESSAGE_ARGC];
+	msgdata_t args[MSG_ARGC];
 
 	struct __packed
 	{
