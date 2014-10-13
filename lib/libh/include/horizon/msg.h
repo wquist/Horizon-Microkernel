@@ -4,6 +4,8 @@
 #include <features.h>
 #include <horizon/types.h>
 
+#define MSG_ARGC 3
+
 struct msg
 {
 	union
@@ -12,7 +14,8 @@ struct msg
 		ipcport_t from;
 	};
 
-	msgdata_t code, arg;
+	msgdata_t code;
+	msgdata_t args[MSG_ARGC];
 
 	struct
 	{
