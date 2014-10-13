@@ -53,4 +53,4 @@ bool bmstack_test(bmstack_t* bms, size_t index);
 void bmstack_set_all(bmstack_t* bms, size_t items);
 void bmstack_clear_all(bmstack_t* bms, size_t items);
 
-size_t bmstack_find_and_set(bmstack_t* bms);
+long bmstack_find_and_set(bmstack_t* bms);

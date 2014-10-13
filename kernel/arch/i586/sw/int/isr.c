@@ -40,7 +40,7 @@ isr_t isr_alloc(ISR_PRIORITY pri)
 	bitmap_t* pri_bm = (bitmap_t*)&(priority_levels[pri]);
 	size_t max_slots = (ISR_PRIORITY_LEVELS - pri) * 16;
 
-	size_t isr = bitmap_find_and_set(pri_bm, max_slots);
+	long isr = bitmap_find_and_set(pri_bm, max_slots);
 	dassert(isr != -1);
 
 	// The resulting ISR's number is relative to the given priority,

@@ -64,7 +64,7 @@ void* physical_alloc()
 {
 	dassert(ref_counts);
 
-	size_t index = bmstack_find_and_set(&alloc_map);
+	long index = bmstack_find_and_set(&alloc_map);
 	dassert(index != -1);
 
 	ref_counts[index] = 1;

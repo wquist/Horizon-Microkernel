@@ -62,7 +62,7 @@ void process_init()
 //! Allocate a new process control block with the given parent ID.
 pid_t process_new(pid_t ppid, uintptr_t entry)
 {
-	size_t index = bmstack_find_and_set(&block_map);
+	long index = bmstack_find_and_set(&block_map);
 	dassert(index != -1); //< No PID available.
 
 	// Get the address of the entire PCB.

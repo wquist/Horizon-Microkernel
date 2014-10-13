@@ -30,7 +30,7 @@ thread_uid_t thread_new(pid_t pid, uintptr_t entry)
 	process_t* owner = process_get(pid);
 	dassert(owner);
 
-	size_t index = bitmap_find_and_set(owner->thread_info.bitmap, PROCESS_THREAD_MAX);
+	long index = bitmap_find_and_set(owner->thread_info.bitmap, PROCESS_THREAD_MAX);
 	dassert(index != -1); // A free thread slot must exist.
 
 	thread_t* thread = &(owner->threads[index]);

@@ -23,9 +23,6 @@
 #include <memory.h>
 #include <stdbool.h>
 
-// Represents the end of a linked list.
-#define NULL_INDEX (PROCESS_MESSAGE_MAX)
-
 //! Place the given message into the target processes message queue.
 /*! The message is placed at the front of the queue if 'head' is 'true'. */
 void message_add(thread_uid_t uid, ipcport_t from, struct msg* info, bool head)
@@ -36,7 +33,7 @@ void message_add(thread_uid_t uid, ipcport_t from, struct msg* info, bool head)
 	dassert(owner);
 	dassert(owner->msg_info.count <= PROCESS_MESSAGE_MAX);
 
-	size_t index = bitmap_find_and_set(owner->msg_info.bitmap, PROCESS_MESSAGE_MAX);
+	long index = bitmap_find_and_set(owner->msg_info.bitmap, PROCESS_MESSAGE_MAX);
 	dassert(index != -1);
 
 	message_t* target = &(owner->messages[index]);
@@ -45,7 +42,8 @@ void message_add(thread_uid_t uid, ipcport_t from, struct msg* info, bool head)
 	target->from = from;
 	target->code = info->code;
 	target->arg  = info->arg;
-	target->payload_flag = (info->payload.size > 0);
+
+	target->flags.payload = (info->payload.size > 0);
 
 	// The head and tail of the queue are stored per-thread.
 	thread_t* thread = thread_get(uid);
@@ -68,7 +66,7 @@ void message_add(thread_uid_t uid, ipcport_t from, struct msg* info, bool head)
 		else
 			owner->messages[thread->msg_info.tail].next = index;
 
-		target->next = NULL_INDEX;
+		target->next = -1;
 		thread->msg_info.tail = index;
 	}
 
@@ -88,7 +86,7 @@ bool message_remove(thread_uid_t uid, struct msg* dest)
 	dassert(thread);
 	dassert(thread->msg_info.count);
 
-	// Since a message exists, the head is definitely not NULL_INDEX.
+	// Since a message exists, the head is definitely not -1.
 	message_t* source = &(owner->messages[thread->msg_info.head]);
 	bitmap_clear(owner->msg_info.bitmap, thread->msg_info.head);
 
@@ -102,13 +100,13 @@ bool message_remove(thread_uid_t uid, struct msg* dest)
 
 	// Update the linked list.
 	thread->msg_info.head = source->next;
-	if (thread->msg_info.head == NULL_INDEX) //< Message was the last in queue.
-		thread->msg_info.tail = NULL_INDEX;
+	if (thread->msg_info.head == -1) //< Message was the last in queue.
+		thread->msg_info.tail = -1;
 
 	owner->msg_info.count  -= 1;
 	thread->msg_info.count -= 1;
 
-	return source->payload_flag;
+	return source->flags.payload;
 }
 
 //! Get the sender and payload info of the head message without dequeue-ing it.
@@ -124,7 +122,7 @@ bool message_peek(thread_uid_t uid, ipcport_t* from)
 	message_t* source = &(owner->messages[thread->msg_info.head]);
 
 	*from = source->from;
-	return source->payload_flag;
+	return source->flags.payload;
 }
 
 //! Search for a message to bring to the head of the queue.
@@ -141,14 +139,14 @@ bool message_find(thread_uid_t uid, ipcport_t search)
 	if (!(thread->msg_info.count))
 		return false;
 
-	uint16_t prev = NULL_INDEX;
-	uint16_t curr = thread->msg_info.head;
-	while (curr != NULL_INDEX)
+	int16_t prev = -1;
+	int16_t curr = thread->msg_info.head;
+	while (curr != -1)
 	{
 		message_t* msg = &(owner->messages[curr]);
 		if (ipc_port_compare(search, uid))
 		{
-			if (prev == NULL_INDEX) //< This message is already the head.
+			if (prev == -1) //< This message is already the head.
 				return true;
 
 			// Remove the message from its position in the list.

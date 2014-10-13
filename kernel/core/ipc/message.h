@@ -36,12 +36,15 @@ struct message
 	struct __packed
 	{
 		// Point to the next message in queue.
-		/* 1 extra bit for storing null index as MESSAGE_MAX. */
-		uint32_t next         : 11;
-		// The payload information is stored in the thread.
-		uint32_t payload_flag : 1;
-		// FIXME: Something useful for reserved.
-		uint32_t _reserved    : 20;
+		int16_t next;
+
+		struct __packed
+		{
+			// The payload information is stored in the thread.
+			uint16_t payload : 1;
+			// FIXME: Other flags/else?
+			uint16_t : 15;
+		} flags;
 	};
 };
 

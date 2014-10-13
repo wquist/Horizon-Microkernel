@@ -58,18 +58,18 @@ void bitmap_clear_all(bitmap_t* bm, size_t items)
 }
 
 //! Find the first clear bit in the bitmap, set it, and return the index.
-size_t bitmap_find_and_set(bitmap_t* bm, size_t items)
+long bitmap_find_and_set(bitmap_t* bm, size_t items)
 {
 	size_t i = 0;
-	for (; ~(bm[i]) == 0; ++i) //< Compare with inverse; ptr size varies per on platform.
+	for (; ~(bm[i]) == 0; ++i) //< Compare with inverse; ptr size varies per platform.
 	{
-		if (i >= items)
+		if (i >= BITMAP_LENGTH(items))
 			return -1;
 	}
 
 	// Find the least significant zero bit.
-	int bit = __builtin_ffsl(~(bm[i])) - 1; //< ffsl return lszb + 1.
-	size_t index = (i * BITMAP_BITS) + bit;
+	char bit = __builtin_ffsl(~(bm[i])) - 1; //< ffsl returns lszb + 1.
+	long index = (i * BITMAP_BITS) + bit;
 
 	bm[i] |= (1 << bit);
 	return index;

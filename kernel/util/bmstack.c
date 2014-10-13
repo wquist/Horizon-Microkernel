@@ -111,18 +111,18 @@ void bmstack_clear_all(bmstack_t* bms, size_t items)
 	memset(bms->base, 0x00, BMSTACK_SIZE(items));
 }
 
-size_t bmstack_find_and_set(bmstack_t* bms)
+long bmstack_find_and_set(bmstack_t* bms)
 {
 	dassert(bms->head);
 
 	// Find the least significant 0 bit.
-	int bit = __builtin_ffsl(~(bms->head->bitmap)) - 1;
+	char bit = __builtin_ffsl(~(bms->head->bitmap)) - 1;
 	if (bit < 0) return -1; //< Problem; head should always have free bit.
 
 	uintptr_t base = (uintptr_t)(bms->base);
 	uintptr_t head = (uintptr_t)(bms->head);
 	size_t i = addr_to_index(base, sizeof(bmstack_entry_t), head); 
-	size_t index  = (i * BITMAP_BITS) + bit;
+	long index  = (i * BITMAP_BITS) + bit;
 
 	bmstack_set(bms, index);
 	return index; 
