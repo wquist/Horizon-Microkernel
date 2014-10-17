@@ -15,14 +15,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <system/exceptions.h>
+#include <system/internal.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
-#include <system/internal.h>
 
-void exception_userfault(isr_t isr)
+void internal_tkill(thread_uid_t uid)
 {
-	// FIXME: Send process manager message?
+	thread_uid_t caller_uid = scheduler_curr();
+	if (caller_uid.pid == uid.pid)
+		scheduler_lock();
 
-	internal_tkill(scheduler_curr());
+	if (uid.tid == 0)
+	{
+		scheduler_purge(uid.pid);
+		process_kill(uid.pid);
+	}
+	else
+	{
+		scheduler_remove(uid);
+		thread_kill(uid);
+	}
+
+	if (!(scheduler_curr().pid))
+		scheduler_unlock();
 }

@@ -18,23 +18,11 @@
 #include <system/exceptions.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <system/internal.h>
 
-// FIXME: Try to demand load, COW, etc.
 void exception_pagefault(isr_t isr)
 {
-	scheduler_lock();
+	// FIXME: Try to demand load, COW, etc.
 
-	thread_uid_t target_uid = scheduler_curr();
-	if (target_uid.tid == 0)
-	{
-		scheduler_purge(target_uid.pid);
-		process_kill(target_uid.pid);
-	}
-	else
-	{
-		scheduler_remove(target_uid);
-		thread_kill(target_uid);
-	}
-
-	scheduler_unlock();
+	internal_tkill(scheduler_curr());
 }

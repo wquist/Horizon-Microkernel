@@ -15,14 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <system/exceptions.h>
-#include <multitask/process.h>
-#include <multitask/scheduler.h>
-#include <system/internal.h>
+/*! \file core/system/internal.h
+ *  \date October 2014
+ */
 
-void exception_userfault(isr_t isr)
-{
-	// FIXME: Send process manager message?
+#pragma once
 
-	internal_tkill(scheduler_curr());
-}
+#include <multitask/thread.h>
+#include <horizon/types.h>
+#include <horizon/msg.h>
+
+void internal_tkill(thread_uid_t uid);
+void internal_ksend(ipcport_t port, msgdata_t code, msgdata_t args[MSG_ARGC]);

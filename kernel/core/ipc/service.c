@@ -21,6 +21,7 @@
 #include <multitask/scheduler.h>
 #include <ipc/port.h>
 #include <ipc/message.h>
+#include <system/internal.h>
 #include <debug/error.h>
 #include <horizon/svc.h>
 #include <horizon/ipc.h>
@@ -72,30 +73,6 @@ void irq_callback(isr_t isr, irq_t irq)
 	if (!port)
 		return;
 
-	// Port should always be valid here.
-	thread_uid_t target_uid;
-	ipc_port_get(port, 0, &target_uid);
-
-	// FIXME: Just kill the process/thread?
-	process_t* target_proc = process_get(target_uid.pid);
-	if (target_proc->msg_info.count >= PROCESS_MESSAGE_MAX)
-		dpanic("Service could not receive IRQ.");
-
-	// FIXME: Code should be some 'SVC_IRQ_OCCURRED' or similar.
-	/* Then data can contain the IRQ number. */
-	struct msg info = {0};
-	info.to = port;
-	info.code = irq;
-
-	// FIXME: Messaging code here is almost duplicate of syscall_send.
-	/* Create a new 'internal_msgsend' function for both? */
-	thread_t* target = thread_get(target_uid);
-
-	bool woken = false;
-	if (target->state == THREAD_STATE_WAITING)
-		woken = (target->syscall_info.wait_for == IPORT_KERNEL);
-
-	message_add(target_uid, IPORT_KERNEL, &info, woken);
-	if (woken)
-		scheduler_add(target_uid);
+	msgdata_t args[MSG_ARGC] = { irq };
+	internal_ksend(port, 0, args);
 }
