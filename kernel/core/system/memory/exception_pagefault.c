@@ -18,11 +18,28 @@
 #include <system/exceptions.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <ipc/service.h>
 #include <system/internal.h>
+#include <horizon/svc.h>
+#include <horizon/msg.h>
 
 void exception_pagefault(isr_t isr)
 {
 	// FIXME: Try to demand load, COW, etc.
 
-	internal_tkill(scheduler_curr());
+	thread_uid_t target_uid = scheduler_curr();
+	internal_tkill(target_uid);
+
+	// Only a thread was killed, not the entire process.
+	if (target_uid.tid != 0)
+		return;
+
+	// Send a message to the process manager telling which PID died.
+	ipcport_t svc_port = service_get(SVC_PROCMGR);
+	if (svc_port)
+	{
+		// FIXME: Add page fault code to arguments.
+		msgdata_t data[MSG_ARGC] = { target_uid.pid };
+		internal_ksend(svc_port, SVC_PROCMGR, data);
+	}
 }

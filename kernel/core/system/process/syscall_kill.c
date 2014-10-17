@@ -19,6 +19,8 @@
 #include <arch.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <ipc/service.h>
+#include <system/internal.h>
 #include <horizon/proc.h>
 #include <horizon/errno.h>
 
@@ -47,4 +49,12 @@ void syscall_kill(pid_t pid)
 		scheduler_unlock();
 	else
 		syscall_return_set(ENONE);
+
+	// Send a message to the process manager saying this PID died.
+	ipcport_t svc_port = service_get(SVC_PROCMGR);
+	if (svc_port)
+	{
+		msgdata_t data[MSG_ARGC] = { pid };
+		internal_ksend(svc_port, SVC_PROCMGR, data);
+	}
 }

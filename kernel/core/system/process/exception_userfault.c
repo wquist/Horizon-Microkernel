@@ -18,11 +18,26 @@
 #include <system/exceptions.h>
 #include <multitask/process.h>
 #include <multitask/scheduler.h>
+#include <ipc/service.h>
 #include <system/internal.h>
+#include <horizon/svc.h>
+#include <horizon/msg.h>
 
 void exception_userfault(isr_t isr)
 {
-	// FIXME: Send process manager message?
+	thread_uid_t target_uid = scheduler_curr();
+	internal_tkill(target_uid);
 
-	internal_tkill(scheduler_curr());
+	// Only a thread was killed, not the entire process.
+	if (target_uid.tid != 0)
+		return;
+
+	// Send a message to the process manager telling which PID died.
+	ipcport_t svc_port = service_get(SVC_PROCMGR);
+	if (svc_port)
+	{
+		// FIXME: Add exception code. (SEGFAULT, etc.)
+		msgdata_t data[MSG_ARGC] = { target_uid.pid };
+		internal_ksend(svc_port, SVC_PROCMGR, data);
+	}
 }

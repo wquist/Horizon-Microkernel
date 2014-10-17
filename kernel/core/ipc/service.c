@@ -52,8 +52,8 @@ ipcport_t service_get(size_t svc)
 {
 	dassert(svc < SVCMAX);
 
-	// Port '0' is technically valid.
-	/* The result of this function will still be 0 in that case. */
+	// Port '0' is technically valid, but would be invalid as a service.
+	/* The port would be local TID 0, but service are always absolute. */
 	ipcport_t port = service_ids[svc];
 
 	thread_uid_t uid;
@@ -73,6 +73,6 @@ void irq_callback(isr_t isr, irq_t irq)
 	if (!port)
 		return;
 
-	msgdata_t args[MSG_ARGC] = { irq };
-	internal_ksend(port, 0, args);
+	msgdata_t args[MSG_ARGC] = { 0 };
+	internal_ksend(port, irq, args);
 }
