@@ -6,9 +6,9 @@
 typedef enum SVC svc_t;
 enum SVC
 {
-	SVC_TERM = SVC_IMAX,
-	SVC_KYBD,
-	SVC_PGER,
+	SVC_PAGER = SVC_IMAX,
+	SVC_PROCMGR,
+	SVC_DEVMGR,
 	SVC_VFS,
 
 	SVCMAX
