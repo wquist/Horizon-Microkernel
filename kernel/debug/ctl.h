@@ -22,6 +22,4 @@
 #pragma once
 
 void debug_init();
-
-// Provide the putchar implementation for libh
-int putchar(char c);
+void debug_disable();

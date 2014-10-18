@@ -74,6 +74,9 @@ void __noreturn kmain(int magic, const bootloader_info_t* bli, uintptr_t vmem)
 		scheduler_add(uid);
 	}
 
+	// A terminal driver is probably loaded, so no more debug out.
+	debug_disable();
+
 	// Begin the first usermode thread.
 	scheduler_start();
 

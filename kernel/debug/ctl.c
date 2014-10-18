@@ -17,10 +17,13 @@
 
 #include "ctl.h"
 #include <arch.h>
+#include <stdbool.h>
 #include <memory.h>
 
+bool debug_enabled = false;
+
 static size_t cursor_x = 0, cursor_y = 0;
-static console_char_t* buffer = (console_char_t*)CONSOLE_ADDR;
+static console_char_t* const buffer = (console_char_t*)CONSOLE_ADDR;
 
 static void scroll();
 
@@ -28,12 +31,21 @@ static void scroll();
 /*! Any debug_* or d* function can be called after this. */
 void debug_init()
 {
+	debug_enabled = true;
+
 	/* Set the entire screen to spaces instead of 0,
 	   since 0 might have extra color info or something
 	 */
 	size_t len = CONSOLE_WIDTH * CONSOLE_HEIGHT;
 	for (size_t i = 0; i != len; ++i)
 		buffer[i] = console_format(' ');
+}
+
+//! Disable debug output.
+/*! debug_trace() calls will no longer be output. */
+void debug_disable()
+{
+	debug_enabled = false;
 }
 
 //! Redirect stdio's character stream directory to video memory.
