@@ -8,7 +8,7 @@ void* realloc(void* ptr, size_t size)
 	struct malloc_header* header = (struct malloc_header*)header_ptr;
 
 	size_t old_size = header->size & ~MALLOC_USED;
-	size_t new_size = MALLOC_ALIGN(size + sizeof(struct malloc_header));
+	size_t new_size = __malloc_align(size + sizeof(struct malloc_header));
 	if (new_size <= old_size)
 		return ptr;
 
