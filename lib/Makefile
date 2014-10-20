@@ -27,11 +27,11 @@ ARFLAGS = rcs
 
 # Use a default of include/ and src/, but allow a unique Makefile.inc to specify more
 INC_DIRS = $(TARGET_ROOT)/include/
-SOURCES  = $(sort $(wildcard $(TARGET_ROOT)/src/*/*.c))
 -include $(TARGET_ROOT)/Makefile.inc
 
 # Each include directory must be in the format -I(inc) for GCC
 INCLUDES = $(addprefix -I, $(INC_DIRS))
+SOURCES  = $(sort $(wildcard $(TARGET_ROOT)/src/*/*.c))
 
 # Set up the object paths inside OBJ_ROOT and extract directories for the checkdirs target
 OBJECTS  = $(subst $(TARGET_ROOT), $(OBJ_ROOT), $(addsuffix .o, $(basename $(SOURCES))))
@@ -47,10 +47,12 @@ checkdirs: $(OBJ_DIRS)
 obj: $(OBJECTS)
 
 $(OBJ_ROOT)/%.o:$(TARGET_ROOT)/%.c | checkdirs
-	$(COMPILE) $< -o $@
+	@$(COMPILE) $< -o $@
+	@echo "CC $<"
 
 $(BINARY): $(OBJECTS)
-	$(PACKAGE) $@ $^
+	@$(PACKAGE) $@ $^
+	@echo "AR $@"
 
 $(OBJ_DIRS):
 	@mkdir -p $@
