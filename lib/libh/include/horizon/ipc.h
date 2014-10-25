@@ -9,6 +9,7 @@
 #define IPORT_LOCAL(tid) ((tid) << 18)
 #define IPORT_GLOBL(pid) (pid)
 
-#define IPORTID(port) ((port) & 0x3FFFF)
+#define IPORTID(port)   ((port) & 0x3FFFF)
+#define IPORTPROC(port) ((port) & 0x3FF)
 
 #endif

@@ -4,11 +4,7 @@
 #include <features.h>
 #include <stdarg.h>
 
-#if defined(_HAS_STDIO)
 int putchar(char c);
-#else
-extern int putchar(char c);
-#endif
 
 int  printf(const char* format, ...);
 int vprintf(const char* format, va_list* arg);
