@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <ctype.h>
 
-// No libgcc in kernel for now; use 32-bit maximums
+// FIXME: No libgcc in kernel for now; use word-size maximums
 #define uintmax_t unsigned long
 #define  intmax_t long
 
