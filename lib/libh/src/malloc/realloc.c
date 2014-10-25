@@ -2,7 +2,7 @@
 #include <internal/malloc.h>
 #include <memory.h>
 
-void* realloc(void* ptr, size_t size)
+__hdecl void* realloc(void* ptr, size_t size)
 {
 	char* header_ptr = (char*)ptr - sizeof(struct malloc_header);
 	struct malloc_header* header = (struct malloc_header*)header_ptr;

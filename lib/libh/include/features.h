@@ -29,6 +29,7 @@
 #else
 #endif
 
+// FIXME: Any additional options besides weak?
 #define __hdecl __weak
 
 #endif

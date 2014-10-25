@@ -3,7 +3,7 @@
 
 static void* find_fit(size_t size);
 
-void* malloc(size_t size)
+__hdecl void* malloc(size_t size)
 {
 	size_t block_size = __malloc_align(size + sizeof(struct malloc_header));
 
