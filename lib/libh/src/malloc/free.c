@@ -1,7 +1,7 @@
 #include <malloc.h>
 #include <internal/malloc.h>
 
-void free(void* ptr)
+__hdecl void free(void* ptr)
 {
 	char* header_ptr = (char*)ptr - sizeof(struct malloc_header);
 	struct malloc_header* header = (struct malloc_header*)header_ptr;

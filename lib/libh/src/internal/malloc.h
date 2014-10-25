@@ -4,7 +4,7 @@
 #include <malloc.h>
 
 #define MALLOC_USED 1UL
-#define MALLOC_ALIGN(x) (((x) + MALLOC_ALIGNMENT-1) & ~(MALLOC_ALIGNMENT-1))
+#define __malloc_align(x) (((x) + MALLOC_ALIGNMENT-1) & ~(MALLOC_ALIGNMENT-1))
 
 struct malloc_header
 {

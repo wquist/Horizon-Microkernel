@@ -6,7 +6,7 @@
 static void* heap_base;
 static void* heap_top;
 
-void malloc_initialize(void* base)
+void __malloc_initialize(void* base)
 {
 	heap_base = base;
 	heap_top  = base;
