@@ -1,7 +1,6 @@
 // main.c
 
 #include <horizon/ipc.h>
-#include <sys/proc.h>
 #include <sys/sched.h>
 #include <sys/svc.h>
 #include <sys/msg.h>
@@ -52,14 +51,14 @@ void add_device(char* name, ipcport_t port)
 int main()
 {
 	if (svcown(SVC_DEVMGR) < 0)
-		kill(PID_SELF);
+		return 1;
 
 	char buffer[64];
 	while (true)
 	{
 		wait(IPORT_ANY);
 
-		struct msg request;
+		struct msg request = {{0}};
 		request.payload.buf  = buffer;
 		request.payload.size = 64;
 
@@ -69,7 +68,7 @@ int main()
 			continue;
 		}
 
-		struct msg response;
+		struct msg response = {{0}};
 		response.to = request.from;
 		switch (request.code)
 		{

@@ -8,6 +8,7 @@
 GLOBAL _start
 EXTERN __malloc_initialize
 EXTERN main
+EXTERN kill
 
 ; =====================
 ; Program Entry (.code)
@@ -22,6 +23,9 @@ _start: mov  esp, _init_stack
 		add esp, 4
 
         call main
+
+        push eax
+        call kill
         jmp  $
 
 ; =========================
