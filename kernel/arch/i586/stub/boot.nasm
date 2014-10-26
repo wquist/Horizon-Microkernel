@@ -22,7 +22,7 @@
 ; ===================
 
 GLOBAL bootstrap
-GLOBAL __kernel_stack
+GLOBAL ___kernel_stack
 EXTERN kmain
 
 EXTERN _KERNEL_PHYS_ADDR
@@ -123,7 +123,7 @@ multiboot: dd   MBH_MAGIC
 SECTION .kentry
 BITS 32
 
-kstart:    mov  esp, __kernel_stack
+kstart:    mov  esp, ___kernel_stack
 
            ; Pass the boot parameters to the kernel main C function
            push ecx
@@ -140,4 +140,4 @@ SECTION .bss
 BITS 32
 
 RESB 4096
-__kernel_stack:    ; Stack grows backwards, so point to the end of the area
+___kernel_stack:    ; Stack grows backwards, so point to the end of the area

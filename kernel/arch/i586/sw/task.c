@@ -22,7 +22,9 @@
 
 // FIXME: Must be changed for SMP.
 static tss_t kernel_task;
-extern uintptr_t __kernel_stack;
+
+extern const uintptr_t ___kernel_stack;
+const uintptr_t __kernel_stack = (uintptr_t)&___kernel_stack;
 
 //! Initialize any specific task info.
 void task_init(task_info_t* info)
