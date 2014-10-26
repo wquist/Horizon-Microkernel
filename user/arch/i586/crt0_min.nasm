@@ -6,6 +6,7 @@
 ; ===================
 
 GLOBAL _start
+EXTERN __malloc_initialize
 EXTERN main
 
 ; =====================
@@ -15,6 +16,11 @@ SECTION .code
 BITS 32
 
 _start: mov  esp, _init_stack
+
+		push _heap_start
+		call __malloc_initialize
+		add esp, 4
+
         call main
         jmp  $
 
@@ -26,3 +32,7 @@ BITS 32
 
 RESB 4096
 _init_stack:
+
+; place some padding between the stack and heap
+RESB 16
+_heap_start:
