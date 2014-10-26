@@ -144,7 +144,7 @@ bool message_find(thread_uid_t uid, ipcport_t search)
 	while (curr != -1)
 	{
 		message_t* msg = &(owner->messages[curr]);
-		if (ipc_port_compare(search, uid))
+		if (search == msg->from)
 		{
 			if (prev == -1) //< This message is already the head.
 				return true;
