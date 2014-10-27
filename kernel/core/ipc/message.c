@@ -144,7 +144,12 @@ bool message_find(thread_uid_t uid, ipcport_t search)
 	while (curr != -1)
 	{
 		message_t* msg = &(owner->messages[curr]);
-		if (search == msg->from)
+		thread_uid_t msg_uid;
+		ipc_port_get(msg->from, 0, &msg_uid);
+
+		// FIXME: Compare will not work when sender is dead.
+		/* Needs separate ipc_port_compare_uid, ipc_port_compare_port, etc. */
+		if (ipc_port_compare(search, msg_uid))
 		{
 			if (prev == -1) //< This message is already the head.
 				return true;
