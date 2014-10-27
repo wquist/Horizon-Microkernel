@@ -36,8 +36,8 @@ void syscall_grant(struct shm* info, uintptr_t dest)
 	if (!(info->size))
 		return syscall_return_set(ESIZE);
 
-	thread_uid_t target_uid;
-	if (!ipc_port_get(info->to, caller_uid.pid, &target_uid))
+	thread_uid_t target_uid = port_to_uid(info->to, caller_uid.pid);
+	if (target_uid.raw == 0)
 		return syscall_return_set(EINVALID);
 
 	process_t* target = process_get(target_uid.pid);

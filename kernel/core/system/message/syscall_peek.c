@@ -35,12 +35,10 @@ void syscall_peek()
 
 	ipcport_t port;
 	bool has_payload = message_peek(caller_uid, &port);
-
-	thread_uid_t sender_uid;
-	bool valid = ipc_port_get(port, caller_uid.pid, &sender_uid);
+	thread_uid_t sender_uid = port_to_uid(port, 0);
 
 	// The payload can no longer be received if the sender is gone.
-	if (!(valid && has_payload))
+	if (!(has_payload && sender_uid.raw != 0))
 		return syscall_return_set(0);
 
 	thread_t* sender = thread_get(sender_uid);

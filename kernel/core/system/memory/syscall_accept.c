@@ -43,7 +43,7 @@ void syscall_accept(shmid_t sid, uintptr_t dest, size_t size)
 	struct shm* info = &(target->syscall_info.shm_offer);
 
 	// Make sure the caller is allowed to accept.
-	if (!ipc_port_compare(info->to, caller_uid))
+	if (!port_compare(info->to, port_from_uid(caller_uid)))
 		return syscall_return_set(EPRIV);
 
 	if (addr_align(dest, ARCH_PGSIZE) != dest)

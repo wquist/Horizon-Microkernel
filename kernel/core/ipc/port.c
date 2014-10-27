@@ -34,7 +34,7 @@ union port_fmt
 };
 
 //! Create a formatted port form the given process/thread identifier.
-ipcport_t ipc_port_format(thread_uid_t uid)
+ipcport_t port_from_uid(thread_uid_t uid)
 {
 	process_t* process = process_get(uid.pid);
 	dassert(process);
@@ -56,84 +56,62 @@ ipcport_t ipc_port_format(thread_uid_t uid)
  *  - For global values, PID = value, TID = 0.
  *  - For a local TID, PID = 0, TID = value.
  *  - For anything else, both PID and TID are set to actual values.
- *  Only returns true if valid and both process and thread exist.
+ *  Returns PID0 and TID0 if invalid/unable to convert.
+ *  FIXME: returns 0 as invalid, although 0 technically represents local TID0.
+ *  - Should not actually cause any problems, though.
  */
-bool ipc_port_get(ipcport_t port, pid_t parent, thread_uid_t* uid)
+thread_uid_t port_to_uid(ipcport_t port, pid_t parent)
 {
-	dassert(uid);
+	port_fmt_t fmt = { .raw = port };
 
 	// First check for global values.
 	if (port == IPORT_ANY || port == IPORT_KERNEL)
-	{
-		uid->pid = 1;
-		uid->tid = port;
-		return true;
-	}
+		return (thread_uid_t){ .pid = 1, .tid = fmt.tid };
 
 	// If a version is not specified, it must be a generic PID or local TID.
-	port_fmt_t fmt = { .raw = port };
 	if (!(fmt.pvn) && !(fmt.tvn))
 	{
 		// This is a local TID.
 		if (!(fmt.pid))
-		{
-			uid->pid = parent;
-			uid->tid = fmt.tid;
-			return true;
-		}
+			return (thread_uid_t){ .pid = parent, .tid = fmt.tid };
 
 		// It must be a generic PID.
-		uid->pid = fmt.pid;
-		uid->tid = 0; //< The TID is ignored - always send to main thread.
-		return true;
+		/* The TID is always set the main thread in this case. */
+		return (thread_uid_t){ .pid = fmt.pid, .tid = 0 };
 	}
 
-	// Both the process and thread must be alive.
-	process_t* process = process_get(fmt.pid);
-	if (!process)
-		return false;
-
+	// If versioning is specified, the process and thread must be alive.
 	thread_uid_t target_uid = { .pid = fmt.pid, .tid = fmt.tid };
+
+	// thread_get returns NULL if the process does not exist as well.
 	thread_t* thread = thread_get(target_uid);
 	if (!thread)
-		return false;
+		return (thread_uid_t){0};
 
-	// Versioning exists, so the port may not be valid.
+	// The port points to a valid thread, but versioning may be invalid.
+	/* The thread exists, so the process must exist as well. */
+	process_t* process = process_get(target_uid.pid);
 	if (process->version != fmt.pvn || thread->version != fmt.tvn)
-		return false;
+		return (thread_uid_t){0};
 
-	uid->pid = fmt.pid;
-	uid->tid = fmt.tid;
-	return true;
+	// The port is valid.
+	return (thread_uid_t){ .pid = fmt.pid, .tid = fmt.tid };
 }
 
-//! Test if a port is compatible with the given process and thread.
-bool ipc_port_compare(ipcport_t port, thread_uid_t uid)
+//! Test if two ports represent equivalent destinations.
+bool port_compare(ipcport_t port1, ipcport_t port2)
 {
-	if (port == IPORT_ANY)
+	// Test for the wildcard ports first.
+	if (port1 == IPORT_ANY || port2 == IPORT_ANY)
 		return true;
-	if (port == IPORT_KERNEL)
-		return (uid.pid == 1 && uid.tid == IPORT_KERNEL);
 
-	port_fmt_t fmt = { .raw = port };
-	if (!(fmt.pvn) && !(fmt.tvn))
-	{
-		if (!(fmt.pid))
-			return (fmt.tid == uid.tid);
+	port_fmt_t fmt1 = { .raw = port1 };
+	port_fmt_t fmt2 = { .raw = port2 };
 
-		return (fmt.pid == uid.pid);
-	}
+	// If one port lacks version info, only test the PID/TID.
+	if ((!(fmt1.pvn) && !(fmt1.tvn)) || (!(fmt2.pvn) && !(fmt2.tvn)))
+		return ((fmt1.pvn == fmt2.pvn) && (fmt1.tvn == fmt2.tvn));
 
-	if (fmt.pid != uid.pid || fmt.tid != uid.tid)
-		return false;
-
-	process_t* process = process_get(uid.pid);
-	if (!process)
-		return false;
-
-	thread_t* thread = thread_get(uid);
-	if (!thread)
-		return false;
-
-	return (process->version == fmt.pvn && thread->version == fmt.tvn);
+	// Both ports are versioned, so they are equivalent if equal.
+	return (port1 == port2);
 }

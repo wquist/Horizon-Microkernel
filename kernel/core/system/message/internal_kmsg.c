@@ -27,9 +27,8 @@
 
 void internal_ksend(ipcport_t port, msgdata_t code, msgdata_t args[MSG_ARGC])
 {
-	thread_uid_t target_uid;
-	bool port_valid = ipc_port_get(port, 0, &target_uid);
-	dassert(port_valid);
+	thread_uid_t target_uid = port_to_uid(port, 0);
+	dassert(target_uid.raw != 0);
 
 	// FIXME: Just kill the process/thread?
 	process_t* target_proc = process_get(target_uid.pid);

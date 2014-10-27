@@ -41,12 +41,10 @@ void syscall_drop(struct msg* info)
 
 	// Copy the message info now (contains the sender value needed next).
 	bool has_payload = message_remove(caller_uid, info);
-
-	thread_uid_t sender_uid;
-	bool valid = ipc_port_get(info->from, caller_uid.pid, &sender_uid);
+	thread_uid_t sender_uid = port_to_uid(info->from, caller_uid.pid);
 
 	// If the sender is alive, it needs to be reawoken after blocking for a payload.
-	if (valid && has_payload)
+	if (has_payload && sender_uid.raw != 0)
 		scheduler_add(sender_uid);
 
 	syscall_return_set(ENONE);

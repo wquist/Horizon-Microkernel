@@ -41,7 +41,7 @@ void service_register(size_t svc, thread_uid_t uid)
 	thread_t* thread = thread_get(uid);
 	dassert(thread);
 
-	service_ids[svc] = ipc_port_format(uid);
+	service_ids[svc] = port_from_uid(uid);
 
 	if (svc < SVC_IMAX)
 		int_callback_set(irq_to_isr(svc), false, irq_callback);
@@ -53,11 +53,9 @@ ipcport_t service_get(size_t svc)
 	dassert(svc < SVCMAX);
 
 	// Port '0' is technically valid, but would be invalid as a service.
-	/* The port would be local TID 0, but service are always absolute. */
+	/* The port would be local TID0, but services are always absolute. */
 	ipcport_t port = service_ids[svc];
-
-	thread_uid_t uid;
-	if (ipc_port_get(port, 0, &uid))
+	if (port_to_uid(port, 0).raw != 0)
 		return port;
 
 	if (svc < SVC_IMAX)

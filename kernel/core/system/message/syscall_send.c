@@ -29,14 +29,15 @@
 void syscall_send(struct msg* src)
 {
 	thread_uid_t caller_uid = scheduler_curr();
+	ipcport_t caller_port = port_from_uid(caller_uid);
 
 	if (virtual_is_mapped(caller_uid.pid, (uintptr_t)src, sizeof(struct msg)) != 1)
 		return syscall_return_set(EPARAM);
-	if (ipc_port_compare(src->to, caller_uid))
+	if (port_compare(src->to, caller_port))
 		return syscall_return_set(EPARAM);
 
-	thread_uid_t target_uid;
-	if (!ipc_port_get(src->to, caller_uid.pid, &target_uid))
+	thread_uid_t target_uid = port_to_uid(src->to, caller_uid.pid);
+	if (target_uid.pid == 0)
 		return syscall_return_set(EINVALID);
 
 	thread_t* target = thread_get(target_uid);
@@ -76,12 +77,10 @@ void syscall_send(struct msg* src)
 	// Try to wake up the receiver if necessary.
 	bool woken = false;
 	if (target->state == THREAD_STATE_WAITING)
-		woken = ipc_port_compare(target->syscall_info.wait_for, caller_uid);
-
-	ipcport_t port = ipc_port_format(caller_uid);
+		woken = port_compare(target->syscall_info.wait_for, caller_port);
 
 	// Here, 'woken' determines if msg is placed at the head (next in queue) or tail.
-	message_add(target_uid, port, src, woken);
+	message_add(target_uid, caller_port, src, woken);
 	if (woken)
 		scheduler_add(target_uid);
 

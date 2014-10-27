@@ -32,8 +32,8 @@ void syscall_wait(ipcport_t sender)
 		return syscall_return_set(ENONE); //< Use 'revc' to get it.
 
 	// Find what thread the caller is waiting for.
-	thread_uid_t target_uid;
-	if (!ipc_port_get(sender, caller_uid.pid, &target_uid))
+	thread_uid_t target_uid = port_to_uid(sender, caller_uid.pid);
+	if (target_uid.raw == 0)
 		return syscall_return_set(EINVALID);
 
 	// Make sure whatever is being waited on actually exists.

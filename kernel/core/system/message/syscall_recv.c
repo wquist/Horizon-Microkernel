@@ -44,12 +44,10 @@ void syscall_recv(struct msg* dest)
 	/* The dest payload info has not been confirmed valid yet. */
 	ipcport_t port;
 	bool has_payload = message_peek(caller_uid, &port);
-
-	thread_uid_t sender_uid;
-	bool valid = ipc_port_get(port, caller_uid.pid, &sender_uid);
+	thread_uid_t sender_uid = port_to_uid(port, 0);
 
 	size_t recv_size = 0;
-	if (has_payload && valid)
+	if (has_payload && sender_uid.raw != 0)
 	{
 		thread_t* sender = thread_get(sender_uid);
 

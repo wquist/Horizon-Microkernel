@@ -32,7 +32,7 @@
  *  An exact receiver: TVN << 24 | TID << 18 | PVN << 10 | PID
  */
 
-ipcport_t ipc_port_format(thread_uid_t uid);
+ipcport_t port_from_uid(thread_uid_t uid);
+thread_uid_t port_to_uid(ipcport_t port, pid_t parent);
 
-bool ipc_port_get(ipcport_t port, pid_t parent, thread_uid_t* uid);
-bool ipc_port_compare(ipcport_t port, thread_uid_t uid);
+bool port_compare(ipcport_t port1, ipcport_t port2);
