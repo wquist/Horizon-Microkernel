@@ -35,14 +35,9 @@ struct device* find_device(char* name)
 
 void add_device(char* name, ipcport_t port)
 {
-	// FIXME: malloc
-	return;
-
 	struct device* dev = malloc(sizeof(struct device));
-
 	strcpy(dev->name, name);
 	dev->port = port;
-	dev->next = NULL;
 
 	dev->next = device_head;
 	device_head = dev;

@@ -7,11 +7,10 @@
 #include <sys/svc.h>
 #include <sys/msg.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <memory.h>
 
-char device_name[] = "tty";
-
-uint16_t* const video_mem = (uint16_t*)0xA0000000;
+uint16_t* const video_mem = (uint16_t*)0x10000000;
 size_t cursor_x = 0, cursor_y = 0;
 
 void putc(char c)
@@ -78,6 +77,28 @@ void puts(const char* s)
 		putc(*s++);
 }
 
+bool register_device()
+{
+	ipcport_t devmgr;
+	while ((devmgr = svcid(SVC_DEVMGR)) == 0);
+
+	struct msg request = {{0}};
+	request.to = devmgr;
+	request.code = 1;
+	request.payload.buf = "tty";
+	request.payload.size = 4;
+
+	send(&request);
+	wait(devmgr);
+
+	struct msg response = {{0}};
+	recv(&response);
+	if (response.code != 0)
+		return false;
+
+	return true;
+}
+
 int main()
 {
 	if (pmap(video_mem, 0xB8000, 4096) == NULL)
@@ -86,26 +107,36 @@ int main()
 	memset(video_mem, 0, 80*25*sizeof(uint16_t));
 	puts("[tty] Initialized VGA driver.\n");
 
-	ipcport_t devmgr;
-	while ((devmgr = svcid(SVC_DEVMGR)) == 0);
-
 	puts("[tty] Registering with device manager... ");
-
-	struct msg request = {{0}};
-	request.to = devmgr;
-	request.code = 1;
-	request.payload.buf = device_name;
-	request.payload.size = 4;
-
-	send(&request);
-	wait(devmgr);
-
-	struct msg response;
-	recv(&response);
-	if (response.code != 0)
+	if (!register_device())
 		return 1;
 
 	puts("OK!\n");
+
+	char buffer[256];
+	while (true)
+	{
+		wait(IPORT_ANY);
+
+		struct msg request = {{0}};
+		request.payload.buf  = buffer;
+		request.payload.size = 256;
+
+		if (recv(&request) < 0)
+		{
+			drop(NULL);
+			continue;
+		}
+
+		switch (request.code)
+		{
+			case 0:
+				puts(buffer);
+				break;
+			default:
+				break;
+		}
+	}
 
 	return 0;
 }

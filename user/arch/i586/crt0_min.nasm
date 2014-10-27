@@ -18,13 +18,13 @@ BITS 32
 
 _start: mov  esp, _init_stack
 
-		push _heap_start
+		push 0x20000000
 		call __malloc_initialize
 		add esp, 4
 
         call main
 
-        push eax
+        push 0
         call kill
         jmp  $
 
@@ -36,7 +36,3 @@ BITS 32
 
 RESB 4096
 _init_stack:
-
-; place some padding between the stack and heap
-RESB 16
-_heap_start:
