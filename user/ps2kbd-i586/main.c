@@ -43,7 +43,6 @@ bool register_device()
 
 int main()
 {
-	for (;;);
 	if (ps2ctl_init() < 0)
 		return 1;
 	if (ps2kbd_init() < 0)

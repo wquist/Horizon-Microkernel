@@ -64,7 +64,7 @@ int ps2kbd_mode_set(char mode, const unsigned char* map)
 unsigned char ps2kbd_read()
 {
 	unsigned char val;
-	sysio(IO_INB, PS2KBD_PORT_DAT, &val);
+	val = sysio(IO_INB, PS2KBD_PORT_DAT, NULL);
 
 	if (active_state == STATE_SKIP)
 	{
@@ -132,7 +132,7 @@ int stat_wait(unsigned char cmd, unsigned char dat, unsigned char ret)
 	while (!ps2ctl_has_data());
 
 	poll:
-	sysio(IO_INB, PS2KBD_PORT_DAT, &result);
+	result = sysio(IO_INB, PS2KBD_PORT_DAT, NULL);
 
 	if (result == ret)
 		return 0;

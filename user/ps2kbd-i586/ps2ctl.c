@@ -35,7 +35,7 @@ int ps2ctl_init()
 
 	// Setup the configuration byte
 	sysio(IO_OUTB, PS2CTL_PORT_CMD, (void*)PS2CTL_CMD_CFGRD);
-	sysio(IO_INB,  PS2CTL_PORT_DAT, &byte);
+	byte = sysio(IO_INB,  PS2CTL_PORT_DAT, NULL);
 
 	cfg.raw = byte;
 	cfg.p1_int    = 0;
@@ -59,7 +59,7 @@ int ps2ctl_init()
 	sysio(IO_OUTB, PS2CTL_PORT_CMD, (void*)PS2CTL_CMD_ENABLE1);
 
 	sysio(IO_OUTB, PS2CTL_PORT_CMD, (void*)PS2CTL_CMD_CFGRD);
-	sysio(IO_INB,  PS2CTL_PORT_DAT, &byte);
+	byte = sysio(IO_INB,  PS2CTL_PORT_DAT, NULL);
 
 	cfg.raw = byte;
 	cfg.p1_int = 1;
@@ -73,7 +73,7 @@ int ps2ctl_init()
 int ps2ctl_has_data()
 {
 	volatile char byte;
-	sysio(IO_INB, PS2CTL_PORT_CMD, &byte);
+	byte = sysio(IO_INB, PS2CTL_PORT_CMD, NULL);
 
 	union ps2ctl_status stat = { .raw = byte };
 	return stat.out_full;
@@ -84,6 +84,6 @@ char wait_result()
 	while (!ps2ctl_has_data());
 
 	volatile char byte;
-	sysio(IO_INB, PS2CTL_PORT_DAT, &byte);
+	byte = sysio(IO_INB, PS2CTL_PORT_DAT, NULL);
 	return byte;
 }
