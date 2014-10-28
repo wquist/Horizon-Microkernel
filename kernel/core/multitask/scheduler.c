@@ -34,13 +34,10 @@ void scheduler_start()
 	// A thread must be in queue to start.
 	dassert(active_thread.raw);
 
-	thread_t* thread = thread_get(active_thread);
-	thread->sched_info.timeslice = SCHEDULER_TIMESLICE;
-
 	arch_timer_init(SCHEDULER_FREQ, timer_tick);
 
-	paging_pas_load(process_get(thread->owner)->addr_space);
-	task_start(&(thread->task));
+	paging_pas_load(process_get(active_thread.pid)->addr_space);
+	task_start(&(thread_get(active_thread)->task));
 }
 
 //! Add a thread to the scheduler queue.
@@ -52,6 +49,7 @@ void scheduler_add(thread_uid_t uid)
 	dassert(target->state != THREAD_STATE_ACTIVE);
 
 	target->state = THREAD_STATE_ACTIVE;
+	target->sched_info.timeslice = SCHEDULER_TIMESLICE;
 
 	// Is this the only thread in queue?
 	if (!(active_thread.pid))
@@ -135,7 +133,10 @@ void scheduler_purge(pid_t pid)
 //! Switch to the context of the next thread.
 void scheduler_next()
 {
+	// Reset the timeslice of the exhausted thread.
+	/* Will be ready next time it comes to the head of the queue. */
 	thread_t* curr = thread_get(active_thread);
+	curr->sched_info.timeslice = SCHEDULER_TIMESLICE;
 
 	// Is the current thread the only one in queue?
 	/* No need to do a task switch then. */
@@ -145,8 +146,6 @@ void scheduler_next()
 	active_thread = curr->sched_info.next;
 	thread_t* next = thread_get(active_thread);
 	dassert(next);
-
-	next->sched_info.timeslice = SCHEDULER_TIMESLICE;
 
 	// Do the threads share the same address space?
 	/* Save a directory flush if so. */
