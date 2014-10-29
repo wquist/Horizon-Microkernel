@@ -27,6 +27,9 @@
 #include <horizon/ipc.h>
 #include <horizon/msg.h>
 
+// FIXME: Do not include this here.
+#include <spec/pic8259/x86.h>
+
 static ipcport_t service_ids[SVCMAX] = {0};
 
 static void irq_callback(isr_t, irq_t);
@@ -44,7 +47,11 @@ void service_register(size_t svc, thread_uid_t uid)
 	service_ids[svc] = port_from_uid(uid);
 
 	if (svc < SVC_IMAX)
+	{
+		// FIXME: Whole thing should be in arch.
 		int_callback_set(irq_to_isr(svc), false, irq_callback);
+		pic_irq_enable(svc);
+	}
 }
 
 //! Get the IPC port of a thread that registered for the given service.
@@ -59,7 +66,11 @@ ipcport_t service_get(size_t svc)
 		return port;
 
 	if (svc < SVC_IMAX)
+	{
+		// FIXME: Same as above.
+		pic_irq_disable(svc);
 		int_callback_set(irq_to_isr(svc), false, NULL);
+	}
 
 	return 0;
 }
