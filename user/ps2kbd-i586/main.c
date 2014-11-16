@@ -111,7 +111,9 @@ int main()
 								buffer_pos -= 1;
 
 							buffer[i++] = key_buffer[buffer_pos];
+
 							buffer_count -= 1;
+							count -= 1;
 						}
 
 						struct msg response = {{0}};

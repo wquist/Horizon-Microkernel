@@ -72,6 +72,7 @@ int main()
 		struct msg request = {{0}};
 		request.to = kbd;
 		request.code = 1;
+		request.args[0] = 1;
 
 		send(&request);
 		wait(kbd);
