@@ -1,5 +1,6 @@
 #include <horizon/types.h>
 #include <horizon/ipc.h>
+#include <sys/sched.h>
 #include <sys/msg.h>
 #include <sys/svc.h>
 #include <malloc.h>
@@ -77,7 +78,7 @@ struct vfs_root* get_root(const char* path, const char** path_start)
 
 struct vfs_node* request_node(struct vfs_root* root, struct vfs_node* parent, const char* name)
 {
-	struct msg node_req = {0};
+	struct msg node_req = {{0}};
 	node_req.to      = root->owner;
 	node_req.code    = VFS_REQ_FIND;
 	node_req.args[0] = (parent) ? parent->uid : 0;
@@ -88,7 +89,7 @@ struct vfs_node* request_node(struct vfs_root* root, struct vfs_node* parent, co
 	send(&node_req);
 	wait(root->owner);
 
-	struct msg node_response = {0};
+	struct msg node_response = {{0}};
 	recv(&node_response);
 
 	if (node_response.code != VFS_REQ_FIND)
@@ -119,7 +120,6 @@ struct vfs_node* get_node(struct vfs_root* root, const char* path)
 {
 	const char* path_end = strchr(path, '\0');
 
-	const char* level_name;
 	struct vfs_node* level_node = root->nodes;
 	struct vfs_node* parent_node = NULL;
 	struct vfs_node* target_node;
@@ -189,7 +189,7 @@ int main()
 		{
 			case VFS_MOUNT:
 			{
-				add_root(buffer);
+				add_root(buffer, request.from);
 				response.code = 0;
 
 				send(&response);
@@ -197,7 +197,7 @@ int main()
 			}
 			case VFS_OPEN:
 			{
-				char* path;
+				const char* path;
 				struct vfs_root* root = get_root(buffer, &path);
 
 				struct vfs_node* node = get_node(root, path);
@@ -274,9 +274,9 @@ int main()
 					wait(write_request.to);
 
 					struct msg write_response = {{0}};
-					recv(&read_response);
+					recv(&write_response);
 
-					response.code = read_response.code;
+					response.code = write_response.code;
 				}
 				else
 				{
