@@ -92,16 +92,17 @@ struct vfs_node* request_node(struct vfs_root* root, struct vfs_node* parent, co
 	struct msg node_response = {{0}};
 	recv(&node_response);
 
-	if (node_response.code != VFS_REQ_FIND)
+	if (node_response.code == -1)
 		return NULL;
 
 	struct vfs_node* new_node = malloc(sizeof(struct vfs_node));
 	memset(new_node, 0, sizeof(struct vfs_node));
 
 	strcpy(new_node->name, name);
-	new_node->uid  = node_response.args[0];
-	new_node->type = node_response.args[1];
+	new_node->uid  = node_response.code;
+	new_node->type = node_response.args[0];
 
+	new_node->root = root;
 	if (parent)
 	{
 		new_node->next = parent;

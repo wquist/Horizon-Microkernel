@@ -128,13 +128,25 @@ int main()
 			continue;
 		}
 
+		struct msg response = {{0}};
+		response.to = request.from;
 		switch (request.code)
 		{
 			case 0:
+			{
 				puts(buffer);
+				response.code = 0;
+
+				send(&response);
 				break;
+			}
 			default:
+			{
+				response.code = -1;
+
+				send(&response);
 				break;
+			}
 		}
 	}
 

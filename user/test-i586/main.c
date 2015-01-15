@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "../vfsd-i586/fs.h"
+
 ipcport_t filesystem;
 int screen, keyboard;
 
@@ -16,8 +18,8 @@ int open(const char* path)
 	request.to = filesystem;
 
 	request.code = VFS_OPEN;
-	request.payload.buf  = path;
-	request.payload.size = strlen(path);
+	request.payload.buf  = (void*)path;
+	request.payload.size = strlen(path)+1;
 
 	send(&request);
 	wait(filesystem);
@@ -71,23 +73,17 @@ int write(int fd, char* buffer, size_t size)
 
 void print(char* msg)
 {
-	write(screen, msg, strlen(msg));
+	write(screen, msg, strlen(msg)+1);
 }
 
 int main()
 {
 	while ((filesystem = svcid(SVC_VFS)) == 0);
 
-	screen = open("dev://tty");
-	if (screen == -1)
-		return 1;
-
+	while ((screen = open("dev://tty")) == -1);
 	print("Test program connected to TTY.\n");
 
-	keyboard = open("dev://kbd");
-	if (keyboard == -1)
-		return 1;
-
+	while ((keyboard = open("dev://kbd")) == -1);
 	print("Test program connected to keyboard.\n");
 	print("> ");
 

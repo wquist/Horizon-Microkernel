@@ -68,9 +68,6 @@ void add_device(char* name, ipcport_t port)
 
 int main()
 {
-	if (svcown(SVC_DEVMGR) < 0)
-		return 1;
-
 	while ((filesystem = svcid(SVC_VFS)) == 0);
 
 	struct msg mount_request = {{0}};
@@ -86,6 +83,9 @@ int main()
 	struct msg mount_response = {{0}};
 	recv(&mount_response);
 	if (mount_response.code == -1)
+		return 1;
+
+	if (svcown(SVC_DEVMGR) < 0)
 		return 1;
 
 	char buffer[64];
@@ -120,9 +120,14 @@ int main()
 			{
 				struct device* dev = find_device(buffer);
 				if (dev)
+				{
 					response.code = dev->uid;
+					response.args[0] = VFS_FILE;
+				}
 				else
+				{
 					response.code = -1;
+				}
 
 				send(&response);
 				break;
