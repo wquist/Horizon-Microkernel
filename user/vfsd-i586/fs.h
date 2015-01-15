@@ -1,22 +1,27 @@
 #pragma once
 
-typedef enum VFSOP vfsop_t;
-enum VFSOP
+enum VFS_FTYPE
 {
-	VFS_FSD_MOUNTSELF,
-
-	VFS_FILE_OPEN,
-	VFS_FILE_READ,
-	VFS_FILE_WRITE,
-
-	VFS_CTL_GETCTL
+	VFS_FILE,
+	VFS_DIR
 };
 
-typedef enum VFSREQ vfsreq_t;
-enum VFSREQ
+enum VFS_OPERATION
 {
-	VFS_DRQ_WRITE,
-	VFS_DRQ_READ,
+	VFS_MOUNT,
+	VFS_UNMOUNT,
 
-	VFS_DRQ_FINDDIR
+	VFS_OPEN,
+	VFS_CLOSE,
+
+	VFS_READ,
+	VFS_WRITE
+};
+
+enum VFS_REQUEST
+{
+	VFS_REQ_FIND,
+
+	VFS_REQ_READ,
+	VFS_REQ_WRITE
 };

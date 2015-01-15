@@ -1,134 +1,300 @@
 #include <horizon/types.h>
 #include <horizon/ipc.h>
 #include <sys/msg.h>
-#include <stddef.h>
-#include <string.h>
+#include <sys/svc.h>
 #include <malloc.h>
+#include <string.h>
+#include <memory.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #include "fs.h"
 
-typedef enum FTYPE ftype_t;
-enum FTYPE
-{
-	FTYPE_FILE,
-	FTYPE_DIR,
+struct vfs_node;
 
-	FTYPE_MOUNTPT
+struct vfs_root
+{
+	char name[32];
+	ipcport_t owner;
+
+	//
+
+	struct vfs_root* next;
+	struct vfs_node* nodes;
 };
 
-struct inode
+struct vfs_node
 {
-	char name[64];
-	ftype_t type;
-
+	char name[32];
 	size_t uid;
-	ipcport_t driver;
+	enum VFS_FTYPE type;
 
-	struct inode* next;
-	struct inode* children;
+	//
+
+	struct vfs_root* root;
+	struct vfs_node* next;
+	struct vfs_node* children;
 };
 
-struct ftable
+static struct vfs_root* root_list = NULL;
+
+struct vfs_root* add_root(const char* name, ipcport_t owner)
 {
-	pid_t proc;
+	struct vfs_root* new_root = malloc(sizeof(struct vfs_root));
+	memset(new_root, 0, sizeof(struct vfs_root));
 
-	struct inode* files[16];
-	size_t next_free;
-};
+	strcpy(new_root->name, name);
+	new_root->owner = owner;
 
-static struct inode root = {0};
-static struct ftable* tables = NULL;
+	new_root->next = root_list;
+	root_list = new_root;
 
-struct inode* find_node(struct inode* start, const char* path)
+	return new_root;
+}
+
+struct vfs_root* get_root(const char* path, const char** path_start)
 {
-	char* curr = path;
-	struct inode* node = start;
+	const char* first = strchr(path, ':');
+	if (!first)
+		return NULL;
 
-	char* next;
-	do
+	if (memcmp("//", first+1, 2) != 0)
+		return NULL;
+
+	*path_start = first+3;
+
+	struct vfs_root* curr = root_list;
+	while (curr)
 	{
-		if (node->type != FTYPE_DIR && node->type != FTYPE_MOUNTPT)
+		if (memcmp(curr->name, path, first - path) == 0)
+			return curr;
+
+		curr = curr->next;
+	}
+
+	return NULL;
+}
+
+struct vfs_node* request_node(struct vfs_root* root, struct vfs_node* parent, const char* name)
+{
+	struct msg node_req = {0};
+	node_req.to      = root->owner;
+	node_req.code    = VFS_REQ_FIND;
+	node_req.args[0] = (parent) ? parent->uid : 0;
+
+	node_req.payload.buf  = (void*)name;
+	node_req.payload.size = strlen(name)+1;
+
+	send(&node_req);
+	wait(root->owner);
+
+	struct msg node_response = {0};
+	recv(&node_response);
+
+	if (node_response.code != VFS_REQ_FIND)
+		return NULL;
+
+	struct vfs_node* new_node = malloc(sizeof(struct vfs_node));
+	memset(new_node, 0, sizeof(struct vfs_node));
+
+	strcpy(new_node->name, name);
+	new_node->uid  = node_response.args[0];
+	new_node->type = node_response.args[1];
+
+	if (parent)
+	{
+		new_node->next = parent;
+		parent->children = new_node;
+	}
+	else
+	{
+		new_node->next = root->nodes;
+		root->nodes = new_node;
+	}
+
+	return new_node;
+}
+
+struct vfs_node* get_node(struct vfs_root* root, const char* path)
+{
+	const char* path_end = strchr(path, '\0');
+
+	const char* level_name;
+	struct vfs_node* level_node = root->nodes;
+	struct vfs_node* parent_node = NULL;
+	struct vfs_node* target_node;
+
+	while (path != path_end+1)
+	{
+		const char* level_name = strchr(path, '/');
+		if (!level_name)
+			level_name = path_end;
+
+		target_node = NULL;
+		while (level_node)
+		{
+			if (memcmp(level_node->name, path, level_name - path) == 0)
+			{
+				target_node = level_node;
+				break;
+			}
+
+			level_node = level_node->next;
+		}
+
+		if (!target_node)
+		{
+			char node_name[32] = {0};
+			memcpy(node_name, path, level_name - path);
+
+			target_node = request_node(root, parent_node, node_name);
+			if (!target_node)
+				return NULL;
+		}
+
+		if (target_node->type != VFS_DIR && level_name != path_end)
 			return NULL;
 
-		next = strchr(curr, '/');
+		level_node  = target_node->children;
+		parent_node = target_node;
+		path = level_name+1;
+	}
 
-		static char component[64];
-		if (next)
-		{
-			memcpy(component, curr, next-curr);
-			component[next-curr] = '\0';
-		}
-		else
-		{
-			strcpy(component, curr);
-		}
-
-		struct inode* next_node = node->children;
-		struct inode* tmp = NULL;
-
-		while (next_node && !tmp)
-		{
-			if (strcmp(component, next_node->name) == 0)
-				tmp = next_node;
-			else
-				next_node = next_node->next;
-		}
-
-		if (!tmp)
-		{
-			struct inode* child = malloc(sizeof(struct inode));
-			memset(child, 0, sizeof(struct inode));
-			strcpy(child->name, component);
-
-			if (node->type == FTYPE_MOUNTPT)
-			{
-				child->type = FTYPE_MOUNTPT;
-			}
-			else
-			{
-				struct msg node_request = {{0}};
-				node_request.to = node->driver;
-				node_request.code = VFS_DRQ_FINDDIR;
-
-				node_request.data[0] = node->uid;
-				node_request.payload.buf  = component;
-				node_request.payload.size = strlen(component);
-
-				send(&node_request);
-				wait(node->driver);
-
-				struct msg node_response = {{0}};
-				recv(&node_response);
-
-				if (node_response.code == -1)
-				{
-					free(child);
-					return NULL;
-				}
-
-				child->type = (node_response.data[1]) ? FTYPE_DIR : FTYPE_FILE;
-
-				child->uid = node_response.data[0];
-				child->driver = node->driver;
-			}
-
-			child->next = node->children;
-			node->children = child;
-
-			tmp = child;
-		}
-		
-		node = tmp;
-		curr = next+1;
-	} while (next);
-
-	return node;
+	return target_node;
 }
 
 int main()
 {
-	root.name = "/";
-	root.type = FTYPE_MOUNTPT;
+	if (svcown(SVC_VFS) < 0)
+		return 1;
+
+	char buffer[256];
+	while (true)
+	{
+		wait(IPORT_ANY);
+
+		struct msg request = {{0}};
+		request.payload.buf  = buffer;
+		request.payload.size = 256;
+
+		if (recv(&request) < 0)
+		{
+			drop(NULL);
+			continue;
+		}
+
+		struct msg response = {{0}};
+		response.to = request.from;
+		switch (request.code)
+		{
+			case VFS_MOUNT:
+			{
+				add_root(buffer);
+				response.code = 0;
+
+				send(&response);
+				break;
+			}
+			case VFS_OPEN:
+			{
+				char* path;
+				struct vfs_root* root = get_root(buffer, &path);
+
+				struct vfs_node* node = get_node(root, path);
+				if (node)
+					response.code = (uintptr_t)node;
+				else
+					response.code = -1;
+
+				send(&response);
+				break;
+			}
+			case VFS_READ:
+			{
+				void* read_buffer = NULL;
+
+				struct vfs_node* node = (struct vfs_node*)(request.args[0]);
+				if (node->type == VFS_FILE)
+				{
+					size_t read_size = request.args[1];
+					read_buffer = malloc(read_size);
+
+					struct msg read_request = {{0}};
+					read_request.to = node->root->owner;
+
+					read_request.code = VFS_READ;
+					read_request.args[0] = node->uid;
+					read_request.args[1] = read_size;
+
+					send(&read_request);
+					wait(read_request.to);
+
+					struct msg read_response = {{0}};
+					read_response.payload.buf  = read_buffer;
+					read_response.payload.size = read_size;
+
+					recv(&read_response);
+
+					response.code = read_response.code;
+					if (response.code != -1)
+					{
+						response.payload.buf  = read_buffer;
+						response.payload.size = read_size;
+					}
+				}
+				else
+				{
+					response.code = -1;
+				}
+
+				send(&response);
+				if (read_buffer)
+					free(read_buffer);
+
+				break;
+			}
+			case VFS_WRITE:
+			{
+				struct vfs_node* node = (struct vfs_node*)(request.args[0]);
+				if (node->type == VFS_FILE)
+				{
+					size_t write_size = request.args[1];
+
+					struct msg write_request = {{0}};
+					write_request.to = node->root->owner;
+
+					write_request.code = VFS_WRITE;
+					write_request.args[0] = node->uid;
+					write_request.args[1] = write_size;
+
+					write_request.payload.buf  = buffer;
+					write_request.payload.size = write_size;
+
+					send(&write_request);
+					wait(write_request.to);
+
+					struct msg write_response = {{0}};
+					recv(&read_response);
+
+					response.code = read_response.code;
+				}
+				else
+				{
+					response.code = -1;
+				}
+
+				send(&response);
+				break;
+			}
+			default:
+			{
+				response.code = -1;
+
+				send(&response);
+				break;
+			}
+		}
+	}
 
 	return 0;
 }
