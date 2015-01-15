@@ -84,7 +84,7 @@ bool register_device()
 
 	struct msg request = {{0}};
 	request.to = devmgr;
-	request.code = 1;
+	request.code = 100;
 	request.payload.buf = "tty";
 	request.payload.size = 4;
 

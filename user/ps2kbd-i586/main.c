@@ -26,7 +26,7 @@ bool register_device()
 
 	struct msg request = {{0}};
 	request.to = devmgr;
-	request.code = 1;
+	request.code = 100;
 	request.payload.buf = "kbd";
 	request.payload.size = 4;
 
@@ -118,7 +118,7 @@ int main()
 
 						struct msg response = {{0}};
 						response.to = request.from;
-						response.code = 0;
+						response.code = i;
 
 						if (i)
 						{

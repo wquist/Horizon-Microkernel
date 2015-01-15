@@ -222,7 +222,7 @@ int main()
 					struct msg read_request = {{0}};
 					read_request.to = node->root->owner;
 
-					read_request.code = VFS_READ;
+					read_request.code = VFS_REQ_READ;
 					read_request.args[0] = node->uid;
 					read_request.args[1] = read_size;
 
@@ -263,7 +263,7 @@ int main()
 					struct msg write_request = {{0}};
 					write_request.to = node->root->owner;
 
-					write_request.code = VFS_WRITE;
+					write_request.code = VFS_REQ_WRITE;
 					write_request.args[0] = node->uid;
 					write_request.args[1] = write_size;
 

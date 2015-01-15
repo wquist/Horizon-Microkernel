@@ -26,12 +26,26 @@ struct device* device_head = NULL;
 
 uint32_t last_id = 0;
 
-struct device* find_device(uint32_t uid)
+struct device* get_device(uint32_t uid)
 {
 	struct device* curr = device_head;
 	while (curr != NULL)
 	{
 		if (curr->uid == uid)
+			return curr;
+
+		curr = curr->next;
+	}
+
+	return NULL;
+}
+
+struct device* find_device(char* name)
+{
+	struct device* curr = device_head;
+	while (curr != NULL)
+	{
+		if (strcmp(curr->name, name) == 0)
 			return curr;
 
 		curr = curr->next;
@@ -93,7 +107,7 @@ int main()
 		response.to = request.from;
 		switch (request.code)
 		{
-			case 1:
+			case 100:
 			{
 				add_device(buffer, request.from);
 
@@ -102,11 +116,22 @@ int main()
 				send(&response);
 				break;
 			}
-			case VFS_READ:
+			case VFS_REQ_FIND:
+			{
+				struct device* dev = find_device(buffer);
+				if (dev)
+					response.code = dev->uid;
+				else
+					response.code = -1;
+
+				send(&response);
+				break;
+			}
+			case VFS_REQ_READ:
 			{
 				void* read_buffer = NULL;
 
-				struct device* dev = find_device(request.args[0]);
+				struct device* dev = get_device(request.args[0]);
 				if (dev)
 				{
 					size_t read_size = request.args[1];
@@ -145,15 +170,15 @@ int main()
 				
 				break;
 			}
-			case VFS_WRITE:
+			case VFS_REQ_WRITE:
 			{
-				struct device* dev = find_device(request.args[0]);
+				struct device* dev = get_device(request.args[0]);
 				if (dev)
 				{
 					size_t write_size = request.args[1];
 
 					struct msg write_request = {{0}};
-					write_request.to = node->root->owner;
+					write_request.to = dev->port;
 
 					write_request.code = 0;
 					write_request.args[0] = write_size;
