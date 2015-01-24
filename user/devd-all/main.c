@@ -9,8 +9,7 @@
 #include <memory.h>
 #include <stdbool.h>
 
-// :(
-#include "../vfsd-i586/fs.h"
+#include "../vfsd-all/fs.h"
 
 struct device
 {

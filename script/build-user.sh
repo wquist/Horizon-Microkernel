@@ -13,7 +13,7 @@ then
 	exit 1
 fi
 
-make TARGET=${2} ARCH=${1}
+make TARGET=${2} ARCH=${1} TARGET_ROOT=${FULLTARGET}
 if [ $? != 0 ]
 then
 	echo "Compilation for '${1}' failed!"

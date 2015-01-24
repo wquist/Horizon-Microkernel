@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "../vfsd-i586/fs.h"
+#include "../vfsd-all/fs.h"
 
 ipcport_t filesystem;
 int screen, keyboard;
