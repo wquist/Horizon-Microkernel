@@ -49,14 +49,14 @@ then
 fi
 
 # Check if disk image needs to be mounted
-if [ ! -d "${BOOT_MOUNT}" ]
+if [ ! -d "${BOOT_MOUNT_DIR}" ]
 then
 	echo "Mounting disk image..."
-	hdiutil attach "${BOOT_IMAGE}" || exit 1
+	${BOOT_MOUNT_CMD} "${BOOT_IMAGE}" || exit 1
 else
 	echo "Disk image already mounted."
 fi
 
 echo "Copying binary to disk image..."
-source update-${TARGET}.sh "${BOOT_MOUNT}" ${BINARY} ${ARCH}
+source update-${TARGET}.sh "${BOOT_MOUNT_DIR}" ${BINARY} ${ARCH}
 cd ${_WD}
