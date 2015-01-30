@@ -74,3 +74,34 @@ long bitmap_find_and_set(bitmap_t* bm, size_t items)
 	bm[i] |= (1 << bit);
 	return index;
 }
+
+//! Find and set N consecutive bits.
+long bitmap_find_and_set_range(bitmap_t* bm, size_t count, size_t items)
+{
+	/* FIXME: Search does not take advantage of comparing ~(bm[i]) to skip chunks. */
+	size_t i = 0, num = 0;
+	for (; i != items && num != count; ++i)
+	{
+		size_t index = i / BITMAP_BITS;
+		size_t bit   = i % BITMAP_BITS;
+
+		if (bm[index] & (1 << bit))
+			num = 0;
+		else
+			num += 1;
+	}
+
+	if (num != count)
+		return -1;
+
+	size_t start = i - num;
+	for (i = start; i != start + count; ++i)
+	{
+		size_t index = i / BITMAP_BITS;
+		size_t bit   = i % BITMAP_BITS;
+
+		bm[index] |= (1 << bit);
+	}
+
+	return start;
+}

@@ -27,7 +27,7 @@
 void physical_init();
 
 void* physical_alloc();
-void* physical_alloc_special();
+void* physical_alloc_special(size_t size);
 
 void physical_retain(const void* block);
 bool physical_release(void* block);

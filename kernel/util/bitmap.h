@@ -41,3 +41,4 @@ void bitmap_set_all(bitmap_t* bm, size_t items);
 void bitmap_clear_all(bitmap_t* bm, size_t items);
 
 long bitmap_find_and_set(bitmap_t* bm, size_t items);
+long bitmap_find_and_set_range(bitmap_t* bm, size_t count, size_t items);

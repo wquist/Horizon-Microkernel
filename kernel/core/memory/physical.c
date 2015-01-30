@@ -94,15 +94,20 @@ void* physical_alloc()
 	return (void*)addr;
 }
 
-//! Allocate a block of memory from the lower region, if it exists.
-void* physical_alloc_special()
+//! Allocate N blocks of memory from the lower region, if it exists.
+//! The size must be a multiple of ARCH_PGSIZE.
+void* physical_alloc_special(size_t size)
 {
-	size_t max_blocks = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, PHYSICAL_ALLOC_BASE);
+	dassert(size % ARCH_PGSIZE == 0);
+	size_t blocks = size / ARCH_PGSIZE;
 
-	long index = bitmap_find_and_set(special_map, max_blocks);
+	size_t max_blocks = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, PHYSICAL_ALLOC_BASE);
+	long index = bitmap_find_and_set_range(special_map, blocks, max_blocks);
 	dassert(index != -1);
 
-	ref_counts[index] = 1;
+	for (size_t i = index; i != index + blocks; ++i)
+		ref_counts[i] = 1;
+
 	uintptr_t addr = index_to_addr(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, index);
 
 	return (void*)addr;
@@ -112,11 +117,10 @@ void* physical_alloc_special()
 void physical_retain(const void* block)
 {
 	size_t index = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, (uintptr_t)block);
-	if (!(ref_counts[index])) //< Bad block; it was not previously allocated.
-		return;
+	dassert(ref_counts[index]); //< Block was not previously allocated.
 
 	dassert(ref_counts[index] < UCHAR_MAX);
-	++(ref_counts[index]);
+	ref_counts[index] += 1;
 }
 
 //! Decrement the retain count for the given block and free it if is no longer retained.
@@ -124,10 +128,9 @@ void physical_retain(const void* block)
 bool physical_release(void* block)
 {
 	size_t index = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, (uintptr_t)block);
-	if (!(ref_counts[index]))
-		return false;
+	dassert(ref_counts[index]);
 
-	--(ref_counts[index]);
+	ref_counts[index] -= 1;
 	if (ref_counts[index]) //< This block is still retained.
 		return false;
 
