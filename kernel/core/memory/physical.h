@@ -21,10 +21,13 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdbool.h>
 
 void physical_init();
 
 void* physical_alloc();
-void  physical_retain(const void* block);
-bool  physical_release(void* block);
+void* physical_alloc_special();
+
+void physical_retain(const void* block);
+bool physical_release(void* block);
