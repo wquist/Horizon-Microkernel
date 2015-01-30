@@ -51,8 +51,9 @@ typedef struct multiboot_info bootloader_info_t;
 extern const uintptr_t KERNEL_PHYS_ADDR, KERNEL_VIRT_BASE, KERNEL_VIRT_ADDR;
 extern const uintptr_t __skernel, __ekernel;
 
-//! The lowest safe address to start allocating memory from.
-#define PHYSICAL_USABLE_BASE 0x1000000
+//! Safe allocation bounds.
+#define PHYSICAL_ALLOC_BASE   0x1000000
+#define PHYSICAL_SPECIAL_BASE 0x100000
 //! The architecture's page size.
 #define ARCH_PGSIZE PAGING_PAGE_SIZE
 

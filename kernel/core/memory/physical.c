@@ -31,7 +31,7 @@ static uint8_t*  ref_counts  = NULL;
 void physical_init()
 {
 	// Allocate the map for the main memory allocator.
-	size_t alloc_blocks = addr_to_index(PHYSICAL_USABLE_BASE, ARCH_PGSIZE, meminfo_limit_get());
+	size_t alloc_blocks = addr_to_index(PHYSICAL_ALLOC_BASE, ARCH_PGSIZE, meminfo_limit_get());
 	size_t alloc_size = BMSTACK_SIZE(alloc_blocks);
 	uintptr_t alloc_start = region_reserve(alloc_size);
 	dtrace("Allocated physical memory bitmap. (%iKB)", alloc_size / 1024);
@@ -40,7 +40,7 @@ void physical_init()
 	bmstack_set_all(&alloc_map, alloc_blocks); //< Mark everything as used first.
 
 	// Allocate the map for the special memory (low memory) allocator.
-	size_t special_blocks = addr_to_index(0, ARCH_PGSIZE, PHYSICAL_USABLE_BASE);
+	size_t special_blocks = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, PHYSICAL_ALLOC_BASE);
 	size_t special_size = BITMAP_SIZE(special_blocks);
 	uintptr_t special_start = region_reserve(special_size);
 	dtrace("Allocated special memory bitmap. (%iB)", special_size);
@@ -55,14 +55,14 @@ void physical_init()
 		const meminfo_mmap_t* mmap = meminfo_mmap_get(i);
 		for (uintptr_t curr = mmap->start; curr + ARCH_PGSIZE <= mmap->end; curr += ARCH_PGSIZE)
 		{
-			if (curr >= PHYSICAL_USABLE_BASE && curr + ARCH_PGSIZE <= meminfo_limit_get())
+			if (curr >= PHYSICAL_ALLOC_BASE && curr + ARCH_PGSIZE <= meminfo_limit_get())
 			{
-				size_t index = addr_to_index(PHYSICAL_USABLE_BASE, ARCH_PGSIZE, curr);
+				size_t index = addr_to_index(PHYSICAL_ALLOC_BASE, ARCH_PGSIZE, curr);
 				bmstack_clear(&alloc_map, index);
 			}
-			else if (curr + ARCH_PGSIZE <= PHYSICAL_USABLE_BASE)
+			else if (curr >= PHYSICAL_SPECIAL_BASE && curr + ARCH_PGSIZE <= PHYSICAL_ALLOC_BASE)
 			{
-				size_t index = addr_to_index(0, ARCH_PGSIZE, curr);
+				size_t index = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, curr);
 				bitmap_clear(special_map, index);
 			}
 		}
@@ -71,7 +71,9 @@ void physical_init()
 	// Create the linked list from the entries just unset.
 	bmstack_link(&alloc_map, alloc_blocks);
 
-	size_t total_blocks = addr_to_index(0, ARCH_PGSIZE, meminfo_limit_get());
+	// Allocate the reference counting array.
+	/* This spans the entire address space for special and normal allocations. */
+	size_t total_blocks = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, meminfo_limit_get());
 	size_t ref_size = total_blocks * sizeof(uint8_t);
 	ref_counts = (uint8_t*)region_reserve(ref_size);
 	dtrace("Allocated physical memory refcount array. (%iKB)", ref_size / 1024);
@@ -85,8 +87,8 @@ void* physical_alloc()
 	long index = bmstack_find_and_set(&alloc_map);
 	dassert(index != -1);
 
-	uintptr_t addr = index_to_addr(PHYSICAL_USABLE_BASE, ARCH_PGSIZE, index);
-	uintptr_t real_index = addr_to_index(0, ARCH_PGSIZE, addr);
+	uintptr_t addr = index_to_addr(PHYSICAL_ALLOC_BASE, ARCH_PGSIZE, index);
+	uintptr_t real_index = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, addr);
 	ref_counts[real_index] = 1;
 
 	return (void*)addr;
@@ -95,13 +97,13 @@ void* physical_alloc()
 //! Allocate a block of memory from the lower region, if it exists.
 void* physical_alloc_special()
 {
-	size_t max_blocks = addr_to_index(0, ARCH_PGSIZE, PHYSICAL_USABLE_BASE);
+	size_t max_blocks = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, PHYSICAL_ALLOC_BASE);
 
 	long index = bitmap_find_and_set(special_map, max_blocks);
 	dassert(index != -1);
 
 	ref_counts[index] = 1;
-	uintptr_t addr = index_to_addr(0, ARCH_PGSIZE, index);
+	uintptr_t addr = index_to_addr(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, index);
 
 	return (void*)addr;
 }
@@ -109,7 +111,7 @@ void* physical_alloc_special()
 //! Increment the retain count for the given block. Block must be from physical_alloc.
 void physical_retain(const void* block)
 {
-	size_t index = addr_to_index(0, ARCH_PGSIZE, (uintptr_t)block);
+	size_t index = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, (uintptr_t)block);
 	if (!(ref_counts[index])) //< Bad block; it was not previously allocated.
 		return;
 
@@ -121,7 +123,7 @@ void physical_retain(const void* block)
 /*! Returns true if the released block was freed, false otherwise. */
 bool physical_release(void* block)
 {
-	size_t index = addr_to_index(0, ARCH_PGSIZE, (uintptr_t)block);
+	size_t index = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, (uintptr_t)block);
 	if (!(ref_counts[index]))
 		return false;
 
@@ -129,9 +131,9 @@ bool physical_release(void* block)
 	if (ref_counts[index]) //< This block is still retained.
 		return false;
 
-	if ((uintptr_t)block >= PHYSICAL_USABLE_BASE)
+	if ((uintptr_t)block >= PHYSICAL_ALLOC_BASE)
 	{
-		size_t offset = addr_to_index(PHYSICAL_USABLE_BASE, ARCH_PGSIZE, (uintptr_t)block);
+		size_t offset = addr_to_index(PHYSICAL_ALLOC_BASE, ARCH_PGSIZE, (uintptr_t)block);
 
 		dassert(bmstack_test(&alloc_map, offset));
 		bmstack_clear(&alloc_map, offset); //< 'free' it by making available for allocation.
