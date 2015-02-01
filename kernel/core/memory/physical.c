@@ -41,12 +41,15 @@ void physical_init()
 
 	// Allocate the map for the special memory (low memory) allocator.
 	size_t special_blocks = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, PHYSICAL_ALLOC_BASE);
-	size_t special_size = BITMAP_SIZE(special_blocks);
-	uintptr_t special_start = region_reserve(special_size);
-	dtrace("Allocated special memory bitmap. (%iB)", special_size);
+	if (special_blocks)
+	{
+		size_t special_size = BITMAP_SIZE(special_blocks);
+		uintptr_t special_start = region_reserve(special_size);
+		dtrace("Allocated special memory bitmap. (%iB)", special_size);
 
-	special_map = (bitmap_t*)special_start;
-	bitmap_set_all(special_map, special_blocks);
+		special_map = (bitmap_t*)special_start;
+		bitmap_set_all(special_map, special_blocks);
+	}
 
 	// Unmark any available memory.
 	for (size_t i = 0; i != meminfo_mmap_count_get(); ++i)
@@ -62,6 +65,7 @@ void physical_init()
 			}
 			else if (curr >= PHYSICAL_SPECIAL_BASE && curr + ARCH_PGSIZE <= PHYSICAL_ALLOC_BASE)
 			{
+				// The bitmap is initialized if this range is satisfied.
 				size_t index = addr_to_index(PHYSICAL_SPECIAL_BASE, ARCH_PGSIZE, curr);
 				bitmap_clear(special_map, index);
 			}
@@ -98,6 +102,8 @@ void* physical_alloc()
 //! The size must be a multiple of ARCH_PGSIZE.
 void* physical_alloc_special(size_t size)
 {
+	dassert(special_map);
+
 	dassert(size % ARCH_PGSIZE == 0);
 	size_t blocks = size / ARCH_PGSIZE;
 
@@ -143,6 +149,7 @@ bool physical_release(void* block)
 	}
 	else
 	{
+		// The bitmap will have been initialized if this is reached.
 		dassert(bitmap_test(special_map, index));
 		bitmap_clear(special_map, index);
 	}
