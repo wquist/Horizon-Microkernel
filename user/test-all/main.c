@@ -81,21 +81,63 @@ int main()
 	while ((filesystem = svcid(SVC_VFS)) == 0);
 
 	while ((screen = open("dev://tty")) == -1);
-	print("Test program connected to TTY.\n");
+	print("Shell connected to TTY.\n");
 
 	while ((keyboard = open("dev://kbd")) == -1);
-	print("Test program connected to keyboard.\n");
-	print("> ");
+	print("Shell connected to keyboard.\n");
 
-	char buffer;
+	char input_buffer[256];
+	size_t input_pos = 0;
 	while (true)
 	{
-		int size = read(keyboard, &buffer, 1);
-		if (size < 1)
-			continue;
+		memset(input_buffer, 0, 256);
+		input_pos = 0;
+		print("$> ");
 
-		char to_print[] = { buffer, '\0' };
-		print(to_print);
+		char last_key = '\0';
+		while (last_key != '\n')
+		{
+			while (read(keyboard, &last_key, 1) < 1);
+
+			char show_key = last_key;
+			if (show_key < 32)
+			{
+				if (show_key == '\b' && input_pos)
+					input_pos -= 1;
+				else
+					show_key = '\0';
+			}
+
+			if (show_key && input_pos >= 255)
+				continue;
+
+			if (show_key)
+			{
+				input_buffer[input_pos++] = show_key;
+
+				char key_str[] = { show_key, '\0' };
+				print(key_str);
+			}
+		}
+
+		input_buffer[input_pos] = '\0';
+		char* cmd = input_buffer;
+
+		char* arg = strchr(input_buffer, ' ');
+		if (arg)
+		{
+			*arg = '\0';
+			arg += 1;
+		}
+
+		print("\n");
+		if (strcmp(cmd, "echo") == 0)
+		{
+			if (arg)
+				print(arg);
+		}
+
+		print("\n");
 	}
 
 	return 0;
