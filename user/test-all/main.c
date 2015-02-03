@@ -103,9 +103,12 @@ int main()
 			if (show_key < 32)
 			{
 				if (show_key == '\b' && input_pos)
+				{
 					input_pos -= 1;
-				else
-					show_key = '\0';
+					print("\b");
+				}
+
+				show_key = '\0';
 			}
 
 			if (show_key && input_pos >= 255)
@@ -135,6 +138,12 @@ int main()
 		{
 			if (arg)
 				print(arg);
+		}
+		else
+		{
+			print("Unknown command '");
+			print(cmd);
+			print("'.");
 		}
 
 		print("\n");
