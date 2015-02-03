@@ -15,6 +15,7 @@ size_t cursor_x = 0, cursor_y = 0;
 
 void putc(char c)
 {
+	size_t forward = 1;
 	switch (c)
 	{
 		case '\b':
@@ -23,6 +24,7 @@ void putc(char c)
 				cursor_x -= 1;
 
 			c = ' ';
+			forward = 0;
 			break;
 		}
 		case '\t':
@@ -50,7 +52,7 @@ void putc(char c)
 	if (c >= ' ')
 	{
 		video_mem[cursor_y * 80 + cursor_x] = (c | (0x7 << 8));
-		cursor_x += 1;
+		cursor_x += forward;
 	}
 
 	if (cursor_x >= 80)
