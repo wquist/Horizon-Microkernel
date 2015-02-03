@@ -75,8 +75,20 @@ void putc(char c)
 
 void puts(const char* s)
 {
-	while (*s != '\0')
-		putc(*s++);
+	if (*s == '\e')
+	{
+		const char* code = s+1;
+		if (strcmp(code, "[2J") == 0)
+		{
+			cursor_x = cursor_y = 0;
+			memset(video_mem, 0, 80*25*sizeof(uint16_t));
+		}
+	}
+	else
+	{
+		while (*s != '\0')
+			putc(*s++);
+	}
 }
 
 bool register_device()

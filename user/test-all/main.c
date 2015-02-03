@@ -139,6 +139,11 @@ int main()
 			if (arg)
 				print(arg);
 		}
+		else if (strcmp(cmd, "clear") == 0)
+		{
+			print("\e[2J");
+			continue;
+		}
 		else
 		{
 			print("Unknown command '");
