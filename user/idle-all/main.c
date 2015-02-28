@@ -1,8 +1,9 @@
-// main.c
+#include <sys/svc.h>
 
 int main()
 {
-	for (;;);
+	svcown(SVC_PAGER);
 
+	for (;;);
 	return 0;
 }

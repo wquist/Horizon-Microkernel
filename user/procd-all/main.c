@@ -44,8 +44,9 @@ void notify(pid_t changed, unsigned event)
 		struct msg response = {{0}};
 		response.to = curr->port;
 
-		response.code = event;
+		response.code = PN_STATECH;
 		response.args[0] = changed;
+		response.args[1] = event;
 
 		send(&response);
 
@@ -95,7 +96,7 @@ int main()
 					// FIXME: check if target process is alive?
 					case PN_LISTEN:
 					{
-						listen(msg_in.args[0], msg_in.args[1], msg_out.from);
+						listen(msg_in.args[0], msg_in.args[1], msg_in.from);
 
 						msg_out.code = 0;
 						break;

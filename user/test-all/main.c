@@ -4,10 +4,12 @@
 #include <sys/sched.h>
 #include <sys/svc.h>
 #include <sys/msg.h>
+#include <sys/proc.h>
 #include <stdbool.h>
 #include <string.h>
 
 #include "../vfsd-all/fs.h"
+#include "../procd-all/pnotify.h"
 
 ipcport_t filesystem;
 int screen, keyboard;
@@ -85,6 +87,42 @@ int main()
 
 	while ((keyboard = open("dev://kbd")) == -1);
 	print("Shell connected to keyboard.\n");
+
+	// *****************************************
+
+	ipcport_t procman;
+	while ((procman = svcid(SVC_PROCMGR)) == 0);
+
+	ipcport_t target;
+	while ((target = svcid(SVC_PAGER)) == 0);
+
+	print("Registering for notifications on idle... ");
+
+	struct msg req = {{0}};
+	req.to = procman;
+
+	req.code = PN_LISTEN;
+	req.args[0] = IPORTPROC(target);
+	req.args[1] = PN_ONDEATH;
+
+	send(&req);
+	wait(procman);
+
+	struct msg res = {{0}};
+	recv(&res);
+
+	print("OK!\n");
+	print("Killing idle process... ");
+
+	kill(IPORTPROC(target));
+
+	wait(procman);
+	recv(&res);
+
+	if (res.args[1] == PN_ONDEATH)
+		print("OK!\n");
+
+	// *****************************************
 
 	char input_buffer[256];
 	size_t input_pos = 0;
