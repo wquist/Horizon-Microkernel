@@ -32,7 +32,7 @@
 
 //! How many modules will be parsed by the kernel?
 /*! Does not prevent more modules from being loaded. */
-#define MODULE_MAX 5
+#define MODULE_MAX 10
 
 typedef struct module module_t;
 struct module
