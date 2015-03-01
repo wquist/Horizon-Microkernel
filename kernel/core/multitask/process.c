@@ -35,6 +35,9 @@ struct block_data
 	thread_t  threads[PROCESS_THREAD_MAX];
 };
 
+// FIXME: Make a macro? Not constant otherwise.
+static size_t BLOCK_DATA_SIZE;
+
 static block_data_t* blocks    = NULL;
 static bmstack_t     block_map = {0};
 
@@ -43,8 +46,10 @@ static uint8_t block_versions[PROCESS_MAX] = {0};
 //! Reserve space for the process control blocks and setup management structures.
 void process_init()
 {
+	BLOCK_DATA_SIZE = addr_align_next(sizeof(block_data_t), ARCH_PGSIZE);
+
 	// Reserve space for the PCBs, but do not allocate memory.
-	blocks = (block_data_t*)region_reserve(PROCESS_MAX * sizeof(block_data_t));
+	blocks = (block_data_t*)region_reserve(PROCESS_MAX * BLOCK_DATA_SIZE);
 
 	// Make space for the bitmap, and actually map this memory.
 	uintptr_t map_start = region_reserve(BMSTACK_SIZE(PROCESS_MAX));
@@ -66,7 +71,7 @@ pid_t process_new(pid_t ppid, uintptr_t entry)
 	dassert(index != -1); //< No PID available.
 
 	// Get the address of the entire PCB.
-	uintptr_t block = index_to_addr((uintptr_t)blocks, sizeof(block_data_t), index);
+	uintptr_t block = index_to_addr((uintptr_t)blocks, BLOCK_DATA_SIZE, index);
 	block_data_t* data = (block_data_t*)block;
 
 	// Only map in the 'process' portion.
@@ -119,7 +124,7 @@ void process_kill(pid_t pid)
 
 	// Unmap the entire PCB area.
 	/* This will also free the threads for this process. */
-	virtual_unmap(0, (uintptr_t)target, sizeof(block_data_t));
+	virtual_unmap(0, (uintptr_t)target, BLOCK_DATA_SIZE);
 
 	dtrace("Destroyed process with PID %i.", pid);
 }
@@ -134,6 +139,6 @@ process_t* process_get(pid_t pid)
 	if (pid < 2)
 		return NULL;
 
-	process_t* proc = (process_t*)index_to_addr((uintptr_t)blocks, sizeof(block_data_t), pid);
+	process_t* proc = (process_t*)index_to_addr((uintptr_t)blocks, BLOCK_DATA_SIZE, pid);
 	return (bmstack_test(&block_map, pid)) ? proc : NULL;
 }
