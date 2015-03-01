@@ -40,7 +40,7 @@ void internal_ksend(ipcport_t port, msgdata_t code, msgdata_t args[MSG_ARGC])
 
 	bool woken = false;
 	if (target->state == THREAD_STATE_WAITING)
-		woken = (target->syscall_info.wait_for == IPORT_KERNEL);
+		woken = port_compare(target->syscall_info.wait_for, IPORT_KERNEL);
 
 	struct msg info = {0};
 	info.to = port;
