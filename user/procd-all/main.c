@@ -114,5 +114,6 @@ int main()
 		}
 	}
 
+	free(states);
 	return 0;
 }
