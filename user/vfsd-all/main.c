@@ -153,6 +153,25 @@ int open_node(vfs_node_t* node, pid_t target)
 	if (table->count >= 8)
 		return -1;
 
+	if (!(table->count))
+	{
+		struct msg request = {{0}};
+		request.to = procmgr;
+
+		request.code = PN_LISTEN;
+		request.args[0] = target;
+		request.args[1] = PN_ONDEATH;
+
+		send(&request);
+		wait(request.to);
+
+		struct msg response = {{0}};
+		recv(&response);
+
+		if (response.code == -1)
+			return -1;
+	}
+
 	int slot = -1;
 	for (int i = 0; i != 8; ++i)
 	{
@@ -162,9 +181,6 @@ int open_node(vfs_node_t* node, pid_t target)
 			break;
 		}
 	}
-
-	if (slot < 0)
-		return -1;
 
 	table->nodes[slot] = node;
 	table->count += 1;
