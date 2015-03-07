@@ -73,7 +73,7 @@ int main()
 	mount_request.to = filesystem;
 
 	mount_request.code = VFS_MOUNT;
-	mount_request.payload.buf  = "dev";
+	mount_request.payload.buf  = "/dev";
 	mount_request.payload.size = 4;
 
 	send(&mount_request);
@@ -115,7 +115,7 @@ int main()
 				send(&response);
 				break;
 			}
-			case VFS_REQ_FIND:
+			case VFS_FSFIND:
 			{
 				struct device* dev = find_device(buffer);
 				if (dev)
@@ -131,7 +131,7 @@ int main()
 				send(&response);
 				break;
 			}
-			case VFS_REQ_READ:
+			case VFS_FSREAD:
 			{
 				void* read_buffer = NULL;
 
@@ -146,6 +146,7 @@ int main()
 
 					read_request.code = 1;
 					read_request.args[0] = read_size;
+					read_request.args[1] = request.args[2];
 
 					send(&read_request);
 					wait(read_request.to);
@@ -174,7 +175,7 @@ int main()
 				
 				break;
 			}
-			case VFS_REQ_WRITE:
+			case VFS_FSWRITE:
 			{
 				struct device* dev = get_device(request.args[0]);
 				if (dev)
@@ -186,6 +187,7 @@ int main()
 
 					write_request.code = 0;
 					write_request.args[0] = write_size;
+					write_request.args[1] = request.args[2];
 
 					write_request.payload.buf  = buffer;
 					write_request.payload.size = write_size;

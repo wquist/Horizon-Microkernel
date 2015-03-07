@@ -82,10 +82,10 @@ int main()
 {
 	while ((filesystem = svcid(SVC_VFS)) == 0);
 
-	while ((screen = open("dev://tty")) == -1);
+	while ((screen = open("/dev/tty")) == -1);
 	print("Shell connected to TTY.\n");
 
-	while ((keyboard = open("dev://kbd")) == -1);
+	while ((keyboard = open("/dev/kbd")) == -1);
 	print("Shell connected to keyboard.\n");
 
 	char input_buffer[256];

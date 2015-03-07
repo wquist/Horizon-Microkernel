@@ -32,10 +32,10 @@ struct file_table
 	vfs_node_t* nodes[8];
 };
 
-vfs_node_t root_node = {0};
+vfs_node_t root_node = {{0}};
 
 ipcport_t procmgr = 0;
-file_table* file_tables = NULL;
+file_table_t* file_tables = NULL;
 
 vfs_node_t* add_node(vfs_node_t* parent, const char* name)
 {
@@ -242,7 +242,7 @@ void handle_procmgr(struct msg* notice)
 		return;
 
 	pid_t pid = notice->args[0];
-	memset(file_tables[pid], 0, sizeof(file_table_t));
+	memset(&(file_tables[pid]), 0, sizeof(file_table_t));
 }
 
 void handle_request(struct msg* request, struct msg* response)
@@ -270,7 +270,7 @@ void handle_request(struct msg* request, struct msg* response)
 		case VFS_OPEN:
 		{
 			vfs_node_t* node = get_node(NULL, buffer, false);
-			if (node->type != VFS_FILE)
+			if (!node || node->type != VFS_FILE)
 				return;
 
 			int fd = open_node(node, IPORTPROC(target));
@@ -285,7 +285,7 @@ void handle_request(struct msg* request, struct msg* response)
 			size_t size = request->args[1];
 			size_t off = request->args[2];
 
-			vfs_node_t* node = file_tables[pid]->nodes[fd];
+			vfs_node_t* node = file_tables[pid].nodes[fd];
 			if (!node)
 				return;
 
@@ -310,11 +310,11 @@ void handle_request(struct msg* request, struct msg* response)
 			size_t size = request->args[1];
 			size_t off = request->args[2];
 
-			vfs_node_t* node = file_tables[pid]->nodes[fd];
+			vfs_node_t* node = file_tables[pid].nodes[fd];
 			if (!node)
 				return;
 
-			int res = write_node(node, data, size, off);
+			int res = write_node(node, buffer, size, off);
 
 			response->code = res;
 			break;
@@ -328,6 +328,9 @@ int main()
 		return 1;
 
 	while ((procmgr = svcid(SVC_PROCMGR)) == 0);
+
+	strcpy(root_node.name, "ROOT");
+	root_node.type = VFS_VIRTDIR;
 
 	file_tables = malloc(sizeof(file_table_t) * 1024);
 	memset(file_tables, 0, sizeof(file_table_t) * 1024);
@@ -347,31 +350,24 @@ int main()
 			continue;
 		}
 
-		switch (msg_in.from)
+		if (msg_in.from == IPORT_KERNEL)
 		{
-			case IPORT_KERNEL:
-			{
-				handle_kernel(&msg_in);
-				break;
-			}
-			case procmgr:
-			{
-				handle_procmgr(&msg_in);
-				break;
-			}
-			default:
-			{
-				struct msg msg_out = {{0}};
-				handle_request(&msg_in, &msg_out);
+			handle_kernel(&msg_in);
+		}
+		else if (msg_in.from == procmgr)
+		{
+			handle_procmgr(&msg_in);
+		}
+		else
+		{
+			struct msg msg_out = {{0}};
+			handle_request(&msg_in, &msg_out);
 
-				msg_out.to = msg_in.from;
-				send(&msg_out);
+			msg_out.to = msg_in.from;
+			send(&msg_out);
 
-				if (msg_out.payload.buf)
-					free(msg_out.payload.buf);
-
-				break;
-			}
+			if (msg_out.payload.buf)
+				free(msg_out.payload.buf);
 		}
 	}
 
