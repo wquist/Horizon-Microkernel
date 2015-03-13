@@ -27,24 +27,32 @@ enum ata_command
 	ATA_CMD_WRITE   = 0x30
 };
 
-typedef struct ata_status ata_status_t;
-struct __packed ata_status
+typedef union ata_status ata_status_t;
+union ata_status
 {
-	uint8_t ERR : 1;
-	uint8_t : 2;
-	uint8_t DRQ : 1;
-	uint8_t : 2;
-	uint8_t DRDY : 1;
-	uint8_t BSY : 1;
+	struct __packed
+	{
+		uint8_t ERR : 1;
+		uint8_t : 2;
+		uint8_t DRQ : 1;
+		uint8_t : 2;
+		uint8_t DRDY : 1;
+		uint8_t BSY : 1;
+	};
+	uint8_t raw;
 };
 
-typedef struct ata_control ata_control_t;
-struct __packed ata_control
+typedef union ata_control ata_control_t;
+union ata_control
 {
-	uint8_t      : 1;
-	uint8_t nIEN : 1;
-	uint8_t SRST : 1;
-	uint8_t      : 5;
+	struct __packed
+	{
+		uint8_t      : 1;
+		uint8_t nIEN : 1;
+		uint8_t SRST : 1;
+		uint8_t      : 5;	
+	};
+	uint8_t raw;
 };
 
 typedef struct ide_device ide_device_t;
@@ -65,5 +73,5 @@ struct ide_device
 	size_t capacity;
 };
 
-void idedev_init(ide_device_t* dev, uint16_t cyl);
+void idedev_init(ide_device_t* dev, uint16_t cyl, uint8_t status);
 void idedev_parse_info(ide_device_t* dev, uint16_t* info);

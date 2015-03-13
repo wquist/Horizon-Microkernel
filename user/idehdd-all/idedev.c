@@ -1,6 +1,7 @@
+#include <memory.h>
 #include "idedev.h"
 
-void idedev_init(ide_device_t* dev, uint16_t cyl)
+void idedev_init(ide_device_t* dev, uint16_t cyl, uint8_t status)
 {
 	memset(dev, 0, sizeof(ide_device_t));
 
@@ -9,7 +10,7 @@ void idedev_init(ide_device_t* dev, uint16_t cyl)
 		dev->present = true;
 		dev->atapi = true;
 	}
-	else if (cyl == 0x0)
+	else if (cyl == 0x0 && status != 0x0)
 	{
 		dev->present = true;
 	}

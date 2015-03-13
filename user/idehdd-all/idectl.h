@@ -5,12 +5,17 @@
 
 #include "idedev.h"
 
-typedef enum ide_devpos IDE_DEVPOS;
-enum ide_devpos
+enum
 {
 	IDE_MASTER = 0,
 	IDE_SLAVE
-}
+};
+
+enum
+{
+	IDE_READ = 0,
+	IDE_WRITE
+};
 
 typedef struct ide_controller ide_controller_t;
 struct ide_controller
@@ -20,8 +25,10 @@ struct ide_controller
 };
 
 void idectl_reset(ide_controller_t* ctl);
-bool idectl_select(ide_controller* ctl, size_t pos);
-void idectl_identify(ide_controller* ctl, size_t pos);
+bool idectl_select(ide_controller_t* ctl, size_t pos);
+void idectl_identify(ide_controller_t* ctl, size_t pos);
+
+void idectl_block_io(ide_controller_t* ctl, size_t pos, int mode, size_t start, size_t count, void* buf);
 
 uint8_t idectl_read(ide_controller_t* ctl, size_t reg);
 void idectl_write(ide_controller_t* ctl, size_t reg, uint8_t val);
