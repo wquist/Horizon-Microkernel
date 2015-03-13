@@ -1,5 +1,7 @@
 enum SYSOP
 {
 	IO_INB,
-	IO_OUTB
+	IO_INW,
+	IO_OUTB,
+	IO_OUTW
 };
