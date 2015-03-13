@@ -31,8 +31,22 @@ static inline uint8_t inb(uint16_t port)
 	return ret;
 }
 
+//! Read a word of data from an I/O port.
+static inline uint8_t inw(uint16_t port)
+{
+	uint16_t ret;
+	__asm ("inw %1, %0" : "=a" (ret) : "d" (port));
+	return ret;
+}
+
 //! Write a byte of data to an I/O port.
 static inline void outb(uint16_t port, uint8_t val)
 {
 	__asm ("outb %0, %1" :: "a" (val), "d" (port) : "memory");
+}
+
+//! Write a word of data to an I/O port.
+static inline void outw(uint16_t port, uint16_t val)
+{
+	__asm ("outw %0, %1" :: "a" (val), "d" (port) : "memory");
 }

@@ -69,6 +69,13 @@ int arch_sysio(size_t action, size_t arg, uintptr_t data)
 
 			return inb((uint16_t)arg);
 		}
+		case IO_INW:
+		{
+			if (arg > USHORT_MAX)
+				return EPARAM;
+
+			return inw((uint16_t)arg);
+		}
 		case IO_OUTB:
 		{
 			if (arg > USHORT_MAX)
@@ -77,6 +84,16 @@ int arch_sysio(size_t action, size_t arg, uintptr_t data)
 				return EPARAM;
 
 			outb((uint16_t)arg, (uint8_t)data);
+			return ENONE;
+		}
+		case IO_OUTW:
+		{
+			if (arg > USHORT_MAX)
+				return EPARAM;
+			if (data > USHORT_MAX)
+				return EPARAM;
+
+			outb((uint16_t)arg, (uint16_t)data);
 			return ENONE;
 		}
 		default: return EPARAM;
