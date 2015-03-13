@@ -32,7 +32,7 @@ static inline uint8_t inb(uint16_t port)
 }
 
 //! Read a word of data from an I/O port.
-static inline uint8_t inw(uint16_t port)
+static inline uint16_t inw(uint16_t port)
 {
 	uint16_t ret;
 	__asm ("inw %1, %0" : "=a" (ret) : "d" (port));

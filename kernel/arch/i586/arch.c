@@ -93,7 +93,7 @@ int arch_sysio(size_t action, size_t arg, uintptr_t data)
 			if (data > USHORT_MAX)
 				return EPARAM;
 
-			outb((uint16_t)arg, (uint16_t)data);
+			outw((uint16_t)arg, (uint16_t)data);
 			return ENONE;
 		}
 		default: return EPARAM;
