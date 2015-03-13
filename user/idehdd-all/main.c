@@ -77,10 +77,13 @@ int main()
 
 	char buf[512];
 	idectl_block_io(&ctl, IDE_MASTER, IDE_READ, 0, 1, buf);
-	buf[255] = '\0';
-
 	print("OK!\n");
-	print(buf);
+	
+	for (size_t i = 0; i != 256; ++i)
+	{
+		char str[] = { buf[i], '\0' };
+		print(str);
+	}
 
 	for (;;);
 	return 0;

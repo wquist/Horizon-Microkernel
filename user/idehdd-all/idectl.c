@@ -65,11 +65,11 @@ void idectl_identify(ide_controller_t* ctl, size_t pos)
 	idectl_wait(ctl, mask, val);
 	/* CHECK FOR ERROR */
 
-	uint8_t info[512];
-	for (size_t i = 0; i != 512; ++i)
-		info[i] = idectl_read(ctl, ATA_REG_DATA);
+	uint16_t info[256];
+	for (size_t i = 0; i != 256; ++i)
+		info[i] = idectl_read_word(ctl, ATA_REG_DATA);
 
-	idedev_parse_info(dev, (uint16_t*)info);
+	idedev_parse_info(dev, info);
 }
 
 void idectl_block_io(ide_controller_t* ctl, size_t pos, int mode, size_t start, size_t count, void* buf)
@@ -113,22 +113,25 @@ void idectl_block_io(ide_controller_t* ctl, size_t pos, int mode, size_t start, 
 	idectl_wait(ctl, mask, val);
 	/* CHECK FOR ERROR */
 
-	if (mode == IDE_WRITE)
+	switch (mode)
 	{
-		uint8_t* src = (uint8_t*)buf;
-		for (size_t i = 0; i != count * 512; ++i)
-			idectl_write(ctl, ATA_REG_DATA, *src++);
-	}
+		case IDE_WRITE:
+		{
+			uint16_t* src = (uint16_t*)buf;
+			for (size_t i = 0; i != count * 256; ++i)
+				idectl_write_word(ctl, ATA_REG_DATA, *src++);
 
-	status.raw = idectl_read(ctl, ATA_REG_STATUS);
-	if (status.ERR)
-		return;
+			/* CHECK FOR ERROR */
+			break;
+		}
+		case IDE_READ:
+		{
+			uint16_t* dest = (uint16_t*)buf;
+			for (size_t i = 0; i != count * 256; ++i)
+				*dest++ = idectl_read_word(ctl, ATA_REG_DATA);
 
-	if (mode == IDE_READ)
-	{
-		uint8_t* dest = (uint8_t*)buf;
-		for (size_t i = 0; i != count * 512; ++i)
-			*dest++ = idectl_read(ctl, ATA_REG_DATA);
+			break;
+		}
 	}
 }
 
@@ -137,9 +140,19 @@ uint8_t idectl_read(ide_controller_t* ctl, size_t reg)
 	return sysio(IO_INB, ctl->base + reg, NULL);
 }
 
+uint16_t idectl_read_word(ide_controller_t* ctl, size_t reg)
+{
+	return sysio(IO_INW, ctl->base + reg, NULL);
+}
+
 void idectl_write(ide_controller_t* ctl, size_t reg, uint8_t val)
 {
 	sysio(IO_OUTB, ctl->base + reg, (void*)(unsigned)val);
+}
+
+void idectl_write_word(ide_controller_t* ctl, size_t reg, uint16_t val)
+{
+	sysio(IO_OUTW, ctl->base + reg, (void*)(unsigned)val);
 }
 
 bool idectl_wait(ide_controller_t* ctl, ata_status_t mask, ata_status_t val)

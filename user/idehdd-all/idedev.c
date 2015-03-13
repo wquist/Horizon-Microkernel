@@ -29,4 +29,8 @@ void idedev_parse_info(ide_device_t* dev, uint16_t* info)
 		dev->capacity = info[60];
 	else
 		dev->capacity = dev->heads * dev->sectors * dev->cylinders;
+
+	memcpy(dev->model, &(info[27]), 39);
+	memcpy(dev->serial, &(info[10]), 19);
+	memcpy(dev->firmware, &(info[23]), 7);
 }

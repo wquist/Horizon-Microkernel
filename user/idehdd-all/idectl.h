@@ -31,5 +31,8 @@ void idectl_identify(ide_controller_t* ctl, size_t pos);
 void idectl_block_io(ide_controller_t* ctl, size_t pos, int mode, size_t start, size_t count, void* buf);
 
 uint8_t idectl_read(ide_controller_t* ctl, size_t reg);
+uint16_t idectl_read_word(ide_controller_t* ctl, size_t reg);
 void idectl_write(ide_controller_t* ctl, size_t reg, uint8_t val);
+void idectl_write_word(ide_controller_t* ctl, size_t reg, uint16_t val);
+
 bool idectl_wait(ide_controller_t* ctl, ata_status_t mask, ata_status_t val);
