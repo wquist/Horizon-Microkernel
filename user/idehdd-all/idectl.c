@@ -22,13 +22,13 @@ void idectl_reset(ide_controller_t* ctl)
 	idectl_wait(ctl, mask, val);
 }
 
-bool idectl_select(ide_controller_t* ctl, size_t pos)
+bool idectl_select(ide_controller_t* ctl, bool pos)
 {
 	ata_status_t status = { .raw = idectl_read(ctl, ATA_REG_STATUS) };
 	if (status.BSY || status.DRQ)
 		return false;
 
-	idectl_write(ctl, ATA_REG_DRIVE_HEAD, 0xA0 | (pos << 4));
+	idectl_write(ctl, ATA_REG_HEAD, 0xA0 | (pos << 4));
 
 	status.raw = idectl_read(ctl, ATA_REG_STATUS);
 	if (status.BSY || status.DRQ)
@@ -37,10 +37,10 @@ bool idectl_select(ide_controller_t* ctl, size_t pos)
 	return true;
 }
 
-void idectl_identify(ide_controller_t* ctl, size_t pos)
+void idectl_identify(ide_controller_t* ctl, bool pos)
 {
-	idectl_write(ctl, ATA_REG_SECTOR_CNT, 0x95);
-	if (idectl_read(ctl, ATA_REG_SECTOR_CNT) != 0x95)
+	idectl_write(ctl, ATA_REG_COUNT, 0x95);
+	if (idectl_read(ctl, ATA_REG_COUNT) != 0x95)
 		return;
 
 	idectl_reset(ctl);
@@ -72,7 +72,7 @@ void idectl_identify(ide_controller_t* ctl, size_t pos)
 	idedev_parse_info(dev, info);
 }
 
-void idectl_block_io(ide_controller_t* ctl, size_t pos, int mode, size_t start, size_t count, void* buf)
+void idectl_block_io(ide_controller_t* ctl, bool pos, int mode, size_t start, size_t count, void* buf)
 {
 	ide_device_t* dev = &(ctl->devices[pos]);
 	if (!(dev->present))
@@ -81,31 +81,15 @@ void idectl_block_io(ide_controller_t* ctl, size_t pos, int mode, size_t start, 
 	if (!idectl_select(ctl, pos))
 		return;
 
-	uint8_t sector, cl, ch, head;
-	if (dev->lba)
-	{
-		sector = start & 0xFF;
-		cl = (start >> 8) & 0xFF;
-		ch = (start >> 16) & 0xFF;
-		head = (start >> 24) & 0xF;
-	}
-	else
-	{
-		size_t cylinder = start / (dev->heads * dev->sectors);
-		size_t offset = start % (dev->heads * dev->sectors);
-
-		sector = offset % dev->sectors + 1;
-		cl = cylinder & 0xFF;
-		ch = (cylinder >> 8) & 0xFF;
-		head = offset / dev->sectors;
-	}
+	ata_geometry_t geom;
+	idedev_get_geometry(dev, pos, start, &geom);
 
 	uint8_t command = (mode == IDE_READ) ? ATA_CMD_READ : ATA_CMD_WRITE;
-	idectl_write(ctl, ATA_REG_SECTOR_CNT, count);
-	idectl_write(ctl, ATA_REG_SECTOR, sector);
-	idectl_write(ctl, ATA_REG_LCYL, cl);
-	idectl_write(ctl, ATA_REG_HCYL, ch);
-	idectl_write(ctl, ATA_REG_DRIVE_HEAD, (dev->lba << 6) | (pos << 4) | head);
+	idectl_write(ctl, ATA_REG_COUNT, count);
+	idectl_write(ctl, ATA_REG_SECTOR, geom.sector);
+	idectl_write(ctl, ATA_REG_LCYL, geom.cylinder.low);
+	idectl_write(ctl, ATA_REG_HCYL, geom.cylinder.high);
+	idectl_write(ctl, ATA_REG_HEAD, geom.head);
 	idectl_write(ctl, ATA_REG_COMMAND, command);
 
 	ata_status_t mask = { .BSY = true,  .DRQ = true };

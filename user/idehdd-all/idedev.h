@@ -6,16 +6,16 @@
 typedef enum ata_register ATA_REGISTER;
 enum ata_register
 {
-	ATA_REG_DATA       = 0,
-	ATA_REG_ERROR      = 1,
-	ATA_REG_SECTOR_CNT = 2,
-	ATA_REG_SECTOR     = 3,
-	ATA_REG_LCYL       = 4,
-	ATA_REG_HCYL       = 5,
-	ATA_REG_DRIVE_HEAD = 6,
-	ATA_REG_STATUS     = 7,
-	ATA_REG_COMMAND    = 7,
-	ATA_REG_DEVCTL     = 0x206
+	ATA_REG_DATA    = 0,
+	ATA_REG_ERROR   = 1,
+	ATA_REG_COUNT   = 2,
+	ATA_REG_SECTOR  = 3,
+	ATA_REG_LCYL    = 4,
+	ATA_REG_HCYL    = 5,
+	ATA_REG_HEAD    = 6,
+	ATA_REG_STATUS  = 7,
+	ATA_REG_COMMAND = 7,
+	ATA_REG_DEVCTL  = 0x206
 };
 
 typedef enum ata_command ATA_COMMAND;
@@ -55,6 +55,18 @@ union ata_control
 	uint8_t raw;
 };
 
+typedef struct ata_geometry ata_geometry_t;
+struct ata_geometry
+{
+	uint8_t sector;
+	uint8_t head;
+	struct
+	{
+		uint8_t low;
+		uint8_t high;
+	} cylinder;
+};
+
 typedef struct ide_device ide_device_t;
 struct ide_device
 {
@@ -75,3 +87,5 @@ struct ide_device
 
 void idedev_init(ide_device_t* dev, uint16_t cyl, uint8_t status);
 void idedev_parse_info(ide_device_t* dev, uint16_t* info);
+
+void idedev_get_geometry(ide_device_t* dev, bool pos, size_t start, ata_geometry_t* geom);

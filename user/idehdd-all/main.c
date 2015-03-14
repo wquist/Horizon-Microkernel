@@ -73,6 +73,14 @@ int main()
 	else
 		return 1;
 
+	print("Device model: ");
+	print(ctl.devices[IDE_MASTER].model);
+	print("\nDevice serial: ");
+	print(ctl.devices[IDE_MASTER].serial);
+	print("\nDevice firmware: ");
+	print(ctl.devices[IDE_MASTER].firmware);
+	print("\n\n");
+
 	print("Reading first block of disk... ");
 
 	char buf[512];

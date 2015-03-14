@@ -25,10 +25,10 @@ struct ide_controller
 };
 
 void idectl_reset(ide_controller_t* ctl);
-bool idectl_select(ide_controller_t* ctl, size_t pos);
-void idectl_identify(ide_controller_t* ctl, size_t pos);
+bool idectl_select(ide_controller_t* ctl, bool pos);
+void idectl_identify(ide_controller_t* ctl, bool pos);
 
-void idectl_block_io(ide_controller_t* ctl, size_t pos, int mode, size_t start, size_t count, void* buf);
+void idectl_block_io(ide_controller_t* ctl, bool pos, int mode, size_t start, size_t count, void* buf);
 
 uint8_t idectl_read(ide_controller_t* ctl, size_t reg);
 uint16_t idectl_read_word(ide_controller_t* ctl, size_t reg);
