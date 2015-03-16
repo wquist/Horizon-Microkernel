@@ -134,4 +134,4 @@ struct fat_file
 void fat_init(int fd, fat_volume_t* ret_vol);
 
 size_t fat_enumerate(fat_volume_t* vol, fat_file_t* parent, size_t index, fat_file_t* ret_file);
-int fat_read(fat_volume_t* vol, fat_file_t* file);
+size_t fat_read(fat_volume_t* vol, fat_file_t* file, size_t off, size_t len, uint8_t* buffer);

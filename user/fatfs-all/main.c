@@ -30,54 +30,66 @@ int open(const char* path)
 	return response.code;
 }
 
-int write(int fd, char* buffer, size_t size)
-{
-	struct msg request = {{0}};
-	request.to = filesystem;
-
-	request.code = VFS_WRITE;
-	request.args[0] = fd;
-	request.args[1] = size;
-
-	request.payload.buf  = buffer;
-	request.payload.size = size;
-
-	send(&request);
-	wait(filesystem);
-
-	struct msg response = {{0}};
-	recv(&response);
-
-	return response.code;
-}
-
-void print(char* msg)
-{
-	write(screen, msg, strlen(msg)+1);
-}
-
 int main()
 {
 	while ((filesystem = svcid(SVC_VFS)) == 0);
-	while ((screen = open("/dev/tty")) == -1);
 
 	int disk;
 	while ((disk = open("/dev/ata")) == -1);
 
+	struct msg mount_request = {{0}};
+	mount_request.to = filesystem;
+
+	mount_request.code = VFS_MOUNT;
+	mount_request.payload.buf  = "/home";
+	mount_request.payload.size = 5;
+
+	send(&mount_request);
+	wait(filesystem);
+
+	struct msg mount_response = {{0}};
+	recv(&mount_response);
+	if (mount_response.code == -1)
+		return 1;
+
 	fat_volume_t vol = {0};
 	fat_init(disk, &vol);
 
-	size_t iter = 0;
+	char buffer[64];
 	while (true)
 	{
-		fat_file_t file = {{0}};
-		iter = fat_enumerate(&vol, NULL, iter, &file);
-		if (iter == -1)
-			break;
+		wait(IPORT_ANY);
 
-		print("Dirent: ");
-		print(file.name);
-		print("\n");
+		struct msg request = {{0}};
+		request.payload.buf  = buffer;
+		request.payload.size = 64;
+
+		if (recv(&request) < 0)
+		{
+			drop(NULL);
+			continue;
+		}
+
+		struct msg response = {{0}};
+		response.to = request.from;
+		switch (request.code)
+		{
+			case VFS_FSFIND:
+			{
+				//
+			}
+			case VFS_FSREAD:
+			{
+				//
+			}
+			default:
+			{
+				response.code = -1;
+
+				send(&response);
+				break;
+			}
+		}
 	}
 
 	return 0;
