@@ -33,7 +33,6 @@ bool register_device(char* name)
 
 int main()
 {
-	ipcport_t devmgr;
 	while ((devmgr = svcid(SVC_DEVMGR)) == 0);
 
 	ide_controller_t ctl = { .base = 0x1F0 };
@@ -41,17 +40,20 @@ int main()
 
 	if (!(ctl.devices[IDE_MASTER].present))
 		return 1;
-	if (!register_device("ata0"))
+	if (!register_device("ata"))
 		return 1;
 
-	void* buffer = malloc(512);
+	char buffer[512];
 	while (true)
 	{
 		wait(IPORT_ANY);
 
 		struct msg request = {{0}};
-		request.payload.buf  = buffer;
-		request.payload.size = 512;
+		if (recv(&request) < 0)
+		{
+			drop(NULL);
+			continue;
+		}
 
 		struct msg response = {{0}};
 		response.to = request.from;
@@ -59,10 +61,10 @@ int main()
 		{
 			case 1:
 			{
-				size_t off = request.args[1];
+				size_t off = request.args[1] / 512;
 				idectl_block_io(&ctl, IDE_MASTER, IDE_READ, off, 1, buffer);
 
-				response.code = 0;
+				response.code = 512;
 				response.payload.buf  = buffer;
 				response.payload.size = 512;
 

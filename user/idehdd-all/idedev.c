@@ -41,7 +41,7 @@ void idedev_get_geometry(ide_device_t* dev, bool pos, size_t start, ata_geometry
 {
 	if (dev->lba)
 	{
-		geom->sector = pos & 0xFF;
+		geom->sector = start & 0xFF;
 		geom->cylinder.low  = (start >> 8)  & 0xFF;
 		geom->cylinder.high = (start >> 16) & 0xFF;
 

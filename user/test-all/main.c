@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "../vfsd-all/fs.h"
-#include "../procd-all/pnotify.h"
 
 ipcport_t filesystem;
 int screen, keyboard;
