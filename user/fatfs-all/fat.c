@@ -6,6 +6,7 @@
 #include "../vfsd-all/fs.h"
 
 static uint16_t next_cluster(fat_volume_t* vol, uint16_t current_cluster);
+static uint16_t find_cluster(fat_volume_t* vol, uint16_t cluster, size_t* offset);
 static size_t get_cluster_sector(fat_volume_t* vol, uint16_t cluster);
 static size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_t* ret_file);
 static int read_sector(int device, size_t sector, uint8_t* buffer);
@@ -29,21 +30,12 @@ size_t fat_enumerate(fat_volume_t* vol, fat_file_t* parent, size_t index, fat_fi
 {
 	size_t cluster;
 	if (!parent)
-		cluster = 2;
+		cluster = 0;
 	else
 		cluster = parent->cluster;
 
 	size_t cluster_offset = (size_t)(index / 512) * 512;
-
-	size_t cluster_size = 512 * vol->boot_record.cluster_sectors;
-	while (index >= cluster_size)
-	{
-		cluster = next_cluster(vol, cluster);
-		if (!cluster)
-			return -1;
-
-		index -= cluster_size;
-	}
+	cluster = find_cluster(vol, cluster, &index);
 
 	size_t increment = read_dirent(vol, cluster, index, ret_file);
 	return (increment == -1) ? -1 : cluster_offset + increment;
@@ -51,38 +43,30 @@ size_t fat_enumerate(fat_volume_t* vol, fat_file_t* parent, size_t index, fat_fi
 
 size_t fat_read(fat_volume_t* vol, fat_file_t* file, size_t off, size_t len, uint8_t* buffer)
 {
-	if (off >= file_size)
+	if (off >= file->size)
 		return 0;
 	if (off + len > file->size)
 		len = file->size - off;
 
 	size_t cluster = file->cluster;
-	size_t cluster_size = 512 * vol->boot_record.cluster_sectors;
-
 	size_t total_end = off + len;
 	while (off < total_end)
 	{
-		while (off >= cluster_size)
-		{
-			cluster = next_cluster(vol, cluster);
-			if (!cluster)
-				return 0;
-
-			off -= cluster_size;
-		}
-
-		size_t cluster_sector = get_cluster_sector(cluster);
+		cluster = find_cluster(vol, cluster, &off);
+		size_t cluster_sector = get_cluster_sector(vol, cluster);
 		size_t target_sector = cluster_sector + (off / 512);
 
-		char full_buffer[512];
-		read_sector(target_sector, full_buffer);
+		uint8_t full_buffer[512];
+		read_sector(vol->device, target_sector, full_buffer);
 
 		size_t to_read = total_end - off;
 		if (to_read > 512)
 			to_read = 512;
 
 		memcpy(buffer, full_buffer, to_read);
+
 		off += to_read;
+		buffer += to_read;
 	}
 
 	return len;
@@ -108,13 +92,33 @@ uint16_t next_cluster(fat_volume_t* vol, uint16_t current_cluster)
 	return (value >= 0xFFF8) ? 0 : value;
 }
 
+uint16_t find_cluster(fat_volume_t* vol, uint16_t cluster, size_t* offset)
+{
+	size_t cluster_size = 512 * vol->boot_record.cluster_sectors;
+	while (*offset >= cluster_size)
+	{
+		cluster = next_cluster(vol, cluster);
+		if (!cluster)
+			return 0;
+
+		*offset -= cluster_size;
+	}
+
+	return cluster;
+}
+
 size_t get_cluster_sector(fat_volume_t* vol, uint16_t cluster)
 {
-	size_t first_sector = vol->boot_record.reserved_sectors;
-	first_sector += (vol->boot_record.fat_count * vol->boot_record.fat_sectors);
+	fat_boot_record_t* br = &(vol->boot_record);
 
-	size_t cluster_start = (cluster - 2) * vol->boot_record.cluster_sectors;
-	return first_sector + cluster_start;
+	size_t first_sector = br->reserved_sectors;
+	first_sector += (br->fat_count * br->fat_sectors);
+	if (cluster == 0)
+		return first_sector;
+
+	size_t root_sectors = ((br->dirent_count * 32) + br->sector_bytes - 1) / br->sector_bytes;
+	size_t cluster_start = (cluster - 2) * br->cluster_sectors;
+	return first_sector + root_sectors + cluster_start;
 }
 
 size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_t* ret_file)
@@ -122,20 +126,20 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 	static uint16_t last_sector = 0;
 	static uint8_t buffer[512];
 
-	size_t cluster_base = get_cluster_sector(vol, cluster);
-	size_t cluster_size = 512 * vol->boot_record.cluster_sectors;
-	while (offset < cluster_size)
+	while (true)
 	{
-		size_t sector = cluster_base + (offset / 512);
-		if (sector != last_sector)
+		cluster = find_cluster(vol, cluster, &offset);
+		size_t cluster_sector = get_cluster_sector(vol, cluster);
+		size_t target_sector = cluster_sector + (offset / 512);
+
+		if (target_sector != last_sector)
 		{
-			read_sector(vol->device, sector, buffer);
-			last_sector = sector;
+			read_sector(vol->device, target_sector, buffer);
+			last_sector = target_sector;
 		}
 
 		size_t sector_offset = offset % 512;
 		fat_dirent_t* entry = (fat_dirent_t*)&(buffer[sector_offset]);
-
 		offset += sizeof(fat_dirent_t);
 
 		if (entry->name[0] == FAT_DIREND)
@@ -164,12 +168,6 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 
 		return offset;
 	}
-
-	uint16_t next = next_cluster(vol, cluster);
-	if (!next)
-		return -1;
-
-	return cluster_size + read_dirent(vol, next, 0, ret_file);
 }
 
 int read_sector(int device, size_t sector, uint8_t* buffer)

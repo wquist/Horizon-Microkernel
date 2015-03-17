@@ -7,6 +7,7 @@
 #include <sys/proc.h>
 #include <stdbool.h>
 #include <string.h>
+#include <malloc.h>
 
 #include "../vfsd-all/fs.h"
 
@@ -139,6 +140,32 @@ int main()
 		{
 			if (arg)
 				print(arg);
+		}
+		else if (strcmp(cmd, "read") == 0)
+		{
+			if (arg)
+			{
+				int fd = open(arg);
+				if (fd != -1)
+				{
+					char* buffer = malloc(64);
+					memset(buffer, 0, 64);
+
+					size_t res = read(fd, buffer, 64);
+					if (res == -1)
+						print("Error.");
+					else if (!res)
+						print("Nothing to read.");
+					else
+						print(buffer);
+
+					free(buffer);
+				}
+				else
+				{
+					print("File not found.");
+				}
+			}
 		}
 		else if (strcmp(cmd, "clear") == 0)
 		{
