@@ -23,7 +23,7 @@ struct device
 ipcport_t filesystem = 0;
 struct device* device_head = NULL;
 
-uint32_t last_id = 0;
+uint32_t last_id = 1;
 
 struct device* get_device(uint32_t uid)
 {
@@ -74,7 +74,7 @@ int main()
 
 	mount_request.code = VFS_MOUNT;
 	mount_request.payload.buf  = "/dev";
-	mount_request.payload.size = 4;
+	mount_request.payload.size = 5;
 
 	send(&mount_request);
 	wait(filesystem);

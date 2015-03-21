@@ -53,16 +53,16 @@ vfs_node_t* add_node(vfs_node_t* parent, const char* name)
 
 vfs_node_t* request_node(vfs_node_t* parent, const char* name, bool virt)
 {
-	if (virt)
+	if (virt && parent->type == VFS_VIRTDIR)
 	{
-		if (parent->type != VFS_VIRTDIR)
-			return NULL;
-
 		vfs_node_t* node = add_node(parent, name);
 		node->type = VFS_VIRTDIR;
 
 		return node;
 	}
+
+	if (!(parent->owner))
+		return NULL;
 
 	struct msg request = {{0}};
 	request.to = parent->owner;
@@ -97,14 +97,11 @@ vfs_node_t* get_node(vfs_node_t* parent, const char* path, bool virt)
 		path += 1;
 	}
 
-	if (!parent)
-		return NULL;
-
 	const char* path_end = strchr(path, '\0');
 	if (path == path_end)
 		return parent;
 
-	while (path != path_end + 1)
+	while (parent && path != path_end + 1)
 	{
 		const char* component = strchr(path, '/');
 		if (!component)
@@ -248,11 +245,10 @@ void handle_procmgr(struct msg* notice)
 void handle_request(struct msg* request, struct msg* response)
 {
 	ipcport_t target = request->from;
-	msgdata_t action = request->code;
 	char* buffer = (char*)(request->payload.buf);
 
 	response->code = -1;
-	switch (action)
+	switch (request->code)
 	{
 		case VFS_MOUNT:
 		{

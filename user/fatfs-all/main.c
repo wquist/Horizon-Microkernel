@@ -10,18 +10,7 @@
 #include "fat.h"
 #include "../vfsd-all/fs.h"
 
-typedef struct open_file open_file_t;
-struct open_file
-{
-	fat_file_t file_info;
-	size_t ref_count;
-
-	open_file_t* next;
-};
-
 ipcport_t filesystem;
-
-open_file_t* open_files = NULL;
 
 int open(const char* path)
 {
@@ -56,7 +45,7 @@ int main()
 
 	mount_request.code = VFS_MOUNT;
 	mount_request.payload.buf  = "/home";
-	mount_request.payload.size = 5;
+	mount_request.payload.size = 6;
 
 	send(&mount_request);
 	wait(filesystem);
@@ -87,32 +76,29 @@ int main()
 		{
 			case VFS_FSFIND:
 			{
-				open_file_t* parent = (open_file_t*)(request.args[0]);
-				open_file_t* found = malloc(sizeof(open_file_t));
-				memset(found, 0, sizeof(open_file_t));
+				fat_file_t* file = malloc(sizeof(fat_file_t));
 
-				size_t iter = 0;
-				while (found->ref_count != 1)
+				size_t iter = 0; bool found = false;
+				while (!found)
 				{
-					iter = fat_enumerate(&vol, &(parent->file_info), iter, &(found->file_info));
+					memset(file, 0, sizeof(fat_file_t));
+
+					iter = fat_enumerate(&vol, NULL, iter, file);
 					if (iter == -1)
 						break;
 
-					if (strcmp(buffer, found->file_info.name) == 0)
-						found->ref_count = 1;
+					if (strcmp(file->name, buffer) == 0)
+						found = true;
 				}
 
-				if (found->ref_count == 1)
+				if (found)
 				{
-					found->next = open_files;
-					open_files = found;
-
-					response.code = (uintptr_t)found;
-					response.args[0] = found->file_info.type;
+					response.code = (uintptr_t)file;
+					response.args[0] = file->type;
 				}
 				else
 				{
-					free(found);
+					free(file);
 					response.code = -1;
 				}
 
@@ -121,11 +107,11 @@ int main()
 			}
 			case VFS_FSREAD:
 			{
-				open_file_t* target = (open_file_t*)(request.args[0]);
+				fat_file_t* target = (fat_file_t*)(request.args[0]);
 				size_t len = request.args[1];
 
 				uint8_t* dest = malloc(len);
-				size_t res = fat_read(&vol, &(target->file_info), request.args[2], len, dest);
+				size_t res = fat_read(&vol, target, request.args[2], len, dest);
 
 				response.code = res;
 				response.payload.buf  = dest;

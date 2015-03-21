@@ -34,11 +34,12 @@ size_t fat_enumerate(fat_volume_t* vol, fat_file_t* parent, size_t index, fat_fi
 	else
 		cluster = parent->cluster;
 
-	size_t cluster_offset = (size_t)(index / 512) * 512;
-	cluster = find_cluster(vol, cluster, &index);
+	size_t offset = index;
+	cluster = find_cluster(vol, cluster, &offset);
+	size_t absolute = index - offset;
 
-	size_t increment = read_dirent(vol, cluster, index, ret_file);
-	return (increment == -1) ? -1 : cluster_offset + increment;
+	size_t increment = read_dirent(vol, cluster, offset, ret_file);
+	return (increment == -1) ? -1 : absolute + increment;
 }
 
 size_t fat_read(fat_volume_t* vol, fat_file_t* file, size_t off, size_t len, uint8_t* buffer)
@@ -128,7 +129,6 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 
 	while (true)
 	{
-		cluster = find_cluster(vol, cluster, &offset);
 		size_t cluster_sector = get_cluster_sector(vol, cluster);
 		size_t target_sector = cluster_sector + (offset / 512);
 
