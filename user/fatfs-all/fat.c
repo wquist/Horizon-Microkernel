@@ -9,17 +9,15 @@ static uint16_t next_cluster(fat_volume_t* vol, uint16_t current_cluster);
 static uint16_t find_cluster(fat_volume_t* vol, uint16_t cluster, size_t* offset);
 static size_t get_cluster_sector(fat_volume_t* vol, uint16_t cluster);
 static size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_t* ret_file);
-static int read_sector(int device, size_t sector, uint8_t* buffer);
+static int read_sector(fat_volume_t* vol, size_t sector, uint8_t* buffer);
 
-// REMOVE ME
-extern ipcport_t filesystem;
-
-void fat_init(int fd, fat_volume_t* ret_vol)
+void fat_init(ipcport_t device, int fd, fat_volume_t* ret_vol)
 {
-	uint8_t buffer[512];
-	read_sector(fd, 0, buffer);
+	ret_vol->device = device;
+	ret_vol->fd = fd;
 
-	ret_vol->device = fd;
+	uint8_t buffer[512];
+	read_sector(ret_vol, 0, buffer);
 
 	/* CHECK FAT TYPE - Only 16 for now */
 	ret_vol->format = FAT16;
@@ -58,7 +56,7 @@ size_t fat_read(fat_volume_t* vol, fat_file_t* file, size_t off, size_t len, uin
 		size_t target_sector = cluster_sector + (off / 512);
 
 		uint8_t full_buffer[512];
-		read_sector(vol->device, target_sector, full_buffer);
+		read_sector(vol, target_sector, full_buffer);
 
 		size_t to_read = total_end - off;
 		if (to_read > 512)
@@ -75,7 +73,7 @@ size_t fat_read(fat_volume_t* vol, fat_file_t* file, size_t off, size_t len, uin
 
 uint16_t next_cluster(fat_volume_t* vol, uint16_t current_cluster)
 {
-	static uint16_t last_sector = 0;
+	static uint16_t last_sector = -1;
 	static uint8_t buffer[512];
 
 	size_t offset = current_cluster * 2;
@@ -83,7 +81,7 @@ uint16_t next_cluster(fat_volume_t* vol, uint16_t current_cluster)
 
 	if (sector != last_sector)
 	{
-		read_sector(vol->device, sector, buffer);
+		read_sector(vol, sector, buffer);
 		last_sector = sector;
 	}
 
@@ -124,7 +122,7 @@ size_t get_cluster_sector(fat_volume_t* vol, uint16_t cluster)
 
 size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_t* ret_file)
 {
-	static uint16_t last_sector = 0;
+	static uint16_t last_sector = -1;
 	static uint8_t buffer[512];
 
 	while (true)
@@ -134,7 +132,7 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 
 		if (target_sector != last_sector)
 		{
-			read_sector(vol->device, target_sector, buffer);
+			read_sector(vol, target_sector, buffer);
 			last_sector = target_sector;
 		}
 
@@ -162,6 +160,8 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 		for (size_t i = 0; i != 3; ++i)
 			*curr_char++ = entry->name[8+i];
 
+		*curr_char = '\0';
+
 		ret_file->type = (entry->attributes.directory) ? VFS_DIR : VFS_FILE;
 		ret_file->cluster = entry->cluster_low;
 		ret_file->size = entry->size;
@@ -170,18 +170,18 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 	}
 }
 
-int read_sector(int device, size_t sector, uint8_t* buffer)
+int read_sector(fat_volume_t* vol, size_t sector, uint8_t* buffer)
 {
 	struct msg request = {{0}};
-	request.to = filesystem;
+	request.to = vol->device;
 
-	request.code = VFS_READ;
-	request.args[0] = device;
+	request.code = VFS_FSREAD;
+	request.args[0] = vol->fd;
 	request.args[1] = 512;
 	request.args[2] = sector * 512;
 
 	send(&request);
-	wait(filesystem);
+	wait(request.to);
 
 	struct msg response = {{0}};
 	response.payload.buf  = buffer;

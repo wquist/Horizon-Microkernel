@@ -115,7 +115,8 @@ struct __packed fat_dirent_long
 typedef struct fat_volume fat_volume_t;
 struct fat_volume
 {
-	int device;
+	ipcport_t device;
+	int fd;
 
 	size_t format;
 	fat_boot_record_t boot_record;
@@ -131,7 +132,7 @@ struct fat_file
 	size_t size;
 };
 
-void fat_init(int fd, fat_volume_t* ret_vol);
+void fat_init(ipcport_t device, int fd, fat_volume_t* ret_vol);
 
 size_t fat_enumerate(fat_volume_t* vol, fat_file_t* parent, size_t index, fat_file_t* ret_file);
 size_t fat_read(fat_volume_t* vol, fat_file_t* file, size_t off, size_t len, uint8_t* buffer);

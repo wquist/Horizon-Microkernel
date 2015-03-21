@@ -274,6 +274,16 @@ void handle_request(struct msg* request, struct msg* response)
 			response->code = fd;
 			break;
 		}
+		case VFS_DOPEN:
+		{
+			vfs_node_t* node = get_node(NULL, buffer, false);
+			if (!node || node->type != VFS_FILE)
+				return;
+
+			response->code = node->owner;
+			response->args[0] = node->uid;
+			break;
+		}
 		case VFS_READ:
 		{
 			pid_t pid = IPORTPROC(target);

@@ -165,41 +165,6 @@ int main()
 				{
 					print("File not found.");
 				}
-
-				/*
-				struct msg request = {{0}};
-				request.to = 3;
-				request.code = VFS_FSFIND;
-				request.payload.buf = "TEST.TXT";
-				request.payload.size = 9;
-
-				send(&request);
-				wait(IPORT_ANY);
-
-				struct msg response = {{0}};
-				recv(&response);
-
-				if (response.code != -1)
-				{
-					struct msg request2 = {{0}};
-					request2.to = 3;
-					request2.code = VFS_FSREAD;
-					request2.args[0] = response.code;
-					request2.args[1] = 32;
-
-					send(&request2);
-					wait(IPORT_ANY);
-
-					char data[64] = {0};
-
-					struct msg response2 = {{0}};
-					response2.payload.buf = data;
-					response2.payload.size = 32;
-
-					recv(&response2);
-					print(data);
-				}
-				*/
 			}
 		}
 		else if (strcmp(cmd, "clear") == 0)

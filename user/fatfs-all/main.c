@@ -11,13 +11,14 @@
 #include "../vfsd-all/fs.h"
 
 ipcport_t filesystem;
+ipcport_t device; int disk;
 
-int open(const char* path)
+int open_device(const char* path)
 {
 	struct msg request = {{0}};
 	request.to = filesystem;
 
-	request.code = VFS_OPEN;
+	request.code = VFS_DOPEN;
 	request.payload.buf  = (void*)path;
 	request.payload.size = strlen(path)+1;
 
@@ -27,6 +28,9 @@ int open(const char* path)
 	struct msg response = {{0}};
 	recv(&response);
 
+	device = response.code;
+	disk = response.args[0];
+
 	return response.code;
 }
 
@@ -34,11 +38,10 @@ int main()
 {
 	while ((filesystem = svcid(SVC_VFS)) == 0);
 
-	int disk;
-	while ((disk = open("/dev/ata")) == -1);
+	while (open_device("/dev/ata") == -1);
 
 	fat_volume_t vol = {0};
-	fat_init(disk, &vol);
+	fat_init(device, disk, &vol);
 
 	struct msg mount_request = {{0}};
 	mount_request.to = filesystem;
