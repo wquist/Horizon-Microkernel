@@ -27,9 +27,6 @@ extern bool debug_enabled;
 /*! Print a formatted message, prepended with the calling filename. */
 void debug_trace(const char* file, const char* format, ...)
 {
-	if (!debug_enabled)
-		return;
-
 	// Extract the filename from the path
 	char* s = strrchr(file, '/');
 	if (s) ++s;

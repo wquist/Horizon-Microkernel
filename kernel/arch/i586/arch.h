@@ -33,6 +33,7 @@
 #include <sw/int/callback.h>
 #include <sw/int/syscall.h>
 #include <sw/instr/io.h>
+#include <hw/serial.h>
 #include <hw/console.h>
 
 #include <spec/multiboot.h>

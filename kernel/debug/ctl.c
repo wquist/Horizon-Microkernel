@@ -33,6 +33,8 @@ void debug_init()
 {
 	debug_enabled = true;
 
+	serial_init(SERIAL_PORT_PRIMARY);
+
 	/* Set the entire screen to spaces instead of 0,
 	   since 0 might have extra color info or something
 	 */
@@ -42,15 +44,19 @@ void debug_init()
 }
 
 //! Disable debug output.
-/*! debug_trace() calls will no longer be output. */
+/*! Output will no longer be sent to video memory. */
 void debug_disable()
 {
 	debug_enabled = false;
 }
 
-//! Redirect stdio's character stream directory to video memory.
+//! Redirect stdio's character stream to video memory (and serial).
 int putchar(char c)
 {
+	serial_write(SERIAL_PORT_PRIMARY, c);
+	if (!debug_enabled)
+		return 0;
+
 	switch (c)
 	{
 		case '\b':
