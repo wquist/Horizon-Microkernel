@@ -79,6 +79,7 @@ int main()
 		{
 			case VFS_FSFIND:
 			{
+				fat_file_t* parent = (fat_file_t*)(request.args[0]);
 				fat_file_t* file = malloc(sizeof(fat_file_t));
 
 				size_t iter = 0; bool found = false;
@@ -86,7 +87,7 @@ int main()
 				{
 					memset(file, 0, sizeof(fat_file_t));
 
-					iter = fat_enumerate(&vol, NULL, iter, file);
+					iter = fat_enumerate(&vol, parent, iter, file);
 					if (iter == -1)
 						break;
 

@@ -1,6 +1,7 @@
 #include "fat.h"
 #include <sys/msg.h>
 #include <sys/sched.h>
+#include <ctype.h> //< FIXME: _tolower and _toupper are swapped.
 #include <string.h>
 #include <malloc.h>
 #include "../vfsd-all/fs.h"
@@ -125,6 +126,7 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 	static uint16_t last_sector = -1;
 	static uint8_t buffer[512];
 
+	char long_filename[256] = {0};
 	while (true)
 	{
 		size_t cluster_sector = get_cluster_sector(vol, cluster);
@@ -144,23 +146,53 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 			return -1;
 		if (entry->name[0] == FAT_UNUSED)
 			continue;
-		if (entry->attributes.nibble_low == 0xF || entry->attributes.volume)
-			continue;
 
-		char* curr_char = ret_file->name;
-		for (size_t i = 0; i != 8; ++i)
+		if (entry->attributes.nibble_low == 0xF)
 		{
-			if (entry->name[i] == ' ')
-				break;
+			fat_dirent_long_t* long_entry = (fat_dirent_long_t*)entry;
 
-			*curr_char++ = entry->name[i];
+			size_t pos = long_entry->order & 0x3F;
+			char* name_buf = &(long_filename[(pos - 1) * 13]);
+
+			int i;
+			for (i = 0; i != 5; ++i)
+				*name_buf++ = (char)(long_entry->name_low[i]);
+			for (i = 0; i != 6; ++i)
+				*name_buf++ = (char)(long_entry->name_middle[i]);
+			for (i = 0; i != 2; ++i)
+				*name_buf++ = (char)(long_entry->name_high[i]);
+
+			continue;
 		}
 
-		*curr_char++ = '.';
-		for (size_t i = 0; i != 3; ++i)
-			*curr_char++ = entry->name[8+i];
+		if (entry->attributes.volume)
+			continue;
 
-		*curr_char = '\0';
+		if (*long_filename)
+		{
+			strncpy(ret_file->name, long_filename, 32);
+			ret_file->name[31] = '\0';
+		}
+		else
+		{
+			char* curr_char = ret_file->name;
+			for (size_t i = 0; i != 8; ++i)
+			{
+				if (entry->name[i] == ' ')
+					break;
+
+				*curr_char++ = _toupper(entry->name[i]);
+			}
+
+			if (!(entry->attributes.directory))
+			{
+				*curr_char++ = '.';
+				for (size_t i = 0; i != 3; ++i)
+					*curr_char++ = _toupper(entry->name[8+i]);
+			}
+
+			*curr_char = '\0';
+		}
 
 		ret_file->type = (entry->attributes.directory) ? VFS_DIR : VFS_FILE;
 		ret_file->cluster = entry->cluster_low;

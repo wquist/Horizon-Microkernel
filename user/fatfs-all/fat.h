@@ -101,15 +101,15 @@ typedef struct fat_dirent_long fat_dirent_long_t;
 struct __packed fat_dirent_long
 {
 	uint8_t order;
-	uint8_t name_low[10];
+	uint16_t name_low[5];
 
 	uint8_t attributes;
 	uint8_t type;
 	uint8_t checksum;
 
-	uint8_t name_middle[12];
+	uint16_t name_middle[6];
 	uint16_t reserved;
-	uint8_t name_high[4];
+	uint16_t name_high[2];
 };
 
 typedef struct fat_volume fat_volume_t;
