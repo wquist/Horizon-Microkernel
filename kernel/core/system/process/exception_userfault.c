@@ -22,10 +22,13 @@
 #include <system/internal.h>
 #include <horizon/svc.h>
 #include <horizon/msg.h>
+#include <debug/log.h>
 
 void exception_userfault(isr_t isr)
 {
 	thread_uid_t target_uid = scheduler_curr();
+	dtrace("Process %i exited abnormally.", target_uid.pid);
+
 	internal_tkill(target_uid);
 
 	// Only a thread was killed, not the entire process.

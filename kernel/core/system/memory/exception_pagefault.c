@@ -22,12 +22,15 @@
 #include <system/internal.h>
 #include <horizon/svc.h>
 #include <horizon/msg.h>
+#include <debug/log.h>
 
 void exception_pagefault(isr_t isr)
 {
 	// FIXME: Try to demand load, COW, etc.
 
 	thread_uid_t target_uid = scheduler_curr();
+	dtrace("Process %i exited due to a page fault.", target_uid.pid);
+
 	internal_tkill(target_uid);
 
 	// Only a thread was killed, not the entire process.
