@@ -5,6 +5,7 @@
 #include <sys/svc.h>
 #include <sys/msg.h>
 #include <sys/proc.h>
+#include <sys/mman.h>
 #include <stdbool.h>
 #include <string.h>
 #include <malloc.h>
@@ -32,7 +33,7 @@ int open(const char* path)
 	return response.code;
 }
 
-int read(int fd, char* buffer, size_t size)
+int read(int fd, char* buffer, size_t size, size_t off)
 {
 	struct msg request = {{0}};
 	request.to = filesystem;
@@ -40,6 +41,7 @@ int read(int fd, char* buffer, size_t size)
 	request.code = VFS_READ;
 	request.args[0] = fd;
 	request.args[1] = size;
+	request.args[2] = off;
 
 	send(&request);
 	wait(filesystem);
@@ -99,7 +101,7 @@ int main()
 		char last_key = '\0';
 		while (last_key != '\n')
 		{
-			while (read(keyboard, &last_key, 1) < 1);
+			while (read(keyboard, &last_key, 1, 0) < 1);
 
 			char show_key = last_key;
 			if (show_key < 32)
@@ -151,7 +153,7 @@ int main()
 					char* buffer = malloc(64);
 					memset(buffer, 0, 64);
 
-					size_t res = read(fd, buffer, 32);
+					size_t res = read(fd, buffer, 32, 0);
 					if (res == -1)
 						print("Error.");
 					else if (!res)
@@ -160,6 +162,28 @@ int main()
 						print(buffer);
 
 					free(buffer);
+				}
+				else
+				{
+					print("File not found.");
+				}
+			}
+		}
+		else if (strcmp(cmd, "load") == 0)
+		{
+			if (arg)
+			{
+				int fd = open(arg);
+				if (fd != -1)
+				{
+					char* buffer = vmap((void*)0xB0000000, 4096 * 8);
+					memset(buffer, 0, 4096 * 8);
+
+					char* ptr = buffer;
+					while (read(fd, ptr, 1024, ptr-buffer) > 0)
+						ptr += 1024;
+
+					//
 				}
 				else
 				{
