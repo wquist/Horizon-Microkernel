@@ -150,10 +150,11 @@ int main()
 				int fd = open(arg);
 				if (fd != -1)
 				{
-					char* buffer = malloc(64);
-					memset(buffer, 0, 64);
+					char* buffer = malloc(2048);
+					memset(buffer, 0, 2048);
+					print("reading...\n");
 
-					size_t res = read(fd, buffer, 32, 0);
+					size_t res = read(fd, buffer, 2048, 0);
 					if (res == -1)
 						print("Error.");
 					else if (!res)

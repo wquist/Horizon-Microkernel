@@ -59,13 +59,16 @@ int main()
 			}
 			case VFS_FSREAD:
 			{
-				char buf = 'a';
+				char* buf = malloc(request.args[1]);
+				memset(buf, 'a', request.args[1]);
 
-				response.code = 1;
-				response.payload.buf = &buf;
-				response.payload.size = 1;
+				response.code = request.args[1];
+				response.payload.buf = buf;
+				response.payload.size = request.args[1];
 
 				send(&response);
+
+				free(buf);
 				break;
 			}
 			default:
