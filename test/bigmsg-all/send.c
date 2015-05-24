@@ -1,4 +1,4 @@
-// main.c
+// send.c
 
 #include <horizon/ipc.h>
 #include <sys/sched.h>
