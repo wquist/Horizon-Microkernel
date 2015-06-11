@@ -4,7 +4,7 @@
 #include <ctype.h> //< FIXME: _tolower and _toupper are swapped.
 #include <string.h>
 #include <malloc.h>
-#include "../vfsd-all/fs.h"
+#include "../util-i586/msg.h"
 
 static uint16_t next_cluster(fat_volume_t* vol, uint16_t current_cluster);
 static uint16_t find_cluster(fat_volume_t* vol, uint16_t cluster, size_t* offset);
@@ -12,10 +12,9 @@ static size_t get_cluster_sector(fat_volume_t* vol, uint16_t cluster);
 static size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_t* ret_file);
 static int read_sector(fat_volume_t* vol, size_t sector, uint8_t* buffer);
 
-void fat_init(ipcport_t device, int fd, fat_volume_t* ret_vol)
+void fat_init(ipcport_t device, fat_volume_t* ret_vol)
 {
 	ret_vol->device = device;
-	ret_vol->fd = fd;
 
 	uint8_t buffer[512];
 	read_sector(ret_vol, 0, buffer);
@@ -194,7 +193,7 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 			*curr_char = '\0';
 		}
 
-		ret_file->type = (entry->attributes.directory) ? VFS_DIR : VFS_FILE;
+		ret_file->type = (entry->attributes.directory) ? 1 : 0;
 		ret_file->cluster = entry->cluster_low;
 		ret_file->size = entry->size;
 
@@ -204,21 +203,16 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 
 int read_sector(fat_volume_t* vol, size_t sector, uint8_t* buffer)
 {
-	struct msg request = {{0}};
-	request.to = vol->device;
+	struct msg req;
+	msg_create(&req, vol->device, 0);
+	msg_set_args(&req, 2, 512, sector * 512);
 
-	request.code = VFS_FSREAD;
-	request.args[0] = vol->fd;
-	request.args[1] = 512;
-	request.args[2] = sector * 512;
+	send(&req);
+	wait(req.to);
 
-	send(&request);
-	wait(request.to);
+	struct msg res;
+	msg_attach_payload(&res, buffer, 512);
 
-	struct msg response = {{0}};
-	response.payload.buf  = buffer;
-	response.payload.size = 512;
-
-	recv(&response);
-	return response.code;
+	recv(&res);
+	return res.code;
 }

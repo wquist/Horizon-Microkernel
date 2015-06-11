@@ -1,85 +1,85 @@
-#include <horizon/ipc.h>
 #include <sys/sched.h>
-#include <sys/svc.h>
-#include <sys/msg.h>
-#include <sys/proc.h>
-#include <stdbool.h>
-#include <string.h>
+#include <ctype.h>
 #include <malloc.h>
-
+#include "../util-i586/serial.h"
+#include "../util-i586/msg.h"
 #include "idectl.h"
-#include "../vfsd-all/fs.h"
-
-ipcport_t devmgr;
-
-bool register_device(char* name)
-{
-	struct msg request = {{0}};
-	request.to = devmgr;
-	request.code = 100;
-	request.payload.buf = name;
-	request.payload.size = strlen(name);
-
-	send(&request);
-	wait(devmgr);
-
-	struct msg response = {{0}};
-	recv(&response);
-	if (response.code != 0)
-		return false;
-
-	return true;
-}
 
 int main()
 {
-	while ((devmgr = svcid(SVC_DEVMGR)) == 0);
-
 	ide_controller_t ctl = { .base = 0x1F0 };
 	idectl_identify(&ctl, IDE_MASTER);
 
 	if (!(ctl.devices[IDE_MASTER].present))
+	{
+		serial_write("No IDE device found.\n");
 		return 1;
-	if (!register_device("ata"))
-		return 1;
+	}
 
-	char buffer[512];
+	ide_device_t* dev = &(ctl.devices[IDE_MASTER]);
+	serial_write("\n");
+
+	serial_write(dev->model);    serial_write("\n");
+	serial_write(dev->serial);   serial_write("\n");
+	serial_write(dev->firmware); serial_write("\n");
+
+	char block0[512] = {0};
+	idectl_block_io(&ctl, IDE_MASTER, IDE_READ, 0, 1, block0);
+
+	for (size_t i = 0; i != 512; ++i)
+	{
+		char str[] = { block0[i], '\0' };
+		if (!isalpha(*str) && !isdigit(*str))
+			serial_write(".");
+		else
+			serial_write(str);
+
+		if (i%16 == 15)
+			serial_write("\n");
+	}
+
+	size_t sz;
 	while (true)
 	{
 		wait(IPORT_ANY);
-
-		struct msg request = {{0}};
-		if (recv(&request) < 0)
-		{
-			drop(NULL);
+		if ((sz = peek()) < 0)
 			continue;
-		}
 
-		struct msg response = {{0}};
-		response.to = request.from;
-		switch (request.code)
+		struct msg req;
+		if (sz)
+			msg_attach_payload(&req, malloc(sz), sz);
+		recv(&req);
+
+		struct msg res;
+		switch (req.code)
 		{
-			case 1:
+			case 0:
 			{
-				size_t off = request.args[1] / 512;
-				idectl_block_io(&ctl, IDE_MASTER, IDE_READ, off, 1, buffer);
+				size_t len = req.args[0] / 512;
+				size_t off = req.args[1] / 512;
 
-				response.code = 512;
-				response.payload.buf  = buffer;
-				response.payload.size = 512;
+				void* buf = malloc(len * 512);
+				idectl_block_io(&ctl, IDE_MASTER, IDE_READ, off, len, buf);
 
-				send(&response);
+				msg_create(&res, req.from, len * 512);
+				msg_attach_payload(&res, buf, len * 512);
+
+				send(&res);
 				break;
 			}
 			default:
 			{
-				response.code = -1;
+				msg_create(&res, req.from, -1);
 
-				send(&response);
+				send(&res);
 				break;
 			}
 		}
+
+		if (sz)
+			free(req.payload.buf);
 	}
 
+	for (;;);
 	return 0;
 }
