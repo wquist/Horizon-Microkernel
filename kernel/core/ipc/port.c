@@ -110,7 +110,7 @@ bool port_compare(ipcport_t port1, ipcport_t port2)
 
 	// If one port lacks version info, only test the PID/TID.
 	if ((!(fmt1.pvn) && !(fmt1.tvn)) || (!(fmt2.pvn) && !(fmt2.tvn)))
-		return ((fmt1.pvn == fmt2.pvn) && (fmt1.tvn == fmt2.tvn));
+		return ((fmt1.pid == fmt2.pid) && (fmt1.tid == fmt2.tid));
 
 	// Both ports are versioned, so they are equivalent if equal.
 	return (port1 == port2);
