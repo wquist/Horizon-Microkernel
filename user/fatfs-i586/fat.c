@@ -34,41 +34,49 @@ size_t fat_enumerate(fat_volume_t* vol, fat_file_t* parent, size_t index, fat_fi
 
 	size_t offset = index;
 	cluster = find_cluster(vol, cluster, &offset);
-	size_t absolute = index - offset;
 
 	size_t increment = read_dirent(vol, cluster, offset, ret_file);
-	return (increment == -1) ? -1 : absolute + increment;
+	return (increment == -1) ? -1 : index + increment;
 }
 
-size_t fat_read(fat_volume_t* vol, fat_file_t* file, size_t off, size_t len, uint8_t* buffer)
+size_t fat_read(fat_volume_t* vol, fat_file_t* file, size_t offset, size_t length, uint8_t* ret_buffer)
 {
-	if (off >= file->size)
+	static uint16_t last_sector = -1;
+	static uint8_t buffer[512];
+
+	if (offset >= file->size)
 		return 0;
-	if (off + len > file->size)
-		len = file->size - off;
+	if (offset + length > file->size)
+		length = file->size - offset;
 
+	size_t curr_pos = 0;
 	size_t cluster = file->cluster;
-	size_t total_end = off + len;
-	while (off < total_end)
+	while (curr_pos < length)
 	{
-		cluster = find_cluster(vol, cluster, &off);
+		cluster = find_cluster(vol, cluster, &offset);
 		size_t cluster_sector = get_cluster_sector(vol, cluster);
-		size_t target_sector = cluster_sector + (off / 512);
+		size_t target_sector = cluster_sector + (offset / 512);
 
-		uint8_t full_buffer[512];
-		read_sector(vol, target_sector, full_buffer);
+		if (target_sector != last_sector)
+		{
+			read_sector(vol, target_sector, buffer);
+			last_sector = target_sector;
+		}
 
-		size_t to_read = total_end - off;
-		if (to_read > 512)
-			to_read = 512;
+		size_t sector_offset = offset % 512;
+		size_t sector_length = 512 - sector_offset;
 
-		memcpy(buffer, full_buffer, to_read);
+		size_t to_read = length - curr_pos;
+		if (to_read > sector_length)
+			to_read = sector_length;
 
-		off += to_read;
-		buffer += to_read;
+		memcpy(&(ret_buffer[curr_pos]), &(buffer[sector_offset]), to_read);
+
+		offset += to_read;
+		curr_pos += to_read;
 	}
 
-	return len;
+	return length;
 }
 
 uint16_t next_cluster(fat_volume_t* vol, uint16_t current_cluster)
@@ -126,8 +134,11 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 	static uint8_t buffer[512];
 
 	char long_filename[256] = {0};
+	
+	size_t total_off = 0;
 	while (true)
 	{
+		cluster = find_cluster(vol, cluster, &offset);
 		size_t cluster_sector = get_cluster_sector(vol, cluster);
 		size_t target_sector = cluster_sector + (offset / 512);
 
@@ -139,7 +150,9 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 
 		size_t sector_offset = offset % 512;
 		fat_dirent_t* entry = (fat_dirent_t*)&(buffer[sector_offset]);
+
 		offset += sizeof(fat_dirent_t);
+		total_off += sizeof(fat_dirent_t);
 
 		if (entry->name[0] == FAT_DIREND)
 			return -1;
@@ -197,7 +210,7 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 		ret_file->cluster = entry->cluster_low;
 		ret_file->size = entry->size;
 
-		return offset;
+		return total_off;
 	}
 }
 
