@@ -1,9 +1,13 @@
 #include <sys/sched.h>
+#include <sys/proc.h>
+#include <sys/mman.h>
+#include <sys/shm.h>
 #include "../util-i586/serial.h"
 #include "../util-i586/msg.h"
 #include "fat.h"
 
 #define IDEHDD 3
+#define FREEPG (void*)0xA0000000
 
 void list_dir(fat_volume_t* vol, fat_file_t* parent)
 {
@@ -67,20 +71,33 @@ int main()
 	fat_volume_t vol;
 	fat_init(IPORT_GLOBL(IDEHDD), &vol);
 
-	serial_write("\nFAT drive root contents:\n");
-	list_dir(&vol, NULL);
+	fat_file_t bin;
+	find_file(&vol, NULL, "main.bin", &bin);
 
-	fat_file_t dir;
-	find_file(&vol, NULL, "test", &dir);
+	serial_write("\nReading binary file...\n");
 
-	serial_write("\n'test' directory contents:\n");
-	list_dir(&vol, &dir);
+	uint8_t bin_contents[256];
+	fat_read(&vol, &bin, 0, 256, bin_contents);
 
-	fat_file_t text;
-	find_file(&vol, &dir, "test.txt", &text);
+	serial_write("Spawning new process...\n");
+	pid_t pid = spawn();
 
-	serial_write("\n'test.txt' contents:\n");
-	list_file(&vol, &text);
+	serial_write("Mapping data to memory...\n");
+	vmap(FREEPG, 4096);
+	memcpy(FREEPG, bin_contents, 256);
+
+	serial_write("Transferring memory to new process...\n");
+	struct shm code =
+	{
+		.to   = IPORT_GLOBL(pid),
+		.addr = FREEPG,
+		.size = 4096,
+		.prot = SPROT_READ | SPROT_WRITE
+	};
+	grant(&code, 0x1000000);
+
+	serial_write("Launching new process...\n");
+	launch(pid, 0x1000000);
 
 	for (;;);
 	return 0;

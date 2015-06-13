@@ -96,7 +96,7 @@ uint16_t next_cluster(fat_volume_t* vol, uint16_t current_cluster)
 	size_t entry = offset % 512;
 	uint16_t value = *(uint16_t*)&(buffer[entry]);
 
-	return (value >= 0xFFF8) ? 0 : value;
+	return (value >= 0xFFF8) ? -1 : value;
 }
 
 uint16_t find_cluster(fat_volume_t* vol, uint16_t cluster, size_t* offset)
@@ -105,7 +105,7 @@ uint16_t find_cluster(fat_volume_t* vol, uint16_t cluster, size_t* offset)
 	while (*offset >= cluster_size)
 	{
 		cluster = next_cluster(vol, cluster);
-		if (!cluster)
+		if (cluster == -1)
 			return 0;
 
 		*offset -= cluster_size;
