@@ -28,9 +28,9 @@
  *  set up by the interrupt assembly wrapper.
  */
 typedef struct int_frame int_frame_t;
-struct int_frame
+struct __packed int_frame
 {
-	uint32_t DS;                 //!< Data segment.
+	uint32_t GS, FS, ES, DS;     //!< User segment registers.
 	uint32_t EDI, ESI;           //!< String registers.
 	uint32_t EBP, ESP;           //!< Base and stack pointers.
 	uint32_t EBX, EDX, ECX, EAX; //!< Named GP registers.

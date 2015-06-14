@@ -81,8 +81,10 @@ isr_noerr_entry: sub   esp, 4             ; Adjust the stack to insert the dummy
                  mov   dword [esp + 4], 0
 
 isr_entry:       pusha
-                 mov   eax, ds
-                 push  eax
+                 push  ds
+                 push  es
+                 push  fs
+                 push  gs
 
                  mov   ax, 0x10 ; Load the kernel data segment
                  mov   ds, ax
@@ -93,14 +95,13 @@ isr_entry:       pusha
                  mov   eax, esp            ; Comply to the C calling convention
                  push  eax                 ; Optimization can trash if not a pointer
                  call  int_callback_common
-                 pop   eax
+                 add   esp, 4
 
-                 pop   eax    ; Restore the previous user data segment
-                 mov   ds, ax
-                 mov   es, ax
-                 mov   fs, ax
-                 mov   gs, ax
-
+                 pop   gs
+                 pop   fs
+                 pop   es
+                 pop   ds
                  popa
+
                  add   esp, 8
                  iret
