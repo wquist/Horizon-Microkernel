@@ -34,7 +34,7 @@ void syscall_launch(pid_t pid, uintptr_t entry)
 	if (target->thread_info.count > 0)
 		return syscall_return_set(EINVALID);
 	// The process can only be launched by its parent or a server/driver.
-	if (!(target->pid == owner->pid || owner->priv > PRIV_NONE))
+	if (!(target->parent == owner->pid || owner->priv > PRIV_NONE))
 		return syscall_return_set(EPRIV);
 
 	// The main thread will start at 'entry'.
