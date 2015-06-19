@@ -42,12 +42,20 @@ int main()
 	while (true)
 	{
 		wait(IPORT_ANY);
-		if ((sz = peek()) < 0)
+
+		sz = peek();
+		if (sz < 0)
+		{
+			//
 			continue;
+		}
+		if (sz > 0)
+		{
+			drop(NULL);
+			continue;
+		}
 
 		struct msg req;
-		if (sz)
-			msg_attach_payload(&req, malloc(sz), sz);
 		recv(&req);
 
 		struct msg res;
@@ -65,6 +73,8 @@ int main()
 				msg_attach_payload(&res, buf, len * 512);
 
 				send(&res);
+
+				free(buf);
 				break;
 			}
 			default:
@@ -75,9 +85,6 @@ int main()
 				break;
 			}
 		}
-
-		if (sz)
-			free(req.payload.buf);
 	}
 
 	for (;;);

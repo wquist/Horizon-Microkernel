@@ -71,6 +71,25 @@ int main()
 	fat_volume_t vol;
 	fat_init(IPORT_GLOBL(IDEHDD), &vol);
 
+	/****************************************/
+
+	serial_write("\nFAT drive root contents:\n");
+	list_dir(&vol, NULL);
+
+	fat_file_t dir;
+	find_file(&vol, NULL, "test", &dir);
+
+	serial_write("\n'test' directory contents:\n");
+	list_dir(&vol, &dir);
+
+	fat_file_t text;
+	find_file(&vol, &dir, "test.txt", &text);
+
+	serial_write("\n'test.txt' contents:\n");
+	list_file(&vol, &text);
+
+	/****************************************/
+
 	fat_file_t bin;
 	find_file(&vol, NULL, "main.bin", &bin);
 
