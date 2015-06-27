@@ -1,3 +1,5 @@
+#pragma once
+
 #include <horizon/ipc.h>
 #include <sys/msg.h>
 #include <stdarg.h>

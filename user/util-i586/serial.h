@@ -1,3 +1,5 @@
+#pragma once
+
 #include <sys/io.h>
 #include <stdint.h>
 
