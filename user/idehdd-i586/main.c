@@ -38,29 +38,27 @@ int main()
 			serial_write("\n");
 	}
 
-	size_t sz;
 	while (true)
 	{
 		wait(IPORT_ANY);
 
-		sz = peek();
+		int sz = peek();
 		if (sz < 0)
-		{
-			//
 			continue;
-		}
-		if (sz > 0)
-		{
-			drop(NULL);
-			continue;
-		}
 
 		struct msg req;
-		recv(&req);
+		if (sz > 0)
+		{
+			void* buf = malloc(sz);
+			msg_attach_payload(&req, buf, sz);
+		}
 
-		struct msg res;
+		recv(&req);
 		switch (req.code)
 		{
+			struct msg res;
+			msg_create(&res, req.from, -1);
+
 			case 0:
 			{
 				size_t len = req.args[0] / 512;
@@ -69,7 +67,7 @@ int main()
 				void* buf = malloc(len * 512);
 				idectl_block_io(&ctl, IDE_MASTER, IDE_READ, off, len, buf);
 
-				msg_create(&res, req.from, len * 512);
+				res.code = len * 512;
 				msg_attach_payload(&res, buf, len * 512);
 
 				send(&res);
@@ -79,12 +77,13 @@ int main()
 			}
 			default:
 			{
-				msg_create(&res, req.from, -1);
-
 				send(&res);
 				break;
 			}
 		}
+
+		if (req.payload.size)
+			free(req.payload.buf);
 	}
 
 	for (;;);

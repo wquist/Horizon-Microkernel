@@ -9,8 +9,6 @@
 #include "../util-i586/msg.h"
 #include "device.h"
 
-ipcport_t filesystem;
-
 int request_read(device_t* dev, size_t off, size_t size, void* buffer)
 {
 	struct msg req;
@@ -47,6 +45,7 @@ int request_write(device_t* dev, size_t off, size_t size, void* buffer)
 
 int main()
 {
+	ipcport_t filesystem;
 	while ((filesystem = svcid(SVC_VFS)) == 0);
 
 	struct msg mnt_req;
