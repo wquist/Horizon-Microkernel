@@ -67,20 +67,10 @@ int main()
 
 	while (true)
 	{
-		wait(IPORT_ANY);
-
-		int sz = peek();
-		if (sz < 0)
+		struct msg req;
+		if (msg_get_waiting(&req) < 0)
 			continue;
 
-		struct msg req;
-		if (sz > 0)
-		{
-			void* buf = malloc(sz);
-			msg_attach_payload(&req, buf, sz);
-		}
-
-		recv(&req);
 		switch (req.code)
 		{
 			struct msg res;
