@@ -1,8 +1,8 @@
 #include <sys/sched.h>
 #include <ctype.h>
 #include <malloc.h>
-#include "../util-i586/serial.h"
 #include "../util-i586/msg.h"
+#include "../util-i586/dev.h"
 #include "idectl.h"
 
 int main()
@@ -11,32 +11,9 @@ int main()
 	idectl_identify(&ctl, IDE_MASTER);
 
 	if (!(ctl.devices[IDE_MASTER].present))
-	{
-		serial_write("No IDE device found.\n");
 		return 1;
-	}
-
-	ide_device_t* dev = &(ctl.devices[IDE_MASTER]);
-	serial_write("\n");
-
-	serial_write(dev->model);    serial_write("\n");
-	serial_write(dev->serial);   serial_write("\n");
-	serial_write(dev->firmware); serial_write("\n");
-
-	char block0[512] = {0};
-	idectl_block_io(&ctl, IDE_MASTER, IDE_READ, 0, 1, block0);
-
-	for (size_t i = 0; i != 512; ++i)
-	{
-		char str[] = { block0[i], '\0' };
-		if (!isalpha(*str) && !isdigit(*str))
-			serial_write(".");
-		else
-			serial_write(str);
-
-		if (i%16 == 15)
-			serial_write("\n");
-	}
+	if (dev_register("ata") < 0)
+		return 1;
 
 	while (true)
 	{
