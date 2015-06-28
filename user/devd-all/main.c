@@ -5,8 +5,9 @@
 #include <stdbool.h>
 #include <malloc.h>
 
-#include "../vfsd-all/fs.h"
 #include "../util-i586/msg.h"
+#include "../util-i586/fs.h"
+#include "../vfsd-all/fs.h"
 #include "device.h"
 
 int request_read(device_t* dev, size_t off, size_t size, void* buffer)
@@ -48,20 +49,8 @@ int main()
 	ipcport_t filesystem;
 	while ((filesystem = svcid(SVC_VFS)) == 0);
 
-	struct msg mnt_req;
-	msg_create(&mnt_req, filesystem, VFS_MOUNT);
-
-	msg_attach_payload(&mnt_req, "/dev", 5);
-
-	send(&mnt_req);
-	wait(mnt_req.to);
-
-	struct msg mnt_res;
-	recv(&mnt_res);
-
-	if (mnt_res.code == -1)
+	if (fs_mount(filesystem, "/dev") < 0)
 		return 1;
-
 	if (svcown(SVC_DEVMGR) < 0)
 		return 1;
 
@@ -71,11 +60,11 @@ int main()
 		if (msg_get_waiting(&req) < 0)
 			continue;
 
+		struct msg res;
+		msg_create(&res, req.from, -1);
+
 		switch (req.code)
 		{
-			struct msg res;
-			msg_create(&res, req.from, -1);
-
 			case 100:
 			{
 				device_add(req.payload.buf, req.from);

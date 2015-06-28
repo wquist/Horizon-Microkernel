@@ -21,11 +21,11 @@ int main()
 		if (msg_get_waiting(&req) < 0)
 			continue;
 
+		struct msg res;
+		msg_create(&res, req.from, -1);
+
 		switch (req.code)
 		{
-			struct msg res;
-			msg_create(&res, req.from, -1);
-
 			case 0:
 			{
 				size_t len = req.args[0] / 512;

@@ -96,8 +96,11 @@ int main()
 	memset(video_mem, 0, 80*25*sizeof(uint16_t));
 	puts("[tty] Initialized VGA driver.\n");
 
+	ipcport_t devmgr;
+	while ((devmgr = svcid(SVC_DEVMGR)) == 0);
+
 	puts("[tty] Registering with device manager... ");
-	if (dev_register("tty") < 0)
+	if (dev_register(devmgr, "tty") < 0)
 		return 1;
 
 	puts("OK!\n");
@@ -107,11 +110,11 @@ int main()
 		if (msg_get_waiting(&req) < 0)
 			continue;
 
+		struct msg res;
+		msg_create(&res, req.from, -1);
+
 		switch (req.code)
 		{
-			struct msg res;
-			msg_create(&res, req.from, -1);
-
 			case 1:
 			{
 				puts(req.payload.buf);

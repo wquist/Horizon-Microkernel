@@ -23,6 +23,9 @@ node_t* node_add(node_t* parent, const char* name)
 
 node_t* node_find(node_t* parent, const char* path, bool virt)
 {
+	if (*path == '\0')
+		return parent;
+
 	const char* path_end = strchr(path, '\0');
 	while (parent && path != path_end+1)
 	{

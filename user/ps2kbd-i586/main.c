@@ -28,9 +28,12 @@ int main()
 	if (ps2kbd_mode_set(2, scanmode2_qwerty) < 0)
 		return 1;
 
+	ipcport_t devmgr;
+	while ((devmgr = svcid(SVC_DEVMGR)) == 0);
+
 	if (svcown(SVC_IRQ(1)) < 0)
 		return 1;
-	if (dev_register("kbd") < 0)
+	if (dev_register(devmgr, "kbd") < 0)
 		return 1;
 
 	while (true)
@@ -58,11 +61,11 @@ int main()
 			}
 			default:
 			{
+				struct msg res;
+				msg_create(&res, req.from, -1);
+
 				switch (req.code)
 				{
-					struct msg res;
-					msg_create(&res, req.from, -1);
-
 					case 0:
 					{
 						size_t count = req.args[0];

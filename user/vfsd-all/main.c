@@ -22,7 +22,7 @@ static file_table_t file_tables[1024] = {{0}};
 
 node_t* mount_add(const char* path, const char* name, ipcport_t owner)
 {
-	node_t* parent = node_find(NULL, path, true);
+	node_t* parent = node_find(&root_node, path+1, true);
 	if (!parent || parent->type != NODE_VIRT)
 		return NULL;
 
@@ -102,7 +102,7 @@ void handle_request(struct msg* req, struct msg* res)
 			char* path_end = strrchr(buffer, '/');
 			*path_end = '\0';
 
-			char* path = (path_end) == buffer ? "/" : buffer;
+			char* path = (path_end == buffer) ? "/" : buffer;
 			char* name = path_end + 1;
 
 			node_t* root = mount_add(path, name, target);
@@ -112,7 +112,7 @@ void handle_request(struct msg* req, struct msg* res)
 		}
 		case VFS_OPEN:
 		{
-			node_t* node = node_find(NULL, buffer, false);
+			node_t* node = node_find(&root_node, buffer+1, false);
 			if (!node || node->type != NODE_FILE)
 				return;
 
@@ -123,7 +123,7 @@ void handle_request(struct msg* req, struct msg* res)
 		}
 		case VFS_DIRECT:
 		{
-			node_t* node = node_find(NULL, buffer, false);
+			node_t* node = node_find(&root_node, buffer+1, false);
 			if (!node || node->type != NODE_FILE)
 				return;
 

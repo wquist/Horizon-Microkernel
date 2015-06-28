@@ -3,13 +3,10 @@
 #include <sys/svc.h>
 #include "msg.h"
 
-static int dev_register(const char* name)
+static int dev_register(ipcport_t dm, const char* name)
 {
-	ipcport_t devmgr;
-	while ((devmgr = svcid(SVC_DEVMGR)) == 0);
-
 	struct msg req;
-	msg_create(&req, devmgr, 100);
+	msg_create(&req, dm, 100);
 
 	msg_attach_payload(&req, (void*)name, strlen(name)+1);
 

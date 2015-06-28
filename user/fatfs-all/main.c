@@ -5,7 +5,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <malloc.h>
+
 #include "../util-i586/msg.h"
+#include "../util-i586/fs.h"
 #include "../vfsd-all/fs.h"
 #include "fat.h"
 
@@ -31,22 +33,6 @@ int get_dev_addr(const char* path, int* fd)
 	return res.code;
 }
 
-int mount_fs(const char* path)
-{
-	struct msg req;
-	msg_create(&req, filesystem, VFS_MOUNT);
-
-	msg_attach_payload(&req, (void*)path, strlen(path)+1);
-
-	send(&req);
-	wait(req.to);
-
-	struct msg res;
-	recv(&res);
-
-	return res.code;
-}
-
 int main()
 {
 	while ((filesystem = svcid(SVC_VFS)) == 0);
@@ -55,7 +41,7 @@ int main()
 	fat_volume_t vol = {0};
 	fat_init(device, disk, &vol);
 
-	if (mount_fs("/usr") < 0)
+	if (fs_mount(filesystem, "/usr") < 0)
 		return 1;
 
 	while (true)
@@ -64,11 +50,11 @@ int main()
 		if (msg_get_waiting(&req) < 0)
 			continue;
 
+		struct msg res;
+		msg_create(&res, req.from, -1);
+
 		switch (req.code)
 		{
-			struct msg res;
-			msg_create(&res, req.from, -1);
-
 			case VFS_FSFIND:
 			{
 				fat_file_t* parent = (fat_file_t*)(req.args[0]);
