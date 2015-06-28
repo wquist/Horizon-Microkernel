@@ -10,9 +10,12 @@ int main()
 	ide_controller_t ctl = { .base = 0x1F0 };
 	idectl_identify(&ctl, IDE_MASTER);
 
+	ipcport_t devmgr;
+	while ((devmgr = svcid(SVC_DEVMGR)) == 0);
+
 	if (!(ctl.devices[IDE_MASTER].present))
 		return 1;
-	if (dev_register("ata") < 0)
+	if (dev_register(devmgr, "ata") < 0)
 		return 1;
 
 	while (true)
