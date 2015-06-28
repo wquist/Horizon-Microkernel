@@ -188,7 +188,7 @@ int main()
 		struct msg req;
 		if (msg_get_waiting(&req) < 0)
 			continue;
-		
+
 		switch (req.from)
 		{
 			//
@@ -208,4 +208,7 @@ int main()
 		if (req.payload.size)
 			free(req.payload.buf);
 	}
+
+	for (;;);
+	return 0;
 }

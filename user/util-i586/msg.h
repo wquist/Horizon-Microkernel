@@ -38,14 +38,13 @@ static int msg_get_waiting(struct msg* m)
 	if (sz < 0)
 		return -1;
 
-	struct msg req;
 	if (sz > 0)
 	{
 		void* buf = malloc(sz);
-		msg_attach_payload(&req, buf, sz);
+		msg_attach_payload(m, buf, sz);
 	}
 
-	int bytes = recv(&req);
+	int bytes = recv(m);
 	if (bytes < 0)
 		return -1;
 
