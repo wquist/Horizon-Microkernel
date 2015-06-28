@@ -105,7 +105,7 @@ int main()
 				int bytes = request_read(dev, off, size, buffer);
 
 				res.code = bytes;
-				if (bytes != -1)
+				if (bytes > 0)
 					msg_attach_payload(&res, buffer, bytes);
 
 				send(&res);
