@@ -116,6 +116,7 @@ typedef struct fat_volume fat_volume_t;
 struct fat_volume
 {
 	ipcport_t device;
+	int disk;
 
 	size_t format;
 	fat_boot_record_t boot_record;
@@ -131,7 +132,7 @@ struct fat_file
 	size_t size;
 };
 
-void fat_init(ipcport_t device, fat_volume_t* ret_vol);
+void fat_init(ipcport_t device, int disk, fat_volume_t* ret_vol);
 
 size_t fat_enumerate(fat_volume_t* vol, fat_file_t* parent, size_t index, fat_file_t* ret_file);
 size_t fat_read(fat_volume_t* vol, fat_file_t* file, size_t offset, size_t length, uint8_t* ret_buffer);

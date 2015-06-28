@@ -11,7 +11,7 @@ static int dev_register(const char* name)
 	struct msg req;
 	msg_create(&req, devmgr, 100);
 
-	msg_attach_payload(&req, (void*)name, strlen(name));
+	msg_attach_payload(&req, (void*)name, strlen(name)+1);
 
 	send(&req);
 	wait(req.to);

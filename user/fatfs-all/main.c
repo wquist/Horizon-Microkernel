@@ -1,122 +1,127 @@
+#include <horizon/ipc.h>
+#include <sys/svc.h>
 #include <sys/sched.h>
-#include <sys/proc.h>
-#include <sys/mman.h>
-#include <sys/shm.h>
-#include "../util-i586/serial.h"
+#include <sys/msg.h>
+#include <stdbool.h>
+#include <string.h>
+#include <malloc.h>
 #include "../util-i586/msg.h"
+#include "../vfsd-all/fs.h"
 #include "fat.h"
 
-#define IDEHDD 3
-#define FREEPG (void*)0xA0000000
+ipcport_t filesystem;
 
-void list_dir(fat_volume_t* vol, fat_file_t* parent)
+ipcport_t device;
+int disk;
+
+int get_dev_addr(const char* path, int* fd)
 {
-	if (parent && parent->type != 1)
-		return;
+	struct msg req;
+	msg_create(&req, filesystem, VFS_DIRECT);
 
-	size_t iter = 0;
-	fat_file_t file;
-	while ((iter = fat_enumerate(vol, parent, iter, &file)) != -1)
-	{
-		serial_write(file.name);
-		switch (file.type)
-		{
-			case 0:
-				serial_write(" (file)\n");
-				break;
-			case 1:
-				serial_write(" (directory)\n");
-				break;
-			default:
-				serial_write(" (unknown)\n");
-				break;
-		}
-	}
+	msg_attach_payload(&req, (void*)path, strlen(path)+1);
+
+	send(&req);
+	wait(req.to);
+
+	struct msg res;
+	recv(&res);
+
+	*fd = res.args[0];
+	return res.code;
 }
 
-bool find_file(fat_volume_t* vol, fat_file_t* parent, char* name, fat_file_t* ret_file)
+int mount_fs(const char* path)
 {
-	if (parent && parent->type != 1)
-		return false;
+	struct msg req;
+	msg_create(&req, filesystem, VFS_MOUNT);
 
-	size_t iter = 0;
-	while ((iter = fat_enumerate(vol, parent, iter, ret_file)) != -1)
-	{
-		if (strcmp(name, ret_file->name) == 0)
-			return true;
-	}
+	msg_attach_payload(&req, (void*)path, strlen(path)+1);
 
-	return false;
-}
+	send(&req);
+	wait(req.to);
 
-void list_file(fat_volume_t* vol, fat_file_t* file)
-{
-	if (file->type != 0)
-		return;
+	struct msg res;
+	recv(&res);
 
-	uint8_t buffer[9] = {0};
-
-	size_t offset = 0;
-	while (fat_read(vol, file, offset, 8, buffer) > 0)
-	{
-		serial_write((const char*)buffer);
-
-		memset(buffer, 0, 8);
-		offset += 8;
-	}
+	return res.code;
 }
 
 int main()
 {
-	fat_volume_t vol;
-	fat_init(IPORT_GLOBL(IDEHDD), &vol);
+	while ((filesystem = svcid(SVC_VFS)) == 0);
+	while ((device = get_dev_addr("/dev/ata", &disk)) < 0);
 
-	/****************************************/
+	fat_volume_t vol = {0};
+	fat_init(device, disk, &vol);
 
-	serial_write("\nFAT drive root contents:\n");
-	list_dir(&vol, NULL);
+	if (mount_fs("/usr") < 0)
+		return 1;
 
-	fat_file_t dir;
-	find_file(&vol, NULL, "test", &dir);
-
-	serial_write("\n'test' directory contents:\n");
-	list_dir(&vol, &dir);
-
-	fat_file_t text;
-	find_file(&vol, &dir, "test.txt", &text);
-
-	serial_write("\n'test.txt' contents:\n");
-	list_file(&vol, &text);
-
-	/****************************************/
-
-	fat_file_t bin;
-	find_file(&vol, NULL, "main.bin", &bin);
-
-	serial_write("\nReading binary file...\n");
-
-	uint8_t bin_contents[256];
-	fat_read(&vol, &bin, 0, 256, bin_contents);
-
-	serial_write("Spawning new process...\n");
-	pid_t pid = spawn();
-
-	serial_write("Mapping data to memory...\n");
-	vmap(FREEPG, 4096);
-	memcpy(FREEPG, bin_contents, 256);
-
-	serial_write("Transferring memory to new process...\n");
-	struct shm code =
+	while (true)
 	{
-		.to   = IPORT_GLOBL(pid),
-		.addr = FREEPG,
-		.size = 4096,
-		.prot = SPROT_READ | SPROT_WRITE
-	};
-	grant(&code, 0x1000000);
+		struct msg req;
+		if (msg_get_waiting(&req) < 0)
+			continue;
 
-	serial_write("Launching new process...\n");
-	launch(pid, 0x1000000);
+		switch (req.code)
+		{
+			struct msg res;
+			msg_create(&res, req.from, -1);
+
+			case VFS_FSFIND:
+			{
+				fat_file_t* parent = (fat_file_t*)(req.args[0]);
+				fat_file_t* file = malloc(sizeof(fat_file_t));
+
+				size_t iter = 0;
+				while ((iter = fat_enumerate(&vol, parent, iter, file)) != -1)
+				{
+					if (strcmp(file->name, req.payload.buf) == 0)
+						break;
+				}
+
+				if (iter >= 0)
+				{
+					res.code = (uintptr_t)file;
+					res.args[0] = file->type;
+				}
+				else
+				{
+					free(file);
+				}
+
+				send(&res);
+				break;
+			}
+			case VFS_FSREAD:
+			{
+				fat_file_t* file = (fat_file_t*)(req.args[0]);
+				size_t len = req.args[1];
+				size_t off = req.args[2];
+
+				uint8_t* buffer = malloc(len);
+				int bytes = fat_read(&vol, file, off, len, buffer);
+
+				res.code = bytes;
+				if (bytes > 0)
+					msg_attach_payload(&res, buffer, bytes);
+
+				send(&res);
+				free(buffer);
+
+				break;
+			}
+			default:
+			{
+				send(&res);
+				break;
+			}
+		}
+
+		if (req.payload.size)
+			free(req.payload.buf);
+	}
 
 	for (;;);
 	return 0;

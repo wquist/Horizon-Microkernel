@@ -5,6 +5,7 @@
 #include <string.h>
 #include <malloc.h>
 #include "../util-i586/msg.h"
+#include "../vfsd-all/fs.h"
 
 static uint16_t next_cluster(fat_volume_t* vol, uint16_t current_cluster);
 static uint16_t find_cluster(fat_volume_t* vol, uint16_t cluster, size_t* offset);
@@ -12,9 +13,10 @@ static size_t get_cluster_sector(fat_volume_t* vol, uint16_t cluster);
 static size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_t* ret_file);
 static int read_sector(fat_volume_t* vol, size_t sector, uint8_t* buffer);
 
-void fat_init(ipcport_t device, fat_volume_t* ret_vol)
+void fat_init(ipcport_t device, int disk, fat_volume_t* ret_vol)
 {
 	ret_vol->device = device;
+	ret_vol->disk = disk;
 
 	uint8_t buffer[512];
 	read_sector(ret_vol, 0, buffer);
@@ -217,8 +219,8 @@ size_t read_dirent(fat_volume_t* vol, uint16_t cluster, size_t offset, fat_file_
 int read_sector(fat_volume_t* vol, size_t sector, uint8_t* buffer)
 {
 	struct msg req;
-	msg_create(&req, vol->device, 0);
-	msg_set_args(&req, 2, 512, sector * 512);
+	msg_create(&req, vol->device, VFS_FSREAD);
+	msg_set_args(&req, 3, vol->disk, 512, sector * 512);
 
 	send(&req);
 	wait(req.to);
