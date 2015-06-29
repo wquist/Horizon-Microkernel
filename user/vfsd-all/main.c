@@ -106,6 +106,7 @@ void handle_request(struct msg* req, struct msg* res)
 			char* name = path_end + 1;
 
 			node_t* root = mount_add(path, name, target);
+			root->uid = 0;
 
 			res->code = (root) ? 0 : -1;
 			break;

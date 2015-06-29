@@ -36,7 +36,7 @@ int get_dev_addr(const char* path, int* fd)
 int main()
 {
 	while ((filesystem = svcid(SVC_VFS)) == 0);
-	while ((device = get_dev_addr("/dev/ata", &disk)) < 0);
+	while ((device = get_dev_addr("/dev/ata", &disk)) == -1);
 
 	fat_volume_t vol = {0};
 	fat_init(device, disk, &vol);
