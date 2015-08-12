@@ -4,6 +4,7 @@
 #include <sys/msg.h>
 #include <sys/proc.h>
 #include <sys/mman.h>
+#include <sys/shm.h>
 #include <stdbool.h>
 #include <string.h>
 #include <malloc.h>
@@ -11,8 +12,54 @@
 #include "../util-i586/msg.h"
 #include "../vfsd-all/fs.h"
 
+typedef struct elf_file_header elf_file_header_t;
+struct __packed elf_file_header
+{
+	uint8_t fid[4];
+
+	uint16_t type;
+	uint16_t arch;
+	uint32_t version;
+
+	uint32_t entry;
+	uint32_t pheader_offset;
+	uint32_t sheader_offset;
+	uint32_t flags;
+
+	uint16_t size;
+	uint16_t pheader_size;
+	uint16_t pheader_count;
+	uint16_t sheader_size;
+	uint16_t sheader_count;
+	uint16_t sheader_strtbl;
+};
+
+typedef struct elf_program_header elf_program_header_t;
+struct __packed elf_program_header
+{
+	uint32_t type;
+	uint32_t offset;
+	uint32_t vaddr, paddr;
+
+	uint32_t file_size;
+	uint32_t mem_size;
+
+	uint32_t flags;
+	uint32_t align;
+};
+
 ipcport_t filesystem;
 int screen, keyboard;
+
+static inline uintptr_t addr_align(uintptr_t addr, size_t bound)
+{
+	return (addr & ~(bound-1));
+}
+
+static inline uintptr_t addr_align_next(uintptr_t addr, size_t bound)
+{
+	return addr_align(addr + bound-1, bound);
+}
 
 int open(const char* path)
 {
@@ -129,12 +176,7 @@ int main()
 		}
 
 		print("\n");
-		if (strcmp(cmd, "echo") == 0)
-		{
-			if (arg)
-				print(arg);
-		}
-		else if (strcmp(cmd, "read") == 0)
+		if (strcmp(cmd, "read") == 0)
 		{
 			if (arg)
 			{
@@ -160,6 +202,10 @@ int main()
 					print("File not found.");
 				}
 			}
+		}
+		else if (strcmp(cmd, "load") == 0)
+		{
+			//
 		}
 		else if (strcmp(cmd, "clear") == 0)
 		{
