@@ -7,19 +7,20 @@ Features
 The microkernel tries not to be a direct copy of any existing operating systems. Special focus went into the areas of inter-process communication and system calls.
 
 ###General:
+- No dynamic allocation occurs in the kernel; the maximum number of procecsses, threads per process, and messages per process are fixed.
 - Almost all functions in the microkernel run in O(1) time, including memory allocation, process creation/destruction, and message passing; it should be possible to calculate a definite maximum time for each kernel operation.
 - Any architecture-specific code is strictly separated from the main kernel logic. All architecture functions are called with fairly generic names, so it should be possible to port the kernel to any architecture (with paging) by re-implementing the functions in the `arch/` directory, requiring no changes to code in the `core/` hierarchy.
 
 ###Multitasking:
 - Support for multiple processes, each with multiple threads. Each thread is its own IPC endpoint, so a single process can neatly separate is functionality/services.
-- Versioned processes and threads, hopefully making IPC more secure and eliminating the possibility of incorrectly sent messages.
+- "Versioned" processes and threads, hopefully making IPC more secure and eliminating the possibility of incorrectly sent messages.
 
 ###Inter-Process Communication:
 - Kernel support for message passing and shared memory.
-- Messages are variably sized and can be synchronous or asynchronous; messages sent with little data are asynchronous and stored in a queue, while messages with large payloads block the sender until the receiver accepts or denies the message. The limited async capabilities could be combined with shared memory for fully asynchronous messaging in userspace.
+- Messages are variably sized and can be synchronous or asynchronous; messages sent with little data are asynchronous and stored in a queue, while messages with large payloads block the sender until the receiver accepts or denies the message. This allows message passing to be handled in a fixed amount of memory, with no allocating or storing in the kernel. The limited async capabilities can also be combined with shared memory for fully asynchronous messaging in userspace.
 
 ###System Calls:
-- Instead of providing the kernel with a binary to create a new process, empty processes are `spawn`ed, and code/data/other memory is `grant`ed to the new process from any sufficiently privileged usermode service before being `launch`ed. This way, the kernel does not have to understand binary formats, or even know about a filesystem. A process can be also cloned (like the UNIX `fork` call) with the same set of system calls by mapping the calling process' memory into the new one.
+- Instead of providing the kernel with a binary to create a new process, empty processes are `spawn`ed, and code/data/other memory is `grant`ed to the new process from any sufficiently privileged usermode service before being `launch`ed. This way, the kernel does not have to understand binary formats, or even know about a filesystem. A process can be also cloned (in the same vein as the UNIX `fork` call) with the same set of system calls by mapping the calling process' memory into the new one.
 - Processes can register as "services" in the kernel to make userspace discovery simpler. Owning a service also allows usermode processes to access hardware features, like interrupts and port I/O.
 
 Building & Running
@@ -46,7 +47,7 @@ and `BOOT_MOUNT_CMD` is the command used to actually mount the image.
 
 Project Structure
 -
-The repository is divided into 3 main portions: `kernel`, `lib`, and `user`, whose names are self-explanatory. Each portion has its own set of git branches, containing experimental changes before they are finalized in `develop`.
+The repository is divided into 3 main portions: `kernel`, `lib`, and `user`. Each portion has its own set of git branches, containing experimental changes before they are finalized in `develop`.
 
 The two major halves of the kernel section are `core` and `arch`. There are additional support directories in the kernel section; `debug` for debug printing/logging, `spec` for hardware descriptions that may exist across multiple platforms, and `util` for implementations of the data structures used in the microkernel.
 
@@ -56,4 +57,4 @@ The core directory is divided into `ipc` for message and service control, `memor
 
 The library section contains only one library for now, `libh`. This library contains portions of the C standard library, as well as constants, structures, and functions used to interact with the microkernel. These definitions are used in both usermode programs and the kernel itself. Each library also contains a `Makefile.inc` for compiling.
 
-The user section contains subdirectories for each test program created. Currently, there is `devd`, a device manager, `vfsd`, a basic virtual filesystem, `ps2kbd` and `vgatty`, some basic drivers, and `test`, which actually uses the other programs. Each test program is suffixed with its target architecture. The user section also contains an `arch` folder containing Makefiles and a basic `crt0` for each platform, for use during compilation.
+The user section contains subdirectories for each program created. Currently, there is a device manager and virtual file system, a filesystem and IDE driver, a screen and keyboard driver, and some test programs. Each program is suffixed with its target architecture. The user section also contains an `arch` folder containing Makefiles and a basic `crt0` for each platform, for use during compilation.
