@@ -1,222 +1,144 @@
-// main.c
-
 #include <horizon/ipc.h>
-#include <sys/sched.h>
 #include <sys/svc.h>
+#include <sys/sched.h>
 #include <sys/msg.h>
-#include <malloc.h>
-#include <string.h>
-#include <memory.h>
 #include <stdbool.h>
+#include <malloc.h>
 
+#include "../util-i586/msg.h"
+#include "../util-i586/fs.h"
 #include "../vfsd-all/fs.h"
+#include "device.h"
 
-struct device
+int request_read(device_t* dev, size_t off, size_t size, void* buffer)
 {
-	char name[64];
-	uint32_t uid;
-	ipcport_t port;
+	struct msg req;
+	msg_create(&req, dev->port, 0);
 
-	struct device* next;
-};
+	msg_set_args(&req, 2, size, off);
 
-ipcport_t filesystem = 0;
-struct device* device_head = NULL;
+	send(&req);
+	wait(req.to);
 
-uint32_t last_id = 1;
+	struct msg res;
+	msg_attach_payload(&res, buffer, size);
 
-struct device* get_device(uint32_t uid)
-{
-	struct device* curr = device_head;
-	while (curr != NULL)
-	{
-		if (curr->uid == uid)
-			return curr;
-
-		curr = curr->next;
-	}
-
-	return NULL;
+	recv(&res);
+	return res.code;
 }
 
-struct device* find_device(char* name)
+int request_write(device_t* dev, size_t off, size_t size, void* buffer)
 {
-	struct device* curr = device_head;
-	while (curr != NULL)
-	{
-		if (strcmp(curr->name, name) == 0)
-			return curr;
+	struct msg req;
+	msg_create(&req, dev->port, 1);
 
-		curr = curr->next;
-	}
+	msg_set_args(&req, 2, size, off);
+	msg_attach_payload(&req, buffer, size);
 
-	return NULL;
-}
+	send(&req);
+	wait(req.to);
 
-void add_device(char* name, ipcport_t port)
-{
-	struct device* dev = malloc(sizeof(struct device));
-	strcpy(dev->name, name);
+	struct msg res;
+	recv(&res);
 
-	dev->uid  = last_id++;
-	dev->port = port;
-
-	dev->next = device_head;
-	device_head = dev;
+	return res.code;
 }
 
 int main()
 {
+	ipcport_t filesystem;
 	while ((filesystem = svcid(SVC_VFS)) == 0);
 
-	struct msg mount_request = {{0}};
-	mount_request.to = filesystem;
-
-	mount_request.code = VFS_MOUNT;
-	mount_request.payload.buf  = "/dev";
-	mount_request.payload.size = 5;
-
-	send(&mount_request);
-	wait(filesystem);
-
-	struct msg mount_response = {{0}};
-	recv(&mount_response);
-	if (mount_response.code == -1)
+	if (fs_mount(filesystem, "/dev") < 0)
 		return 1;
-
 	if (svcown(SVC_DEVMGR) < 0)
 		return 1;
 
-	char buffer[64];
 	while (true)
 	{
-		wait(IPORT_ANY);
-
-		struct msg request = {{0}};
-		request.payload.buf  = buffer;
-		request.payload.size = 64;
-
-		if (recv(&request) < 0)
-		{
-			drop(NULL);
+		struct msg req;
+		if (msg_get_waiting(&req) < 0)
 			continue;
-		}
 
-		struct msg response = {{0}};
-		response.to = request.from;
-		switch (request.code)
+		struct msg res;
+		msg_create(&res, req.from, -1);
+
+		switch (req.code)
 		{
 			case 100:
 			{
-				add_device(buffer, request.from);
+				device_add(req.payload.buf, req.from);
 
-				response.code = 0;
+				res.code = 0;
 
-				send(&response);
+				send(&res);
 				break;
 			}
 			case VFS_FSFIND:
 			{
-				struct device* dev = find_device(buffer);
-				if (dev)
+				device_t* dev = device_find(req.payload.buf);
+				if (!dev)
 				{
-					response.code = dev->uid;
-					response.args[0] = VFS_FILE;
-				}
-				else
-				{
-					response.code = -1;
+					send(&res);
+					break;
 				}
 
-				send(&response);
+				res.code = dev->uid;
+				msg_set_args(&res, 1, 0);
+
+				send(&res);
 				break;
 			}
 			case VFS_FSREAD:
 			{
-				void* read_buffer = NULL;
-
-				struct device* dev = get_device(request.args[0]);
-				if (dev)
+				device_t* dev = device_get(req.args[0]);
+				if (!dev)
 				{
-					size_t read_size = request.args[1];
-					read_buffer = malloc(read_size);
-
-					struct msg read_request = {{0}};
-					read_request.to = dev->port;
-
-					read_request.code = 1;
-					read_request.args[0] = read_size;
-					read_request.args[1] = request.args[2];
-
-					send(&read_request);
-					wait(read_request.to);
-
-					struct msg read_response = {{0}};
-					read_response.payload.buf  = read_buffer;
-					read_response.payload.size = read_size;
-
-					recv(&read_response);
-
-					response.code = read_response.code;
-					if (response.code != -1)
-					{
-						response.payload.buf  = read_buffer;
-						response.payload.size = read_size;
-					}
-				}
-				else
-				{
-					response.code = -1;
+					send(&res);
+					break;
 				}
 
-				send(&response);
-				if (read_buffer)
-					free(read_buffer);
-				
+				size_t size = req.args[1];
+				size_t off = req.args[2];
+
+				void* buffer = malloc(size);
+				int bytes = request_read(dev, off, size, buffer);
+
+				res.code = bytes;
+				if (bytes > 0)
+					msg_attach_payload(&res, buffer, bytes);
+
+				send(&res);
+
+				free(buffer);
 				break;
 			}
 			case VFS_FSWRITE:
 			{
-				struct device* dev = get_device(request.args[0]);
-				if (dev)
+				device_t* dev = device_get(req.args[0]);
+				if (!dev)
 				{
-					size_t write_size = request.args[1];
-
-					struct msg write_request = {{0}};
-					write_request.to = dev->port;
-
-					write_request.code = 0;
-					write_request.args[0] = write_size;
-					write_request.args[1] = request.args[2];
-
-					write_request.payload.buf  = buffer;
-					write_request.payload.size = write_size;
-
-					send(&write_request);
-					wait(write_request.to);
-
-					struct msg write_response = {{0}};
-					recv(&write_response);
-
-					response.code = write_response.code;
-				}
-				else
-				{
-					response.code = -1;
+					send(&res);
+					break;
 				}
 
-				send(&response);
+				size_t size = req.args[1];
+				size_t off = req.args[2];
+
+				int bytes = request_write(dev, off, size, req.payload.buf);
+				res.code = bytes;
+
+				send(&res);
 				break;
 			}
 			default:
 			{
-				response.code = -1;
-
-				send(&response);
+				send(&res);
 				break;
 			}
 		}
-	}
 
-	return 0;
+		if (req.payload.buf)
+			free(req.payload.buf);
+	}
 }

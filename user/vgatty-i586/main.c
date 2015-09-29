@@ -1,14 +1,11 @@
-// main.c
-
-#include <horizon/ipc.h>
-#include <sys/proc.h>
 #include <sys/sched.h>
 #include <sys/mman.h>
-#include <sys/svc.h>
-#include <sys/msg.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <memory.h>
+#include <malloc.h>
+#include "../util-i586/msg.h"
+#include "../util-i586/dev.h"
 
 uint16_t* const video_mem = (uint16_t*)0x10000000;
 size_t cursor_x = 0, cursor_y = 0;
@@ -91,28 +88,6 @@ void puts(const char* s)
 	}
 }
 
-bool register_device()
-{
-	ipcport_t devmgr;
-	while ((devmgr = svcid(SVC_DEVMGR)) == 0);
-
-	struct msg request = {{0}};
-	request.to = devmgr;
-	request.code = 100;
-	request.payload.buf = "tty";
-	request.payload.size = 4;
-
-	send(&request);
-	wait(devmgr);
-
-	struct msg response = {{0}};
-	recv(&response);
-	if (response.code != 0)
-		return false;
-
-	return true;
-}
-
 int main()
 {
 	if (pmap(video_mem, 0xB8000, 4096) == NULL)
@@ -121,48 +96,45 @@ int main()
 	memset(video_mem, 0, 80*25*sizeof(uint16_t));
 	puts("[tty] Initialized VGA driver.\n");
 
+	ipcport_t devmgr;
+	while ((devmgr = svcid(SVC_DEVMGR)) == 0);
+
 	puts("[tty] Registering with device manager... ");
-	if (!register_device())
+	if (dev_register(devmgr, "tty") < 0)
 		return 1;
 
 	puts("OK!\n");
-
-	char buffer[256];
 	while (true)
 	{
-		wait(IPORT_ANY);
-
-		struct msg request = {{0}};
-		request.payload.buf  = buffer;
-		request.payload.size = 256;
-
-		if (recv(&request) < 0)
-		{
-			drop(NULL);
+		struct msg req;
+		if (msg_get_waiting(&req) < 0)
 			continue;
-		}
 
-		struct msg response = {{0}};
-		response.to = request.from;
-		switch (request.code)
+		struct msg res;
+		msg_create(&res, req.from, -1);
+
+		switch (req.code)
 		{
-			case 0:
+			case 1:
 			{
-				puts(buffer);
-				response.code = 0;
+				puts(req.payload.buf);
 
-				send(&response);
+				res.code = 0;
+				send(&res);
+
 				break;
 			}
 			default:
 			{
-				response.code = -1;
-
-				send(&response);
+				send(&res);
 				break;
 			}
 		}
+
+		if (req.payload.size)
+			free(req.payload.buf);
 	}
 
+	for (;;);
 	return 0;
 }
