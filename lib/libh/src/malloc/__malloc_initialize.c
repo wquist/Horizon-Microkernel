@@ -25,7 +25,7 @@ void* malloc_heap_end()
 void* malloc_heap_expand(size_t min_size)
 {
 	size_t size = (min_size + PAGE_SIZE-1) & ~(PAGE_SIZE-1);
-	void* res = vmap(heap_base, size);
+	void* res = vmap(heap_top, size);
 	if (!res)
 		return NULL;
 

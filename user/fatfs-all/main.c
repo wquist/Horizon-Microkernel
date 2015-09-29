@@ -1,139 +1,114 @@
 #include <horizon/ipc.h>
-#include <sys/sched.h>
 #include <sys/svc.h>
+#include <sys/sched.h>
 #include <sys/msg.h>
-#include <sys/proc.h>
 #include <stdbool.h>
 #include <string.h>
 #include <malloc.h>
 
-#include "fat.h"
+#include "../util-i586/msg.h"
+#include "../util-i586/fs.h"
 #include "../vfsd-all/fs.h"
+#include "fat.h"
 
 ipcport_t filesystem;
-ipcport_t device; int disk;
 
-int open_device(const char* path)
+ipcport_t device;
+int disk;
+
+int get_dev_addr(const char* path, int* fd)
 {
-	struct msg request = {{0}};
-	request.to = filesystem;
+	struct msg req;
+	msg_create(&req, filesystem, VFS_DIRECT);
 
-	request.code = VFS_DOPEN;
-	request.payload.buf  = (void*)path;
-	request.payload.size = strlen(path)+1;
+	msg_attach_payload(&req, (void*)path, strlen(path)+1);
 
-	send(&request);
-	wait(filesystem);
+	send(&req);
+	wait(req.to);
 
-	struct msg response = {{0}};
-	recv(&response);
+	struct msg res;
+	recv(&res);
 
-	device = response.code;
-	disk = response.args[0];
-
-	return response.code;
+	*fd = res.args[0];
+	return res.code;
 }
 
 int main()
 {
 	while ((filesystem = svcid(SVC_VFS)) == 0);
-
-	while (open_device("/dev/ata") == -1);
+	while ((device = get_dev_addr("/dev/ata", &disk)) == -1);
 
 	fat_volume_t vol = {0};
 	fat_init(device, disk, &vol);
 
-	struct msg mount_request = {{0}};
-	mount_request.to = filesystem;
-
-	mount_request.code = VFS_MOUNT;
-	mount_request.payload.buf  = "/home";
-	mount_request.payload.size = 6;
-
-	send(&mount_request);
-	wait(filesystem);
-
-	struct msg mount_response = {{0}};
-	recv(&mount_response);
-	if (mount_response.code == -1)
+	if (fs_mount(filesystem, "/usr") < 0)
 		return 1;
 
-	char buffer[64];
 	while (true)
 	{
-		wait(IPORT_ANY);
-
-		struct msg request = {{0}};
-		request.payload.buf  = buffer;
-		request.payload.size = 64;
-
-		if (recv(&request) < 0)
-		{
-			drop(NULL);
+		struct msg req;
+		if (msg_get_waiting(&req) < 0)
 			continue;
-		}
 
-		struct msg response = {{0}};
-		response.to = request.from;
-		switch (request.code)
+		struct msg res;
+		msg_create(&res, req.from, -1);
+
+		switch (req.code)
 		{
 			case VFS_FSFIND:
 			{
-				fat_file_t* parent = (fat_file_t*)(request.args[0]);
+				fat_file_t* parent = (fat_file_t*)(req.args[0]);
 				fat_file_t* file = malloc(sizeof(fat_file_t));
 
-				size_t iter = 0; bool found = false;
-				while (!found)
+				size_t iter = 0;
+				while ((iter = fat_enumerate(&vol, parent, iter, file)) != -1)
 				{
-					memset(file, 0, sizeof(fat_file_t));
-
-					iter = fat_enumerate(&vol, parent, iter, file);
-					if (iter == -1)
+					if (strcmp(file->name, req.payload.buf) == 0)
 						break;
-
-					if (strcmp(file->name, buffer) == 0)
-						found = true;
 				}
 
-				if (found)
+				if (iter >= 0)
 				{
-					response.code = (uintptr_t)file;
-					response.args[0] = file->type;
+					res.code = (uintptr_t)file;
+					res.args[0] = file->type;
 				}
 				else
 				{
 					free(file);
-					response.code = -1;
 				}
 
-				send(&response);
+				send(&res);
 				break;
 			}
 			case VFS_FSREAD:
 			{
-				fat_file_t* target = (fat_file_t*)(request.args[0]);
-				size_t len = request.args[1];
+				fat_file_t* file = (fat_file_t*)(req.args[0]);
+				size_t len = req.args[1];
+				size_t off = req.args[2];
 
-				uint8_t* dest = malloc(len);
-				size_t res = fat_read(&vol, target, request.args[2], len, dest);
+				uint8_t* buffer = malloc(len);
+				int bytes = fat_read(&vol, file, off, len, buffer);
 
-				response.code = res;
-				response.payload.buf  = dest;
-				response.payload.size = res;
+				res.code = bytes;
+				if (bytes > 0)
+					msg_attach_payload(&res, buffer, bytes);
 
-				send(&response);
-				free(dest);
+				send(&res);
+				free(buffer);
+
 				break;
 			}
 			default:
 			{
-				response.code = -1;
-
-				send(&response);
+				send(&res);
 				break;
 			}
 		}
+
+		if (req.payload.size)
+			free(req.payload.buf);
 	}
 
+	for (;;);
 	return 0;
 }

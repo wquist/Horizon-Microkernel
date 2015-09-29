@@ -32,9 +32,9 @@ void idedev_parse_info(ide_device_t* dev, uint16_t* info)
 	else
 		dev->capacity = dev->heads * dev->sectors * dev->cylinders;
 
-	read_string(dev->model, (char*)&(info[27]), 39);
-	read_string(dev->serial, (char*)&(info[10]), 19);
-	read_string(dev->firmware, (char*)&(info[23]), 7);
+	read_string(dev->model, (char*)&(info[27]), 40);
+	read_string(dev->serial, (char*)&(info[10]), 20);
+	read_string(dev->firmware, (char*)&(info[23]), 8);
 }
 
 void idedev_get_geometry(ide_device_t* dev, bool pos, size_t start, ata_geometry_t* geom)

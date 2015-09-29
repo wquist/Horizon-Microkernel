@@ -1,85 +1,61 @@
-#include <horizon/ipc.h>
 #include <sys/sched.h>
-#include <sys/svc.h>
-#include <sys/msg.h>
-#include <sys/proc.h>
-#include <stdbool.h>
-#include <string.h>
+#include <ctype.h>
 #include <malloc.h>
-
+#include "../util-i586/msg.h"
+#include "../util-i586/dev.h"
 #include "idectl.h"
-#include "../vfsd-all/fs.h"
-
-ipcport_t devmgr;
-
-bool register_device(char* name)
-{
-	struct msg request = {{0}};
-	request.to = devmgr;
-	request.code = 100;
-	request.payload.buf = name;
-	request.payload.size = strlen(name);
-
-	send(&request);
-	wait(devmgr);
-
-	struct msg response = {{0}};
-	recv(&response);
-	if (response.code != 0)
-		return false;
-
-	return true;
-}
 
 int main()
 {
-	while ((devmgr = svcid(SVC_DEVMGR)) == 0);
-
 	ide_controller_t ctl = { .base = 0x1F0 };
 	idectl_identify(&ctl, IDE_MASTER);
 
+	ipcport_t devmgr;
+	while ((devmgr = svcid(SVC_DEVMGR)) == 0);
+
 	if (!(ctl.devices[IDE_MASTER].present))
 		return 1;
-	if (!register_device("ata"))
+	if (dev_register(devmgr, "ata") < 0)
 		return 1;
 
-	char buffer[512];
 	while (true)
 	{
-		wait(IPORT_ANY);
-
-		struct msg request = {{0}};
-		if (recv(&request) < 0)
-		{
-			drop(NULL);
+		struct msg req;
+		if (msg_get_waiting(&req) < 0)
 			continue;
-		}
 
-		struct msg response = {{0}};
-		response.to = request.from;
-		switch (request.code)
+		struct msg res;
+		msg_create(&res, req.from, -1);
+
+		switch (req.code)
 		{
-			case 1:
+			case 0:
 			{
-				size_t off = request.args[1] / 512;
-				idectl_block_io(&ctl, IDE_MASTER, IDE_READ, off, 1, buffer);
+				size_t len = req.args[0] / 512;
+				size_t off = req.args[1] / 512;
 
-				response.code = 512;
-				response.payload.buf  = buffer;
-				response.payload.size = 512;
+				void* buf = malloc(len * 512);
+				idectl_block_io(&ctl, IDE_MASTER, IDE_READ, off, len, buf);
 
-				send(&response);
+				res.code = len * 512;
+				msg_attach_payload(&res, buf, len * 512);
+
+				send(&res);
+
+				free(buf);
 				break;
 			}
 			default:
 			{
-				response.code = -1;
-
-				send(&response);
+				send(&res);
 				break;
 			}
 		}
+
+		if (req.payload.size)
+			free(req.payload.buf);
 	}
 
+	for (;;);
 	return 0;
 }

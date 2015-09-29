@@ -24,7 +24,8 @@ CFLAGS =           \
 	-nostartfiles  \
 	-nodefaultlibs \
 	-Wall          \
-	-Werror
+	-Werror        \
+	-Wno-unused-function
 LDFLAGS = -T $(ARCH_ROOT)/link.ld
 
 LIBS =                        \

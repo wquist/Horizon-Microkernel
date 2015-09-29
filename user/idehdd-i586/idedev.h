@@ -75,9 +75,9 @@ struct ide_device
 	bool lba;
 	bool dma;
 
-	char model[40];
-	char serial[20];
-	char firmware[8];
+	char model[41];
+	char serial[21];
+	char firmware[9];
 
 	size_t cylinders;
 	size_t heads;

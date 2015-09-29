@@ -1,83 +1,119 @@
-// main.c
-
 #include <horizon/ipc.h>
 #include <sys/sched.h>
 #include <sys/svc.h>
 #include <sys/msg.h>
 #include <sys/proc.h>
 #include <sys/mman.h>
+#include <sys/shm.h>
 #include <stdbool.h>
 #include <string.h>
 #include <malloc.h>
 
+#include "../util-i586/msg.h"
 #include "../vfsd-all/fs.h"
+
+typedef struct elf_file_header elf_file_header_t;
+struct __packed elf_file_header
+{
+	uint8_t fid[4];
+
+	uint16_t type;
+	uint16_t arch;
+	uint32_t version;
+
+	uint32_t entry;
+	uint32_t pheader_offset;
+	uint32_t sheader_offset;
+	uint32_t flags;
+
+	uint16_t size;
+	uint16_t pheader_size;
+	uint16_t pheader_count;
+	uint16_t sheader_size;
+	uint16_t sheader_count;
+	uint16_t sheader_strtbl;
+};
+
+typedef struct elf_program_header elf_program_header_t;
+struct __packed elf_program_header
+{
+	uint32_t type;
+	uint32_t offset;
+	uint32_t vaddr, paddr;
+
+	uint32_t file_size;
+	uint32_t mem_size;
+
+	uint32_t flags;
+	uint32_t align;
+};
 
 ipcport_t filesystem;
 int screen, keyboard;
 
+static inline uintptr_t addr_align(uintptr_t addr, size_t bound)
+{
+	return (addr & ~(bound-1));
+}
+
+static inline uintptr_t addr_align_next(uintptr_t addr, size_t bound)
+{
+	return addr_align(addr + bound-1, bound);
+}
+
 int open(const char* path)
 {
-	struct msg request = {{0}};
-	request.to = filesystem;
+	struct msg req;
+	msg_create(&req, filesystem, VFS_OPEN);
 
-	request.code = VFS_OPEN;
-	request.payload.buf  = (void*)path;
-	request.payload.size = strlen(path)+1;
+	msg_attach_payload(&req, (void*)path, strlen(path)+1);
 
-	send(&request);
-	wait(filesystem);
+	send(&req);
+	wait(req.to);
 
-	struct msg response = {{0}};
-	recv(&response);
+	struct msg res;
+	recv(&res);
 
-	return response.code;
+	return res.code;
 }
 
 int read(int fd, char* buffer, size_t size, size_t off)
 {
-	struct msg request = {{0}};
-	request.to = filesystem;
+	struct msg req;
+	msg_create(&req, filesystem, VFS_READ);
 
-	request.code = VFS_READ;
-	request.args[0] = fd;
-	request.args[1] = size;
-	request.args[2] = off;
+	msg_set_args(&req, 3, fd, size, off);
 
-	send(&request);
-	wait(filesystem);
+	send(&req);
+	wait(req.to);
 
-	struct msg response = {{0}};
-	response.payload.buf  = buffer;
-	response.payload.size = size;
+	struct msg res;
+	msg_attach_payload(&res, buffer, size);
 
-	recv(&response);
-	return response.code;
+	recv(&res);
+	return res.code;
 }
 
-int write(int fd, char* buffer, size_t size)
+int write(int fd, char* buffer, size_t size, size_t off)
 {
-	struct msg request = {{0}};
-	request.to = filesystem;
+	struct msg req;
+	msg_create(&req, filesystem, VFS_WRITE);
 
-	request.code = VFS_WRITE;
-	request.args[0] = fd;
-	request.args[1] = size;
+	msg_set_args(&req, 3, fd, size, off);
+	msg_attach_payload(&req, buffer, size);
 
-	request.payload.buf  = buffer;
-	request.payload.size = size;
+	send(&req);
+	wait(req.to);
 
-	send(&request);
-	wait(filesystem);
+	struct msg res;
+	recv(&res);
 
-	struct msg response = {{0}};
-	recv(&response);
-
-	return response.code;
+	return res.code;
 }
 
 void print(char* msg)
 {
-	write(screen, msg, strlen(msg)+1);
+	write(screen, msg, strlen(msg)+1, 0);
 }
 
 int main()
@@ -92,10 +128,12 @@ int main()
 
 	char input_buffer[256];
 	size_t input_pos = 0;
+
 	while (true)
 	{
 		memset(input_buffer, 0, 256);
 		input_pos = 0;
+
 		print("$> ");
 
 		char last_key = '\0';
@@ -115,10 +153,10 @@ int main()
 				show_key = '\0';
 			}
 
-			if (show_key && input_pos >= 255)
+			if (input_pos >= 255)
 				continue;
 
-			if (show_key)
+			if (show_key != '\0')
 			{
 				input_buffer[input_pos++] = show_key;
 
@@ -138,12 +176,7 @@ int main()
 		}
 
 		print("\n");
-		if (strcmp(cmd, "echo") == 0)
-		{
-			if (arg)
-				print(arg);
-		}
-		else if (strcmp(cmd, "read") == 0)
+		if (strcmp(cmd, "read") == 0)
 		{
 			if (arg)
 			{
@@ -172,25 +205,7 @@ int main()
 		}
 		else if (strcmp(cmd, "load") == 0)
 		{
-			if (arg)
-			{
-				int fd = open(arg);
-				if (fd != -1)
-				{
-					char* buffer = vmap((void*)0xB0000000, 4096 * 8);
-					memset(buffer, 0, 4096 * 8);
-
-					char* ptr = buffer;
-					while (read(fd, ptr, 1024, ptr-buffer) > 0)
-						ptr += 1024;
-
-					//
-				}
-				else
-				{
-					print("File not found.");
-				}
-			}
+			//
 		}
 		else if (strcmp(cmd, "clear") == 0)
 		{
@@ -207,5 +222,6 @@ int main()
 		print("\n");
 	}
 
+	for (;;);
 	return 0;
 }
