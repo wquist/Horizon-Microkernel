@@ -6,20 +6,20 @@ Features
 -
 The microkernel tries not to be a direct copy of any existing operating systems. Special focus went into the areas of inter-process communication and system calls.
 
-###General:
+### General:
 - No dynamic allocation occurs in the kernel; the maximum number of procecsses, threads per process, and messages per process are fixed.
 - Almost all functions in the microkernel run in O(1) time, including memory allocation, process creation/destruction, and message passing; it should be possible to calculate a definite maximum time for each kernel operation.
 - Any architecture-specific code is strictly separated from the main kernel logic. All architecture functions are called with fairly generic names, so it should be possible to port the kernel to any architecture (with paging) by re-implementing the functions in the `arch/` directory, requiring no changes to code in the `core/` hierarchy.
 
-###Multitasking:
+### Multitasking:
 - Support for multiple processes, each with multiple threads. Each thread is its own IPC endpoint, so a single process can neatly separate is functionality/services.
 - "Versioned" processes and threads, hopefully making IPC more secure and eliminating the possibility of incorrectly sent messages.
 
-###Inter-Process Communication:
+### Inter-Process Communication:
 - Kernel support for message passing and shared memory.
 - Messages are variably sized and can be synchronous or asynchronous; messages sent with little data are asynchronous and stored in a queue, while messages with large payloads block the sender until the receiver accepts or denies the message. This allows message passing to be handled in a fixed amount of memory, with no allocating or storing in the kernel. The limited async capabilities can also be combined with shared memory for fully asynchronous messaging in userspace.
 
-###System Calls:
+### System Calls:
 - Instead of providing the kernel with a binary to create a new process, empty processes are `spawn`ed, and code/data/other memory is `grant`ed to the new process from any sufficiently privileged usermode service before being `launch`ed. This way, the kernel does not have to understand binary formats, or even know about a filesystem. A process can be also cloned (in the same vein as the UNIX `fork` call) with the same set of system calls by mapping the calling process' memory into the new one.
 - Processes can register as "services" in the kernel to make userspace discovery simpler. Owning a service also allows usermode processes to access hardware features, like interrupts and port I/O.
 
